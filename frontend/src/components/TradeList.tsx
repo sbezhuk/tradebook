@@ -110,19 +110,19 @@ export const TradeList: React.FC<TradeListProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Search & Filter Toolbar */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+      <div className="liquid-glass-card rounded-2xl p-4">
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
           {/* Search Symbol */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/60" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Пошук за символом (BTC, EUR, AAPL)..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              placeholder="Пошук за символом (BTC, EUR, NVDA)..."
+              className="liquid-glass-input w-full rounded-xl pl-10 pr-3.5 py-2 text-xs text-white placeholder-purple-400/40"
             />
           </div>
 
@@ -131,54 +131,54 @@ export const TradeList: React.FC<TradeListProps> = ({
             <select
               value={selectedMarket}
               onChange={(e) => handleMarketChange(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="liquid-glass-input rounded-xl px-3 py-2 text-xs text-purple-200 cursor-pointer"
             >
-              <option value="">Всі ринки</option>
-              <option value="CRYPTO">Crypto</option>
-              <option value="FOREX">Forex</option>
-              <option value="STOCKS">Stocks</option>
-              <option value="FUTURES">Futures</option>
-              <option value="COMMODITIES">Commodities</option>
+              <option value="" className="bg-[#120827] text-white">Всі ринки</option>
+              <option value="CRYPTO" className="bg-[#120827] text-white">Crypto</option>
+              <option value="FOREX" className="bg-[#120827] text-white">Forex</option>
+              <option value="STOCKS" className="bg-[#120827] text-white">Stocks</option>
+              <option value="FUTURES" className="bg-[#120827] text-white">Futures</option>
+              <option value="COMMODITIES" className="bg-[#120827] text-white">Commodities</option>
             </select>
 
             {/* Direction */}
             <select
               value={selectedDirection}
               onChange={(e) => handleDirectionChange(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="liquid-glass-input rounded-xl px-3 py-2 text-xs text-purple-200 cursor-pointer"
             >
-              <option value="">Всі сторони</option>
-              <option value="LONG">Long 🟢</option>
-              <option value="SHORT">Short 🔴</option>
+              <option value="" className="bg-[#120827] text-white">Всі сторони</option>
+              <option value="LONG" className="bg-[#120827] text-white">Long 🟢</option>
+              <option value="SHORT" className="bg-[#120827] text-white">Short 🔴</option>
             </select>
 
             {/* Status */}
             <select
               value={selectedStatus}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="liquid-glass-input rounded-xl px-3 py-2 text-xs text-purple-200 cursor-pointer"
             >
-              <option value="">Всі статуси</option>
-              <option value="CLOSED">Закриті</option>
-              <option value="OPEN">Відкриті</option>
-              <option value="CANCELLED">Скасовані</option>
+              <option value="" className="bg-[#120827] text-white">Всі статуси</option>
+              <option value="CLOSED" className="bg-[#120827] text-white">Закриті</option>
+              <option value="OPEN" className="bg-[#120827] text-white">Відкриті</option>
+              <option value="CANCELLED" className="bg-[#120827] text-white">Скасовані</option>
             </select>
 
             {/* Sort */}
             <select
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="liquid-glass-input rounded-xl px-3 py-2 text-xs text-purple-200 cursor-pointer"
             >
-              <option value="date_desc">Дата: новіші спочатку</option>
-              <option value="date_asc">Дата: старіші спочатку</option>
-              <option value="pnl_desc">PnL: від прибуткових</option>
-              <option value="pnl_asc">PnL: від збиткових</option>
+              <option value="date_desc" className="bg-[#120827] text-white">Дата: новіші спочатку</option>
+              <option value="date_asc" className="bg-[#120827] text-white">Дата: старіші спочатку</option>
+              <option value="pnl_desc" className="bg-[#120827] text-white">PnL: від прибуткових</option>
+              <option value="pnl_asc" className="bg-[#120827] text-white">PnL: від збиткових</option>
             </select>
 
             <button
               type="submit"
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors"
+              className="px-4 py-2 rounded-xl bg-purple-900/40 hover:bg-purple-800/60 border border-purple-400/30 text-purple-200 text-xs font-semibold tracking-wide transition-all shadow-[0_2px_10px_rgba(147,51,234,0.15)]"
             >
               Фільтрувати
             </button>
@@ -187,24 +187,24 @@ export const TradeList: React.FC<TradeListProps> = ({
       </div>
 
       {/* Trades Table */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="liquid-glass-card rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(76,29,149,0.25)]">
         {loading ? (
-          <div className="p-12 text-center text-slate-400">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mb-3" />
-            <p className="text-sm">Завантаження угод...</p>
+          <div className="p-16 text-center text-purple-300">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mb-3" />
+            <p className="text-xs font-medium">Завантаження угод...</p>
           </div>
         ) : trades.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+          <div className="p-16 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-purple-950/60 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
               <Filter className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-white">Угод не знайдено</h3>
-            <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
-              За вашими критеріями пошуку або фільтрації угод немає. Створіть нову угоду або скиньте фільтри.
+            <h3 className="text-base font-bold text-white">Угод не знайдено</h3>
+            <p className="text-xs text-purple-300/60 mt-1.5 max-w-sm mx-auto">
+              За вашими критеріями пошуку угод немає. Створіть нову угоду або скиньте фільтри.
             </p>
             <button
               onClick={onNewTrade}
-              className="mt-4 inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors"
+              className="liquid-button mt-5 inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-white text-xs font-bold"
             >
               <span>Створити першу угоду</span>
             </button>
@@ -213,20 +213,20 @@ export const TradeList: React.FC<TradeListProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-medium">
-                  <th className="py-3 px-4">Символ / Ринок</th>
-                  <th className="py-3 px-3">Сторона</th>
-                  <th className="py-3 px-3">Статус</th>
-                  <th className="py-3 px-3">Вхід / Вихід</th>
-                  <th className="py-3 px-3">Об'єм</th>
-                  <th className="py-3 px-3">SL / TP</th>
-                  <th className="py-3 px-4 text-right">PnL / ROI</th>
-                  <th className="py-3 px-3 text-center">R:R</th>
-                  <th className="py-3 px-3">Теги</th>
-                  <th className="py-3 px-4 text-center">Дії</th>
+                <tr className="border-b border-purple-500/15 bg-purple-950/40 text-purple-300/70 font-semibold uppercase tracking-wider text-[11px]">
+                  <th className="py-3.5 px-4">Символ / Ринок</th>
+                  <th className="py-3.5 px-3">Сторона</th>
+                  <th className="py-3.5 px-3">Статус</th>
+                  <th className="py-3.5 px-3">Вхід / Вихід</th>
+                  <th className="py-3.5 px-3">Об'єм</th>
+                  <th className="py-3.5 px-3">SL / TP</th>
+                  <th className="py-3.5 px-4 text-right">PnL / ROI</th>
+                  <th className="py-3.5 px-3 text-center">R:R</th>
+                  <th className="py-3.5 px-3">Теги</th>
+                  <th className="py-3.5 px-4 text-center">Дії</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-purple-500/10">
                 {trades.map((trade) => {
                   const isLong = trade.direction === 'LONG';
                   const isOpen = trade.status === 'OPEN';
@@ -236,23 +236,23 @@ export const TradeList: React.FC<TradeListProps> = ({
                   return (
                     <tr
                       key={trade.id}
-                      className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                      className="hover:bg-purple-900/25 transition-colors group cursor-pointer"
                       onClick={() => onSelectTrade(trade)}
                     >
                       {/* Symbol & Market */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center space-x-2">
-                          <span className="font-bold text-white text-sm group-hover:text-indigo-400 transition-colors">
+                          <span className="font-extrabold text-white text-sm group-hover:text-purple-300 transition-colors">
                             {trade.symbol}
                           </span>
                           {trade.chart_url && (
                             <span title="Є скріншот або графік">
-                              <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                              <ImageIcon className="w-3.5 h-3.5 text-fuchsia-400" />
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
-                          <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                        <div className="flex items-center space-x-2 text-[11px] text-purple-300/60 mt-0.5">
+                          <span className="px-2 py-0.5 rounded-full bg-purple-900/40 border border-purple-500/20 text-purple-300 font-mono text-[10px]">
                             {trade.market}
                           </span>
                           <span>{formatDate(trade.entry_date)}</span>
@@ -262,13 +262,13 @@ export const TradeList: React.FC<TradeListProps> = ({
                       {/* Direction */}
                       <td className="py-3.5 px-3">
                         <span
-                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold ${
+                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[11px] font-bold backdrop-blur-md ${
                             isLong
-                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]'
                           }`}
                         >
-                          {isLong ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                          {isLong ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                           <span>{trade.direction}</span>
                         </span>
                       </td>
@@ -276,12 +276,12 @@ export const TradeList: React.FC<TradeListProps> = ({
                       {/* Status */}
                       <td className="py-3.5 px-3">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider ${
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${
                             isOpen
-                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.2)]'
                               : trade.status === 'CLOSED'
-                              ? 'bg-slate-800 text-slate-300'
-                              : 'bg-zinc-800 text-zinc-400'
+                              ? 'bg-purple-950/60 text-purple-300 border border-purple-500/20'
+                              : 'bg-zinc-900/60 text-zinc-400'
                           }`}
                         >
                           {trade.status === 'OPEN' ? 'В процесі' : trade.status === 'CLOSED' ? 'Закрита' : 'Скасована'}
@@ -290,41 +290,41 @@ export const TradeList: React.FC<TradeListProps> = ({
 
                       {/* Prices */}
                       <td className="py-3.5 px-3 font-mono">
-                        <div className="text-slate-200">
-                          Вхід: <span className="font-semibold text-white">{trade.entry_price}</span>
+                        <div className="text-purple-200">
+                          Вхід: <span className="font-bold text-white">{trade.entry_price}</span>
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-purple-300/60">
                           {trade.exit_price ? `Вихід: ${trade.exit_price}` : '—'}
                         </div>
                       </td>
 
                       {/* Quantity */}
-                      <td className="py-3.5 px-3 font-mono text-slate-300">
+                      <td className="py-3.5 px-3 font-mono text-purple-200 font-semibold">
                         {trade.quantity}
                       </td>
 
                       {/* SL / TP */}
                       <td className="py-3.5 px-3 font-mono text-[11px]">
-                        <div className="text-rose-400/90">SL: {trade.stop_loss ?? '—'}</div>
-                        <div className="text-emerald-400/90">TP: {trade.take_profit ?? '—'}</div>
+                        <div className="text-rose-400/90 font-medium">SL: {trade.stop_loss ?? '—'}</div>
+                        <div className="text-emerald-400/90 font-medium">TP: {trade.take_profit ?? '—'}</div>
                       </td>
 
                       {/* PnL & ROI */}
                       <td className="py-3.5 px-4 text-right">
                         {isOpen ? (
-                          <span className="text-amber-400 font-mono italic">відкрита</span>
+                          <span className="text-amber-300 font-mono italic text-[11px]">відкрита</span>
                         ) : (
                           <div>
                             <div
-                              className={`text-sm font-bold font-mono ${
-                                isWin ? 'text-emerald-400' : isLoss ? 'text-rose-400' : 'text-slate-300'
+                              className={`text-sm font-black font-mono drop-shadow-sm ${
+                                isWin ? 'text-emerald-400' : isLoss ? 'text-rose-400' : 'text-purple-200'
                               }`}
                             >
                               {isWin ? '+' : ''}${trade.pnl.toFixed(2)}
                             </div>
                             <div
-                              className={`text-[11px] font-mono font-medium ${
-                                isWin ? 'text-emerald-500' : isLoss ? 'text-rose-500' : 'text-slate-500'
+                              className={`text-[11px] font-mono font-bold ${
+                                isWin ? 'text-emerald-500' : isLoss ? 'text-rose-500' : 'text-purple-400'
                               }`}
                             >
                               {isWin ? '+' : ''}{trade.pnl_percentage.toFixed(2)}%
@@ -337,18 +337,18 @@ export const TradeList: React.FC<TradeListProps> = ({
                       <td className="py-3.5 px-3 text-center">
                         {trade.r_multiple !== null && trade.r_multiple !== undefined ? (
                           <span
-                            className={`px-1.5 py-0.5 rounded font-mono font-semibold text-[11px] ${
+                            className={`px-2 py-0.5 rounded-lg font-mono font-bold text-[11px] ${
                               trade.r_multiple > 0
-                                ? 'bg-emerald-500/10 text-emerald-400'
+                                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                 : trade.r_multiple < 0
-                                ? 'bg-rose-500/10 text-rose-400'
-                                : 'bg-slate-800 text-slate-400'
+                                ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                : 'bg-purple-950/60 text-purple-300'
                             }`}
                           >
                             {trade.r_multiple > 0 ? `+${trade.r_multiple}R` : `${trade.r_multiple}R`}
                           </span>
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-purple-400/40">—</span>
                         )}
                       </td>
 
@@ -359,31 +359,31 @@ export const TradeList: React.FC<TradeListProps> = ({
                             trade.tags.split(',').slice(0, 2).map((t, idx) => (
                               <span
                                 key={idx}
-                                className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-[10px] font-medium truncate"
+                                className="px-2 py-0.5 rounded-full bg-purple-900/40 border border-purple-400/20 text-purple-200 text-[10px] font-medium truncate backdrop-blur-sm"
                               >
                                 #{t.trim()}
                               </span>
                             ))
                           ) : (
-                            <span className="text-slate-600">—</span>
+                            <span className="text-purple-400/40">—</span>
                           )}
                         </div>
                       </td>
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center space-x-1">
+                        <div className="flex items-center justify-center space-x-1.5">
                           <button
                             onClick={() => onSelectTrade(trade)}
                             title="Деталі"
-                            className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded transition-colors"
+                            className="p-1.5 text-purple-300/70 hover:text-white hover:bg-purple-900/40 rounded-lg transition-colors"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onEditTrade(trade)}
                             title="Редагувати"
-                            className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded transition-colors"
+                            className="p-1.5 text-purple-300/70 hover:text-amber-300 hover:bg-purple-900/40 rounded-lg transition-colors"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -394,7 +394,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                               }
                             }}
                             title="Видалити"
-                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                            className="p-1.5 text-purple-300/70 hover:text-rose-400 hover:bg-purple-900/40 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

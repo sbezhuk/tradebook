@@ -77,7 +77,6 @@ export const AppContent: React.FC = () => {
     } else {
       await api.createTrade(data);
     }
-    // Reload trades & analytics
     await Promise.all([loadTrades(), loadAnalytics()]);
   };
 
@@ -107,10 +106,10 @@ export const AppContent: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">
+      <div className="min-h-screen flex items-center justify-center bg-[#090514] text-purple-300">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mb-3" />
-          <p className="text-sm">Завантаження...</p>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mb-3" />
+          <p className="text-sm font-medium tracking-wide">Завантаження TradeBook...</p>
         </div>
       </div>
     );
@@ -121,14 +120,19 @@ export const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#090514] text-purple-50 flex flex-col relative overflow-hidden">
+      {/* Liquid Ambient Glowing Orbs */}
+      <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-purple-700/12 rounded-full blur-[140px] pointer-events-none -translate-y-1/2" />
+      <div className="fixed top-1/2 right-10 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="fixed bottom-0 left-10 w-[600px] h-[600px] bg-indigo-700/10 rounded-full blur-[160px] pointer-events-none translate-y-1/3" />
+
       <Navbar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         onOpenNewTrade={handleOpenNew}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
         {/* KPI Summary Cards */}
         {analytics && <StatCards stats={analytics.summary} />}
 
