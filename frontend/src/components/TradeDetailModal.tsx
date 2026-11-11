@@ -12,14 +12,15 @@ import {
   Tag as TagIcon,
   ExternalLink,
   Edit3,
-  Trash2
+  Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface TradeDetailModalProps {
   trade: Trade | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (trade: Trade) => void;
+  onEdit: (trade: Trade, closeMode?: boolean) => void;
   onDelete: (id: number) => void;
 }
 
@@ -100,6 +101,17 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {isOpenTrade && (
+              <button
+                type="button"
+                onClick={() => onEdit(trade, true)}
+                className="accent-pill inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
+                title="Вказати ціну виходу та закрити угоду"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Закрити угоду</span>
+              </button>
+            )}
             <button
               onClick={() => onEdit(trade)}
               className="p-2 text-purple-300/70 hover:text-amber-300 hover:bg-purple-900/40 rounded-xl transition-colors"

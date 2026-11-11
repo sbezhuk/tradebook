@@ -22,6 +22,7 @@ interface TradeModalProps {
   onClose: () => void;
   onSave: (data: TradeFormData, id?: number) => Promise<void>;
   editTrade?: Trade | null;
+  initialCloseMode?: boolean;
 }
 
 const QUICK_SYMBOLS: Record<MarketType, string[]> = {
@@ -40,6 +41,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   onClose,
   onSave,
   editTrade,
+  initialCloseMode = false,
 }) => {
   const isEditing = !!editTrade;
 
@@ -48,7 +50,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [symbol, setSymbol] = useState('');
   const [market, setMarket] = useState<MarketType>('CRYPTO');
   const [direction, setDirection] = useState<DirectionType>('LONG');
-  const [status, setStatus] = useState<StatusType>('CLOSED');
+  const [status, setStatus] = useState<StatusType>('OPEN');
 
   const [entryDate, setEntryDate] = useState('');
   const [exitDate, setExitDate] = useState('');
@@ -85,12 +87,20 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     setStep(1);
     setError(null);
     if (editTrade) {
+      const nextStatus: StatusType =
+        initialCloseMode && editTrade.status === 'OPEN' ? 'CLOSED' : editTrade.status;
       setSymbol(editTrade.symbol);
       setMarket(editTrade.market);
       setDirection(editTrade.direction);
-      setStatus(editTrade.status);
+      setStatus(nextStatus);
       setEntryDate(formatForInput(editTrade.entry_date));
-      setExitDate(editTrade.exit_date ? formatForInput(editTrade.exit_date) : '');
+      setExitDate(
+        editTrade.exit_date
+          ? formatForInput(editTrade.exit_date)
+          : nextStatus === 'CLOSED'
+          ? formatForInput(new Date().toISOString())
+          : ''
+      );
       setEntryPrice(String(editTrade.entry_price));
       setExitPrice(
         editTrade.exit_price !== null && editTrade.exit_price !== undefined
@@ -111,10 +121,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setSymbol('');
       setMarket('CRYPTO');
       setDirection('LONG');
-      setStatus('CLOSED');
+      setStatus('OPEN');
       const nowStr = formatForInput(new Date().toISOString());
       setEntryDate(nowStr);
-      setExitDate(nowStr);
+      setExitDate('');
       setEntryPrice('');
       setExitPrice('');
       setQuantity('1');
@@ -128,7 +138,15 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setFollowedRules(true);
       setChartUrl('');
     }
-  }, [editTrade, isOpen]);
+  }, [editTrade, initialCloseMode, isOpen]);
+
+  const handleStatusChange = (nextStatus: StatusType) => {
+    setStatus(nextStatus);
+    if (nextStatus === 'CLOSED' && !exitDate) {
+      setExitDate(formatForInput(new Date().toISOString()));
+    }
+    setError(null);
+  };
 
   if (!isOpen) return null;
 
@@ -240,7 +258,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         direction,
         status,
         entry_date: entryDate ? new Date(entryDate).toISOString() : new Date().toISOString(),
-        exit_date: status === 'CLOSED' && exitDate ? new Date(exitDate).toISOString() : null,
+        exit_date:
+          status === 'CLOSED'
+            ? (exitDate ? new Date(exitDate).toISOString() : new Date().toISOString())
+            : null,
         entry_price: numEntry,
         exit_price: status === 'CLOSED' && numExit > 0 ? numExit : null,
         quantity: numQty,
@@ -388,10 +409,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                   <GlassSelect
                     variant="field"
                     value={status}
-                    onChange={(val) => setStatus(val as StatusType)}
+                    onChange={(val) => handleStatusChange(val as StatusType)}
                     options={[
+                      { value: 'OPEN', label: 'Відкрита (в процесі)' },
                       { value: 'CLOSED', label: 'Закрита' },
-                      { value: 'OPEN', label: 'Відкрита' },
                       { value: 'CANCELLED', label: 'Скасована' },
                     ]}
                   />
@@ -460,14 +481,29 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                   <input
                     type="number"
                     step="any"
-                    disabled={status === 'OPEN'}
+                    disabled={status !== 'CLOSED'}
                     value={exitPrice}
                     onChange={(e) => setExitPrice(e.target.value)}
-                    placeholder={status === 'OPEN' ? 'Відкрита' : '68000'}
+                    placeholder={
+                      status === 'OPEN'
+                        ? 'В процесі'
+                        : status === 'CANCELLED'
+                        ? 'Скасована'
+                        : '68000'
+                    }
                     className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono disabled:opacity-40"
                   />
                 </div>
               </div>
+
+              {status === 'OPEN' && (
+                <div className="p-3 rounded-2xl bg-[#c49bff]/10 border border-[#c49bff]/25 text-[11px] text-purple-100/85 flex items-center space-x-2">
+                  <Clock className="w-3.5 h-3.5 text-[#c49bff] shrink-0" />
+                  <span>
+                    Угода зберігається як активна (в процесі) — ціну та час виходу заповните при закритті.
+                  </span>
+                </div>
+              )}
 
               {/* Live PnL Preview */}
               {numEntry > 0 && numExit > 0 && status === 'CLOSED' && (
@@ -561,7 +597,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                   </label>
                   <input
                     type="datetime-local"
-                    disabled={status === 'OPEN'}
+                    disabled={status !== 'CLOSED'}
                     value={exitDate}
                     onChange={(e) => setExitDate(e.target.value)}
                     className="glass-input w-full rounded-xl px-3 py-2.5 text-xs text-white disabled:opacity-40"

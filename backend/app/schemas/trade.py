@@ -6,7 +6,7 @@ class TradeBase(BaseModel):
     symbol: str = Field(..., description="Символ або пара")
     market: str = Field(default="CRYPTO", description="CRYPTO, FOREX, STOCKS, FUTURES, COMMODITIES")
     direction: str = Field(..., description="LONG або SHORT")
-    status: str = Field(default="CLOSED", description="OPEN, CLOSED, CANCELLED")
+    status: str = Field(default="OPEN", description="OPEN, CLOSED, CANCELLED")
     entry_date: datetime
     exit_date: Optional[datetime] = None
     entry_price: float = Field(..., gt=0)

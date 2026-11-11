@@ -78,33 +78,48 @@ def list_trades(
         total=total
     )
 
+VALID_TRADE_STATUSES = {"OPEN", "CLOSED", "CANCELLED"}
+
+
 @router.post("", response_model=TradeResponse, status_code=status.HTTP_201_CREATED)
 def create_trade(
     trade_in: TradeCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Calculate PnL, PnL %, R-Multiple
-    pnl, pnl_pct, r_multiple = calculate_trade_metrics(
-        direction=trade_in.direction,
-        entry_price=trade_in.entry_price,
-        exit_price=trade_in.exit_price,
-        quantity=trade_in.quantity,
-        fees=trade_in.fees,
-        stop_loss=trade_in.stop_loss,
-        manual_pnl=trade_in.pnl
-    )
+    target_status = trade_in.status.upper()
+    if target_status not in VALID_TRADE_STATUSES:
+        raise HTTPException(status_code=400, detail="Невірний статус угоди. Доступно: OPEN, CLOSED, CANCELLED")
+
+    if target_status != "CLOSED":
+        exit_price = None
+        exit_date = None
+        pnl, pnl_pct, r_multiple = 0.0, 0.0, None
+    else:
+        exit_price = trade_in.exit_price
+        if exit_price is None and trade_in.pnl is None:
+            raise HTTPException(status_code=400, detail="Для закритої угоди необхідно вказати ціну виходу")
+        exit_date = trade_in.exit_date or datetime.utcnow()
+        pnl, pnl_pct, r_multiple = calculate_trade_metrics(
+            direction=trade_in.direction,
+            entry_price=trade_in.entry_price,
+            exit_price=exit_price,
+            quantity=trade_in.quantity,
+            fees=trade_in.fees,
+            stop_loss=trade_in.stop_loss,
+            manual_pnl=trade_in.pnl
+        )
 
     trade = Trade(
         user_id=current_user.id,
         symbol=trade_in.symbol.upper(),
         market=trade_in.market.upper(),
         direction=trade_in.direction.upper(),
-        status=trade_in.status.upper(),
+        status=target_status,
         entry_date=trade_in.entry_date,
-        exit_date=trade_in.exit_date,
+        exit_date=exit_date,
         entry_price=trade_in.entry_price,
-        exit_price=trade_in.exit_price,
+        exit_price=exit_price,
         quantity=trade_in.quantity,
         stop_loss=trade_in.stop_loss,
         take_profit=trade_in.take_profit,
@@ -286,19 +301,32 @@ def update_trade(
         else:
             setattr(trade, field, value)
 
-    # Recalculate metrics
-    pnl, pnl_pct, r_multiple = calculate_trade_metrics(
-        direction=trade.direction,
-        entry_price=trade.entry_price,
-        exit_price=trade.exit_price,
-        quantity=trade.quantity,
-        fees=trade.fees,
-        stop_loss=trade.stop_loss,
-        manual_pnl=trade.pnl
-    )
-    trade.pnl = pnl
-    trade.pnl_percentage = pnl_pct
-    trade.r_multiple = r_multiple
+    if trade.status not in VALID_TRADE_STATUSES:
+        raise HTTPException(status_code=400, detail="Невірний статус угоди. Доступно: OPEN, CLOSED, CANCELLED")
+
+    if trade.status != "CLOSED":
+        trade.exit_price = None
+        trade.exit_date = None
+        trade.pnl = 0.0
+        trade.pnl_percentage = 0.0
+        trade.r_multiple = None
+    else:
+        if trade.exit_price is None and (trade.pnl is None or trade.pnl == 0.0):
+            raise HTTPException(status_code=400, detail="Для закритої угоди необхідно вказати ціну виходу")
+        if trade.exit_date is None:
+            trade.exit_date = datetime.utcnow()
+        pnl, pnl_pct, r_multiple = calculate_trade_metrics(
+            direction=trade.direction,
+            entry_price=trade.entry_price,
+            exit_price=trade.exit_price,
+            quantity=trade.quantity,
+            fees=trade.fees,
+            stop_loss=trade.stop_loss,
+            manual_pnl=trade.pnl
+        )
+        trade.pnl = pnl
+        trade.pnl_percentage = pnl_pct
+        trade.r_multiple = r_multiple
 
     db.commit()
     db.refresh(trade)

@@ -10,6 +10,7 @@ import {
   Trash2,
   Image as ImageIcon,
   UploadCloud,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface TradeListProps {
@@ -19,7 +20,7 @@ interface TradeListProps {
   onSelectMonth?: (month: string) => void;
   availableMonths?: MonthlySummaryItem[];
   onSelectTrade: (trade: Trade) => void;
-  onEditTrade: (trade: Trade) => void;
+  onEditTrade: (trade: Trade, closeMode?: boolean) => void;
   onDeleteTrade: (id: number) => void;
   onNewTrade: () => void;
   onOpenImport: () => void;
@@ -335,6 +336,16 @@ export const TradeList: React.FC<TradeListProps> = ({
 
                       <td className="py-4 pl-3 pr-5 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center space-x-1">
+                          {isOpen && (
+                            <button
+                              type="button"
+                              onClick={() => onEditTrade(trade, true)}
+                              title="Закрити угоду"
+                              className="p-1.5 text-amber-300 hover:text-emerald-400 hover:bg-white/[0.06] rounded-lg transition-colors cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => onSelectTrade(trade)}
                             title="Деталі"

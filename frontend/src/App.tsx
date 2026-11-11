@@ -44,6 +44,7 @@ export const AppContent: React.FC = () => {
   // Modals state
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
+  const [closeTradeMode, setCloseTradeMode] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -128,8 +129,9 @@ export const AppContent: React.FC = () => {
     await Promise.all([loadTrades(), loadAnalytics()]);
   };
 
-  const handleOpenEdit = (trade: Trade) => {
+  const handleOpenEdit = (trade: Trade, closeMode = false) => {
     setEditingTrade(trade);
+    setCloseTradeMode(closeMode);
     setIsTradeModalOpen(true);
   };
 
@@ -140,6 +142,7 @@ export const AppContent: React.FC = () => {
 
   const handleOpenNew = () => {
     setEditingTrade(null);
+    setCloseTradeMode(false);
     setIsTradeModalOpen(true);
   };
 
@@ -259,9 +262,13 @@ export const AppContent: React.FC = () => {
       {/* Trade Edit / Create Modal */}
       <TradeModal
         isOpen={isTradeModalOpen}
-        onClose={() => setIsTradeModalOpen(false)}
+        onClose={() => {
+          setIsTradeModalOpen(false);
+          setCloseTradeMode(false);
+        }}
         onSave={handleSaveTrade}
         editTrade={editingTrade}
+        initialCloseMode={closeTradeMode}
       />
 
       {/* Trade Detail Modal */}
@@ -269,9 +276,9 @@ export const AppContent: React.FC = () => {
         trade={selectedTrade}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onEdit={(tr) => {
+        onEdit={(tr, closeMode) => {
           setIsDetailModalOpen(false);
-          handleOpenEdit(tr);
+          handleOpenEdit(tr, closeMode);
         }}
         onDelete={handleDeleteTrade}
       />
