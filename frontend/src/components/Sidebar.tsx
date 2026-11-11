@@ -19,6 +19,8 @@ interface SidebarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   stats?: SummaryStats | null;
+  overallTotalPnl?: number;
+  overallTotalTrades?: number;
   tagsCount?: number;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -28,6 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onSelectTab,
   stats,
+  overallTotalPnl,
+  overallTotalTrades,
   tagsCount = 0,
   mobileOpen = false,
   onCloseMobile,
@@ -61,7 +65,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? user.username.slice(0, 2).toUpperCase()
     : 'TR';
 
-  const isPnlPositive = (stats?.total_pnl ?? 0) >= 0;
+  const displayOverallPnl = overallTotalPnl ?? stats?.total_pnl ?? 0;
+  const displayOverallTrades = overallTotalTrades ?? stats?.total_trades ?? 0;
+  const isPnlPositive = displayOverallPnl >= 0;
 
   const handleNav = (tab: NavTab) => {
     onSelectTab(tab);
@@ -159,24 +165,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom Summary Widget & User Profile */}
       <div className="space-y-3 pt-4">
-        {/* Mini Glass Metric Box (like "Safe to spend today") */}
+        {/* Mini Glass Metric Box — Always shows overall all-time PnL separately from monthly period */}
         <div className="glass-card-subtle rounded-2xl p-3.5">
           <div className="text-[11px] font-medium text-purple-200/55">
-            Загальний баланс PnL
+            Загальний PnL (весь час)
           </div>
           <div
             className={`text-xl font-bold font-mono mt-1 tracking-tight ${
               isPnlPositive ? 'text-[#c49bff]' : 'text-rose-400'
             }`}
           >
-            {isPnlPositive ? '+' : ''}$
-            {(stats?.total_pnl ?? 0).toLocaleString('en-US', {
+            {isPnlPositive ? '+' : '-'}$
+            {Math.abs(displayOverallPnl).toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </div>
           <div className="text-[11px] text-purple-200/45 mt-1">
-            {stats?.win_rate ?? 0}% winrate • {stats?.total_trades ?? 0} закритих угод
+            {displayOverallTrades} закритих угод загалом
           </div>
         </div>
 

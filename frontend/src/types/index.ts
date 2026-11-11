@@ -107,7 +107,22 @@ export interface DailyActivityItem {
   total_pnl: number;
 }
 
+export interface MonthlySummaryItem {
+  month: string;
+  label: string;
+  trades_count: number;
+  winning_trades: number;
+  losing_trades: number;
+  win_rate: number;
+  total_pnl: number;
+  profit_factor: number;
+}
+
 export interface AnalyticsData {
+  overall_total_pnl: number;
+  overall_total_trades: number;
+  selected_month: string | null;
+  available_months: MonthlySummaryItem[];
   summary: SummaryStats;
   equity_curve: EquityPoint[];
   by_market: BreakdownItem[];

@@ -16,9 +16,11 @@ import {
 interface InsightsBentoProps {
   analytics: AnalyticsData | null;
   loading: boolean;
+  selectedMonth?: string;
+  onSelectMonth?: (month: string) => void;
   pageTitle?: string;
   pageSubtitle?: string;
-  defaultSubTab?: 'bento' | 'equity' | 'setups';
+  defaultSubTab?: 'bento' | 'months' | 'equity' | 'setups';
 }
 
 const BAR_COLORS = [
@@ -35,11 +37,13 @@ const BAR_COLORS = [
 export const InsightsBento: React.FC<InsightsBentoProps> = ({
   analytics,
   loading,
+  selectedMonth = '',
+  onSelectMonth,
   pageTitle = 'Аналітика',
   pageSubtitle = 'Скільки ви заробляєте, утримуєте та де ваша перевага на ринку.',
   defaultSubTab = 'bento',
 }) => {
-  const [subTab, setSubTab] = useState<'bento' | 'equity' | 'setups'>(defaultSubTab);
+  const [subTab, setSubTab] = useState<'bento' | 'months' | 'equity' | 'setups'>(defaultSubTab);
   const [breakdownMode, setBreakdownMode] = useState<'market' | 'symbol' | 'tag'>('market');
   const [hoveredDay, setHoveredDay] = useState<DailyActivityItem | null>(null);
 
@@ -51,7 +55,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
     return abs.toLocaleString('en-US', { maximumFractionDigits: 2 });
   };
 
-  // Build 12-week calendar grid ending today
+  // Build 12-week calendar grid ending at selectedMonth (or today for all-time)
   const calendarWeeks = useMemo(() => {
     const activityMap = new Map<string, DailyActivityItem>();
     if (analytics?.daily_activity) {
@@ -61,10 +65,21 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
     }
 
     const today = new Date();
-    // Find Sunday of current week (or align to Monday-Sunday rows)
-    const dayOfWeek = (today.getDay() + 6) % 7; // Mon=0 .. Sun=6
-    const endOfWeek = new Date(today);
-    endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+    let anchorDate = today;
+    if (selectedMonth) {
+      const [yStr, mStr] = selectedMonth.split('-');
+      const y = Number(yStr);
+      const m = Number(mStr);
+      if (y && m) {
+        const monthEnd = new Date(y, m, 0);
+        anchorDate = monthEnd < today ? monthEnd : today;
+      }
+    }
+
+    // Align to Monday-Sunday rows
+    const dayOfWeek = (anchorDate.getDay() + 6) % 7; // Mon=0 .. Sun=6
+    const endOfWeek = new Date(anchorDate);
+    endOfWeek.setDate(anchorDate.getDate() + (6 - dayOfWeek));
 
     const totalDays = 12 * 7; // 12 weeks
     const startDate = new Date(endOfWeek);
@@ -91,13 +106,13 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
         weekDays.push({
           dateStr,
           data: activityMap.get(dateStr) || null,
-          isFuture: curr > today,
+          isFuture: curr > today && !activityMap.has(dateStr),
         });
       }
       weeks.push({ label: weekLabel, days: weekDays });
     }
     return weeks;
-  }, [analytics?.daily_activity]);
+  }, [analytics?.daily_activity, selectedMonth]);
 
   if (loading || !analytics) {
     return (
@@ -108,7 +123,23 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
     );
   }
 
-  const { summary, equity_curve, by_market, by_direction, by_tag, by_symbol, by_day_of_week } = analytics;
+  const {
+    summary,
+    equity_curve,
+    by_market,
+    by_direction,
+    by_tag,
+    by_symbol,
+    by_day_of_week,
+    available_months,
+    overall_total_pnl,
+    overall_total_trades,
+  } = analytics;
+
+  const activeMonthObj = available_months.find((m) => m.month === selectedMonth);
+  const periodLabel = activeMonthObj ? activeMonthObj.label : 'Весь час';
+  const isOverallPositive = overall_total_pnl >= 0;
+  const isPeriodPositive = summary.total_pnl >= 0;
 
   const activeBreakdownList: BreakdownItem[] =
     breakdownMode === 'market'
@@ -159,15 +190,87 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Page Title & Underline Tabs (Matches Verdelo "Insights / In & out | Spending | Merchants") */}
+      {/* Page Title, Separate Overall Total PnL Card & Month Period Selector */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">{pageTitle}</h1>
-        <p className="text-sm text-purple-200/50 mt-1">{pageSubtitle}</p>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">{pageTitle}</h1>
+            <p className="text-sm text-purple-200/50 mt-1">
+              {pageSubtitle} Звітний період:{' '}
+              <span className="text-[#c49bff] font-semibold">{periodLabel}</span>
+            </p>
+          </div>
 
-        <div className="flex items-center space-x-6 border-b border-white/[0.07] mt-5">
+          {/* Separate All-Time Overall Total PnL Badge */}
+          <div className="glass-panel rounded-2xl px-5 py-3.5 border border-[#c49bff]/25 flex items-center gap-5 self-start">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
+                Загальний PnL (весь час)
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-0.5">
+                {overall_total_trades} закритих угод • {available_months.length} міс.
+              </div>
+            </div>
+            <div
+              className={`text-2xl font-bold font-mono tracking-tight ${
+                isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
+              }`}
+            >
+              {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
+            </div>
+          </div>
+        </div>
+
+        {/* Reporting Month Pill Selector */}
+        {available_months.length > 0 && onSelectMonth && (
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            {available_months.map((m) => {
+              const isActive = selectedMonth === m.month;
+              return (
+                <button
+                  key={m.month}
+                  type="button"
+                  onClick={() => onSelectMonth(m.month)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                    isActive
+                      ? 'accent-pill'
+                      : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-purple-200/75 hover:text-white'
+                  }`}
+                >
+                  <span>{m.label}</span>
+                  <span
+                    className={`font-mono text-[11px] ${
+                      isActive
+                        ? 'text-[#110820]/80 font-bold'
+                        : m.total_pnl >= 0
+                        ? 'text-emerald-400'
+                        : 'text-rose-400'
+                    }`}
+                  >
+                    {m.total_pnl >= 0 ? '+' : '-'}${formatUsd(m.total_pnl)}
+                  </span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => onSelectMonth('')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                selectedMonth === ''
+                  ? 'accent-pill'
+                  : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-purple-200/75 hover:text-white'
+              }`}
+            >
+              Весь час
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-6 border-b border-white/[0.07] mt-5 overflow-x-auto">
           <button
             onClick={() => setSubTab('bento')}
-            className={`pb-3 text-xs font-semibold transition-all border-b-2 ${
+            className={`pb-3 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
               subTab === 'bento'
                 ? 'border-[#c49bff] text-white'
                 : 'border-transparent text-purple-200/50 hover:text-purple-100'
@@ -176,8 +279,18 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
             Загальний огляд
           </button>
           <button
+            onClick={() => setSubTab('months')}
+            className={`pb-3 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
+              subTab === 'months'
+                ? 'border-[#c49bff] text-white'
+                : 'border-transparent text-purple-200/50 hover:text-purple-100'
+            }`}
+          >
+            Помісячний звіт ({available_months.length})
+          </button>
+          <button
             onClick={() => setSubTab('equity')}
-            className={`pb-3 text-xs font-semibold transition-all border-b-2 ${
+            className={`pb-3 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
               subTab === 'equity'
                 ? 'border-[#c49bff] text-white'
                 : 'border-transparent text-purple-200/50 hover:text-purple-100'
@@ -187,7 +300,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
           </button>
           <button
             onClick={() => setSubTab('setups')}
-            className={`pb-3 text-xs font-semibold transition-all border-b-2 ${
+            className={`pb-3 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
               subTab === 'setups'
                 ? 'border-[#c49bff] text-white'
                 : 'border-transparent text-purple-200/50 hover:text-purple-100'
@@ -201,6 +314,55 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
       {/* TAB 1: BENTO OVERVIEW (Matches Verdelo Screenshot Layout) */}
       {subTab === 'bento' && (
         <div className="space-y-5">
+          {/* Monthly Reporting Period KPI Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="glass-panel rounded-2xl p-4">
+              <div className="text-[11px] text-purple-200/55 font-medium">
+                PnL періоду ({periodLabel})
+              </div>
+              <div
+                className={`text-xl font-bold font-mono mt-1 ${
+                  isPeriodPositive ? 'text-[#c49bff]' : 'text-rose-400'
+                }`}
+              >
+                {isPeriodPositive ? '+' : '-'}${formatUsd(summary.total_pnl)}
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-1">
+                Середня угода: {summary.average_trade >= 0 ? '+' : '-'}${formatUsd(summary.average_trade)}
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl p-4">
+              <div className="text-[11px] text-purple-200/55 font-medium">Угод за період</div>
+              <div className="text-xl font-bold font-mono text-white mt-1">
+                {summary.total_trades}
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-1">
+                {summary.winning_trades} прибуткових • {summary.losing_trades} збиткових
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl p-4">
+              <div className="text-[11px] text-purple-200/55 font-medium">Вінрейт періоду</div>
+              <div className="text-xl font-bold font-mono text-white mt-1">
+                {summary.win_rate}%
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-1">
+                Найкраща: +${formatUsd(summary.best_trade)}
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl p-4">
+              <div className="text-[11px] text-purple-200/55 font-medium">Profit Factor</div>
+              <div className="text-xl font-bold font-mono text-[#c49bff] mt-1">
+                {summary.profit_factor}
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-1">
+                Дисципліна: {summary.rule_discipline_rate}%
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* LEFT WIDE CARD (7 cols) — By Category / Markets / Symbols */}
             <div className="lg:col-span-7 glass-panel rounded-2xl p-6 flex flex-col justify-between">
@@ -533,6 +695,163 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 1.5: MONTHLY BREAKDOWN REPORT */}
+      {subTab === 'months' && (
+        <div className="space-y-5">
+          <div className="glass-panel rounded-2xl p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-white/[0.07] gap-3">
+              <div>
+                <h3 className="text-base font-bold text-white">Порівняння звітних місяців</h3>
+                <p className="text-xs text-purple-200/45 mt-0.5">
+                  Кожен календарний місяць формує окремий звітний період. Натисніть на рядок, щоб відкрити аналітику місяця.
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] text-purple-200/55">Загальний PnL (весь час)</div>
+                <div
+                  className={`font-mono text-xl font-bold ${
+                    isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
+                  }`}
+                >
+                  {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
+                </div>
+              </div>
+            </div>
+
+            {available_months.length === 0 ? (
+              <div className="py-12 text-center text-xs text-purple-200/45">
+                Немає даних для помісячного звіту
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[...available_months].reverse()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis
+                        dataKey="label"
+                        stroke="rgba(216,180,254,0.45)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="rgba(216,180,254,0.45)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(v) => `$${v}`}
+                      />
+                      <Tooltip
+                        formatter={(val: any) => [`$${Number(val).toFixed(2)}`, 'Місячний PnL']}
+                        contentStyle={{
+                          backgroundColor: '#140d22',
+                          borderColor: 'rgba(196,155,255,0.25)',
+                          borderRadius: '1rem',
+                          fontSize: '12px',
+                          color: '#fff',
+                        }}
+                      />
+                      <Bar dataKey="total_pnl" radius={[8, 8, 0, 0]}>
+                        {[...available_months].reverse().map((entry) => (
+                          <Cell
+                            key={entry.month}
+                            fill={entry.total_pnl >= 0 ? '#c49bff' : '#fb7185'}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-white/[0.07] text-[11px] uppercase tracking-wider text-purple-200/45">
+                        <th className="py-3 px-3">Період</th>
+                        <th className="py-3 px-3 text-right">Угод</th>
+                        <th className="py-3 px-3 text-right">W / L</th>
+                        <th className="py-3 px-3 text-right">Win Rate</th>
+                        <th className="py-3 px-3 text-right">Profit Factor</th>
+                        <th className="py-3 px-3 text-right">PnL періоду</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.05]">
+                      {available_months.map((m) => {
+                        const isSelected = selectedMonth === m.month;
+                        const pos = m.total_pnl >= 0;
+                        return (
+                          <tr
+                            key={m.month}
+                            onClick={() => {
+                              onSelectMonth?.(m.month);
+                              setSubTab('bento');
+                            }}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-[#c49bff]/10'
+                                : 'hover:bg-white/[0.03]'
+                            }`}
+                          >
+                            <td className="py-3.5 px-3 font-semibold text-white flex items-center gap-2">
+                              <span>{m.label}</span>
+                              {isSelected && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c49bff]/20 text-[#d8b4fe] border border-[#c49bff]/30">
+                                  Активний
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-3 text-right font-mono text-purple-100/80">
+                              {m.trades_count}
+                            </td>
+                            <td className="py-3.5 px-3 text-right font-mono">
+                              <span className="text-emerald-400">{m.winning_trades}</span>
+                              <span className="text-purple-200/40"> / </span>
+                              <span className="text-rose-400">{m.losing_trades}</span>
+                            </td>
+                            <td className="py-3.5 px-3 text-right font-mono text-white">
+                              {m.win_rate}%
+                            </td>
+                            <td className="py-3.5 px-3 text-right font-mono text-purple-200">
+                              {m.profit_factor}
+                            </td>
+                            <td
+                              className={`py-3.5 px-3 text-right font-mono font-bold ${
+                                pos ? 'text-[#c49bff]' : 'text-rose-400'
+                              }`}
+                            >
+                              {pos ? '+' : '-'}${formatUsd(m.total_pnl)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-white/[0.12] bg-white/[0.02]">
+                        <td className="py-3.5 px-3 font-bold text-white">
+                          Разом за весь час
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono font-bold text-white">
+                          {overall_total_trades}
+                        </td>
+                        <td className="py-3.5 px-3 text-right text-purple-200/45" colSpan={3}>
+                          Окремий підсумок усіх закритих періодів
+                        </td>
+                        <td
+                          className={`py-3.5 px-3 text-right font-mono font-bold text-sm ${
+                            isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
+                          }`}
+                        >
+                          {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

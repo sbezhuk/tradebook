@@ -2,7 +2,7 @@ from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, func
 from app.core.database import get_db
 from app.models.user import User
 from app.models.trade import Trade
@@ -26,6 +26,7 @@ def list_trades(
     direction: Optional[str] = Query(None, description="LONG або SHORT"),
     status: Optional[str] = Query(None, description="OPEN, CLOSED, CANCELLED"),
     tag: Optional[str] = Query(None, description="Фільтр за тегом"),
+    month: Optional[str] = Query(None, description="Фільтр за звітним місяцем (YYYY-MM)"),
     sort_by: str = Query("date_desc", description="date_desc, date_asc, pnl_desc, pnl_asc"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
@@ -44,6 +45,19 @@ def list_trades(
         query = query.filter(Trade.status == status.upper())
     if tag:
         query = query.filter(Trade.tags.ilike(f"%{tag}%"))
+    if month:
+        try:
+            year_str, month_str = month.split("-")
+            year = int(year_str)
+            m = int(month_str)
+            if not (1900 <= year <= 2200 and 1 <= m <= 12):
+                raise ValueError
+            month_start = datetime(year, m, 1)
+            next_month_start = datetime(year + 1, 1, 1) if m == 12 else datetime(year, m + 1, 1)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Невірний формат місяця. Очікується YYYY-MM")
+        period_dt = func.coalesce(Trade.exit_date, Trade.entry_date)
+        query = query.filter(period_dt >= month_start, period_dt < next_month_start)
 
     total = query.count()
 

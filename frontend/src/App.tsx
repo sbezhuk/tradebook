@@ -26,7 +26,9 @@ export const AppContent: React.FC = () => {
   const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(false);
   const [tagsCount, setTagsCount] = useState<number>(0);
 
-  // Filters & Global Search
+  // Reporting month & Filters & Global Search
+  // undefined = initial auto-select latest available month; '' = All time; 'YYYY-MM' = specific month
+  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{
     symbol?: string;
@@ -47,12 +49,15 @@ export const AppContent: React.FC = () => {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  const monthParam = selectedMonth || undefined;
+
   const loadTrades = useCallback(async () => {
     if (!user) return;
     setTradesLoading(true);
     try {
       const mergedFilters = {
         ...filters,
+        month: monthParam,
         symbol: searchQuery.trim() || filters.symbol,
       };
       const data = await api.getTrades(mergedFilters);
@@ -62,24 +67,28 @@ export const AppContent: React.FC = () => {
     } finally {
       setTradesLoading(false);
     }
-  }, [user, filters, searchQuery]);
+  }, [user, filters, searchQuery, monthParam]);
 
   const loadAnalytics = useCallback(async () => {
     if (!user) return;
     setAnalyticsLoading(true);
     try {
       const [analyticsRes, tagsRes] = await Promise.all([
-        api.getAnalytics(),
+        api.getAnalytics(monthParam),
         api.getTags(),
       ]);
       setAnalytics(analyticsRes);
       setTagsCount(tagsRes.length);
+      if (selectedMonth === undefined) {
+        const latestMonth = analyticsRes.available_months[0]?.month ?? '';
+        setSelectedMonth(latestMonth);
+      }
     } catch (err) {
       console.error('Failed to load analytics:', err);
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [user]);
+  }, [user, monthParam, selectedMonth]);
 
   useEffect(() => {
     if (user) {
@@ -154,6 +163,8 @@ export const AppContent: React.FC = () => {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         stats={analytics?.summary}
+        overallTotalPnl={analytics?.overall_total_pnl}
+        overallTotalTrades={analytics?.overall_total_trades}
         tagsCount={tagsCount}
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
@@ -177,6 +188,8 @@ export const AppContent: React.FC = () => {
             <OverviewView
               trades={trades}
               analytics={analytics}
+              selectedMonth={selectedMonth ?? ''}
+              onSelectMonth={(m) => setSelectedMonth(m)}
               onSelectTrade={handleOpenDetail}
               onGoToTrades={() => setCurrentTab('trades')}
               onGoToInsights={() => setCurrentTab('insights')}
@@ -187,6 +200,9 @@ export const AppContent: React.FC = () => {
             <TradeList
               trades={trades}
               loading={tradesLoading}
+              selectedMonth={selectedMonth ?? ''}
+              onSelectMonth={(m) => setSelectedMonth(m)}
+              availableMonths={analytics?.available_months ?? []}
               onSelectTrade={handleOpenDetail}
               onEditTrade={handleOpenEdit}
               onDeleteTrade={handleDeleteTrade}
@@ -201,6 +217,8 @@ export const AppContent: React.FC = () => {
               key="insights-bento"
               analytics={analytics}
               loading={analyticsLoading}
+              selectedMonth={selectedMonth ?? ''}
+              onSelectMonth={(m) => setSelectedMonth(m)}
               pageTitle="Аналітика"
               pageSubtitle="Скільки ви заробляєте, утримуєте та де ваша перевага на ринку."
               defaultSubTab="bento"
@@ -212,6 +230,8 @@ export const AppContent: React.FC = () => {
               key="setups-bento"
               analytics={analytics}
               loading={analyticsLoading}
+              selectedMonth={selectedMonth ?? ''}
+              onSelectMonth={(m) => setSelectedMonth(m)}
               pageTitle="Сетапи та активність"
               pageSubtitle="Аналіз ефективності ваших торгових формацій та днів тижня."
               defaultSubTab="setups"
@@ -253,8 +273,9 @@ export const AppContent: React.FC = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={async () => {
+          setSelectedMonth(undefined);
           await Promise.all([loadTrades(), loadAnalytics()]);
-          setCurrentTab('trades');
+          setCurrentTab('insights');
         }}
       />
     </div>

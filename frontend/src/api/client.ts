@@ -125,8 +125,9 @@ class ApiClient {
   }
 
   // Analytics
-  async getAnalytics(): Promise<AnalyticsData> {
-    return this.request<AnalyticsData>('/analytics');
+  async getAnalytics(month?: string): Promise<AnalyticsData> {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : '';
+    return this.request<AnalyticsData>(`/analytics${qs}`);
   }
 
   // Import Hyperliquid CSV

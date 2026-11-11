@@ -39,7 +39,21 @@ class DailyActivityItem(BaseModel):
     trades_count: int
     total_pnl: float
 
+class MonthlySummaryItem(BaseModel):
+    month: str          # YYYY-MM
+    label: str          # e.g. "Листопад 2026"
+    trades_count: int
+    winning_trades: int
+    losing_trades: int
+    win_rate: float
+    total_pnl: float
+    profit_factor: float
+
 class AnalyticsResponse(BaseModel):
+    overall_total_pnl: float
+    overall_total_trades: int
+    selected_month: Optional[str] = None
+    available_months: List[MonthlySummaryItem]
     summary: SummaryStats
     equity_curve: List[EquityPoint]
     by_market: List[BreakdownItem]

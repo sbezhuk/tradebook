@@ -6,6 +6,8 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 interface OverviewViewProps {
   trades: Trade[];
   analytics: AnalyticsData | null;
+  selectedMonth?: string;
+  onSelectMonth?: (month: string) => void;
   onSelectTrade: (trade: Trade) => void;
   onGoToTrades: () => void;
   onGoToInsights: () => void;
@@ -14,36 +16,114 @@ interface OverviewViewProps {
 export const OverviewView: React.FC<OverviewViewProps> = ({
   trades,
   analytics,
+  selectedMonth = '',
+  onSelectMonth,
   onSelectTrade,
   onGoToTrades,
   onGoToInsights,
 }) => {
   const stats = analytics?.summary;
   const equity = analytics?.equity_curve || [];
-  const isPnlPos = (stats?.total_pnl ?? 0) >= 0;
+  const availableMonths = analytics?.available_months || [];
+  const activeMonthObj = availableMonths.find((m) => m.month === selectedMonth);
+  const periodLabel = activeMonthObj ? activeMonthObj.label : 'Весь час';
+
+  const overallPnl = analytics?.overall_total_pnl ?? stats?.total_pnl ?? 0;
+  const overallTrades = analytics?.overall_total_trades ?? stats?.total_trades ?? 0;
+  const isOverallPos = overallPnl >= 0;
+  const isPeriodPos = (stats?.total_pnl ?? 0) >= 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Огляд портфелю</h1>
-        <p className="text-sm text-purple-200/50 mt-1">
-          Ключові показники ефективності та останні операції.
-        </p>
-      </div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Огляд портфелю</h1>
+          <p className="text-sm text-purple-200/50 mt-1">
+            Звітний період: <span className="text-[#c49bff] font-medium">{periodLabel}</span> • статистика розраховується за вибраним місяцем.
+          </p>
+        </div>
 
-      {/* 4 Sleek Glass Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel rounded-2xl p-5">
-          <div className="text-xs text-purple-200/55 font-medium">Загальний PnL</div>
+        {/* Separate Overall Total PnL Card */}
+        <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20 self-start">
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
+              Загальний PnL (весь час)
+            </div>
+            <div className="text-[11px] text-purple-200/45 mt-0.5">
+              {overallTrades} закритих угод
+            </div>
+          </div>
           <div
-            className={`text-2xl font-bold font-mono mt-1.5 ${
-              isPnlPos ? 'text-[#c49bff]' : 'text-rose-400'
+            className={`text-xl font-bold font-mono ${
+              isOverallPos ? 'text-[#c49bff]' : 'text-rose-400'
             }`}
           >
-            {isPnlPos ? '+' : ''}${(stats?.total_pnl ?? 0).toFixed(2)}
+            {isOverallPos ? '+' : '-'}${Math.abs(overallPnl).toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {/* Month Period Selector */}
+      {availableMonths.length > 0 && onSelectMonth && (
+        <div className="flex flex-wrap items-center gap-2">
+          {availableMonths.map((m) => {
+            const active = selectedMonth === m.month;
+            return (
+              <button
+                key={m.month}
+                type="button"
+                onClick={() => onSelectMonth(m.month)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                  active
+                    ? 'accent-pill'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-purple-200/75 hover:text-white'
+                }`}
+              >
+                <span>{m.label}</span>
+                <span
+                  className={`font-mono text-[11px] ${
+                    active
+                      ? 'text-[#110820]/80 font-bold'
+                      : m.total_pnl >= 0
+                      ? 'text-emerald-400'
+                      : 'text-rose-400'
+                  }`}
+                >
+                  {m.total_pnl >= 0 ? '+' : '-'}${Math.abs(m.total_pnl).toFixed(2)}
+                </span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => onSelectMonth('')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              selectedMonth === ''
+                ? 'accent-pill'
+                : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-purple-200/75 hover:text-white'
+            }`}
+          >
+            Весь час
+          </button>
+        </div>
+      )}
+
+      {/* 4 Sleek Glass Metric Cards for Selected Month */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="text-xs text-purple-200/55 font-medium">
+            PnL ({periodLabel})
+          </div>
+          <div
+            className={`text-2xl font-bold font-mono mt-1.5 ${
+              isPeriodPos ? 'text-[#c49bff]' : 'text-rose-400'
+            }`}
+          >
+            {isPeriodPos ? '+' : '-'}${Math.abs(stats?.total_pnl ?? 0).toFixed(2)}
           </div>
           <div className="text-[11px] text-purple-200/45 mt-1">
-            Середній трейд: {stats && stats.average_trade >= 0 ? '+' : ''}${stats?.average_trade ?? 0}
+            Середній трейд: {stats && stats.average_trade >= 0 ? '+' : '-'}$
+            {Math.abs(stats?.average_trade ?? 0).toFixed(2)}
           </div>
         </div>
 

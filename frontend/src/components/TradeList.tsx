@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Trade } from '../types';
+import type { Trade, MonthlySummaryItem } from '../types';
 import {
   Filter,
   ArrowUpRight,
@@ -14,6 +14,9 @@ import {
 interface TradeListProps {
   trades: Trade[];
   loading: boolean;
+  selectedMonth?: string;
+  onSelectMonth?: (month: string) => void;
+  availableMonths?: MonthlySummaryItem[];
   onSelectTrade: (trade: Trade) => void;
   onEditTrade: (trade: Trade) => void;
   onDeleteTrade: (id: number) => void;
@@ -32,6 +35,9 @@ interface TradeListProps {
 export const TradeList: React.FC<TradeListProps> = ({
   trades,
   loading,
+  selectedMonth = '',
+  onSelectMonth,
+  availableMonths = [],
   onSelectTrade,
   onEditTrade,
   onDeleteTrade,
@@ -76,6 +82,21 @@ export const TradeList: React.FC<TradeListProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onSelectMonth && (
+            <select
+              value={selectedMonth}
+              onChange={(e) => onSelectMonth(e.target.value)}
+              className="glass-input rounded-full px-3.5 py-1.5 text-xs text-[#e2ccff] font-medium cursor-pointer border border-[#c49bff]/25"
+            >
+              <option value="" className="bg-[#120827]">Всі місяці</option>
+              {availableMonths.map((m) => (
+                <option key={m.month} value={m.month} className="bg-[#120827]">
+                  {m.label} ({m.trades_count})
+                </option>
+              ))}
+            </select>
+          )}
+
           <select
             value={selectedMarket}
             onChange={(e) => {
