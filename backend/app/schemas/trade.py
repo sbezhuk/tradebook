@@ -68,3 +68,6 @@ class HyperliquidImportResponse(BaseModel):
     open_count: int
     total_pnl: float
     trades: List[TradeResponse]
+
+class DeleteAllTradesResponse(BaseModel):
+    deleted_count: int

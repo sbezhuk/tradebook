@@ -151,3 +151,40 @@ def test_monthly_reporting_periods():
     finally:
         for tid in created_ids:
             client.delete(f"/api/v1/trades/{tid}", headers=headers)
+
+
+def test_delete_all_trades_isolated_user():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"wipe_{suffix}",
+        "email": f"wipe_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    for sym in ("BTC/USDT", "ETH/USDT"):
+        r = client.post("/api/v1/trades", headers=headers, json={
+            "symbol": sym,
+            "market": "CRYPTO",
+            "direction": "LONG",
+            "status": "CLOSED",
+            "entry_price": 100,
+            "exit_price": 110,
+            "quantity": 1,
+            "entry_date": "2026-11-01T10:00:00",
+            "exit_date": "2026-11-01T12:00:00",
+        })
+        assert r.status_code == 201
+
+    assert client.get("/api/v1/trades", headers=headers).json()["total"] == 2
+
+    del_all = client.delete("/api/v1/trades", headers=headers)
+    assert del_all.status_code == 200
+    assert del_all.json()["deleted_count"] == 2
+
+    assert client.get("/api/v1/trades", headers=headers).json()["total"] == 0
+    analytics = client.get("/api/v1/analytics", headers=headers).json()
+    assert analytics["overall_total_trades"] == 0
+    assert analytics["overall_total_pnl"] == 0.0

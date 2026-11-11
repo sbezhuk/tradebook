@@ -120,6 +120,12 @@ class ApiClient {
     });
   }
 
+  async deleteAllTrades(): Promise<{ deleted_count: number }> {
+    return this.request<{ deleted_count: number }>('/trades', {
+      method: 'DELETE',
+    });
+  }
+
   async getTags(): Promise<string[]> {
     return this.request<string[]>('/trades/tags/all');
   }

@@ -122,6 +122,12 @@ export const AppContent: React.FC = () => {
     }
   };
 
+  const handleDeleteAllTrades = async () => {
+    await api.deleteAllTrades();
+    setSelectedMonth(undefined);
+    await Promise.all([loadTrades(), loadAnalytics()]);
+  };
+
   const handleOpenEdit = (trade: Trade) => {
     setEditingTrade(trade);
     setIsTradeModalOpen(true);
@@ -179,6 +185,8 @@ export const AppContent: React.FC = () => {
           onOpenImport={() => setIsImportModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
+          totalTradesCount={analytics?.overall_total_trades}
+          onDeleteAllTrades={handleDeleteAllTrades}
           onSelectTrade={handleOpenDetail}
           onSelectTab={setCurrentTab}
         />

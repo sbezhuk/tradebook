@@ -12,6 +12,7 @@ from app.schemas.trade import (
     TradeResponse,
     TradeListResponse,
     HyperliquidImportResponse,
+    DeleteAllTradesResponse,
 )
 from app.api.deps import get_current_user
 from app.services.trade_calculator import calculate_trade_metrics
@@ -242,6 +243,19 @@ async def import_hyperliquid_trades(
         total_pnl=round(total_pnl, 4),
         trades=[TradeResponse.model_validate(t) for t in created_trades]
     )
+
+@router.delete("", response_model=DeleteAllTradesResponse)
+def delete_all_trades(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    deleted_count = (
+        db.query(Trade)
+        .filter(Trade.user_id == current_user.id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return DeleteAllTradesResponse(deleted_count=deleted_count)
 
 @router.get("/{trade_id}", response_model=TradeResponse)
 def get_trade(
