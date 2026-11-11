@@ -63,13 +63,13 @@ def list_trades(
     total = query.count()
 
     if sort_by == "date_asc":
-        query = query.order_by(asc(Trade.entry_date))
+        query = query.order_by(asc(Trade.entry_date), asc(Trade.id))
     elif sort_by == "pnl_desc":
-        query = query.order_by(desc(Trade.pnl))
+        query = query.order_by(desc(Trade.pnl), desc(Trade.id))
     elif sort_by == "pnl_asc":
-        query = query.order_by(asc(Trade.pnl))
+        query = query.order_by(asc(Trade.pnl), asc(Trade.id))
     else:  # date_desc default
-        query = query.order_by(desc(Trade.entry_date))
+        query = query.order_by(desc(Trade.entry_date), desc(Trade.id))
 
     items = query.offset(skip).limit(limit).all()
 

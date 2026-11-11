@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import type { Trade, MonthlySummaryItem } from '../types';
 import { GlassSelect } from './GlassSelect';
+import { PaginationBar } from './PaginationBar';
 import {
   Filter,
   ArrowUpRight,
@@ -10,12 +11,28 @@ import {
   Trash2,
   Image as ImageIcon,
   UploadCloud,
+  Download,
   CheckCircle2,
 } from 'lucide-react';
 
+export interface TradeFilters {
+  symbol?: string;
+  market?: string;
+  direction?: string;
+  status?: string;
+  tag?: string;
+  sort_by?: string;
+}
+
 interface TradeListProps {
   trades: Trade[];
+  total: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   loading: boolean;
+  filters?: TradeFilters;
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   availableMonths?: MonthlySummaryItem[];
@@ -24,19 +41,19 @@ interface TradeListProps {
   onDeleteTrade: (id: number) => void;
   onNewTrade: () => void;
   onOpenImport: () => void;
-  onFilterChange: (filters: {
-    symbol?: string;
-    market?: string;
-    direction?: string;
-    status?: string;
-    tag?: string;
-    sort_by?: string;
-  }) => void;
+  onExportCsv?: () => void;
+  onFilterChange: (filters: TradeFilters) => void;
 }
 
 export const TradeList: React.FC<TradeListProps> = ({
   trades,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
   loading,
+  filters,
   selectedMonth = '',
   onSelectMonth,
   availableMonths = [],
@@ -45,15 +62,18 @@ export const TradeList: React.FC<TradeListProps> = ({
   onDeleteTrade,
   onNewTrade,
   onOpenImport,
+  onExportCsv,
   onFilterChange,
 }) => {
-  const [selectedMarket, setSelectedMarket] = useState<string>('');
-  const [selectedDirection, setSelectedDirection] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('date_desc');
+  const selectedMarket = filters?.market ?? '';
+  const selectedDirection = filters?.direction ?? '';
+  const selectedStatus = filters?.status ?? '';
+  const sortBy = filters?.sort_by ?? 'date_desc';
+  const topRef = useRef<HTMLDivElement>(null);
 
   const triggerFilter = (overrides: Record<string, string>) => {
     onFilterChange({
+      ...filters,
       market: selectedMarket,
       direction: selectedDirection,
       status: selectedStatus,
@@ -72,7 +92,7 @@ export const TradeList: React.FC<TradeListProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div ref={topRef} className="space-y-5 scroll-mt-6">
       {/* Header + Clean Adaptive Filter Toolbar */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -83,14 +103,26 @@ export const TradeList: React.FC<TradeListProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onOpenImport}
-            className="h-9 inline-flex items-center space-x-1.5 px-4 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer self-start sm:self-auto shrink-0 whitespace-nowrap"
-          >
-            <UploadCloud className="w-3.5 h-3.5 text-[#c49bff]" />
-            <span>Імпорт Hyperliquid</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+            {onExportCsv && (
+              <button
+                type="button"
+                onClick={onExportCsv}
+                className="h-9 inline-flex items-center space-x-1.5 px-3.5 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-100/85 hover:text-white text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
+              >
+                <Download className="w-3.5 h-3.5 text-[#c49bff]" />
+                <span>Експорт CSV</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onOpenImport}
+              className="h-9 inline-flex items-center space-x-1.5 px-4 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
+            >
+              <UploadCloud className="w-3.5 h-3.5 text-[#c49bff]" />
+              <span>Імпорт угод</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -111,10 +143,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
           <GlassSelect
             value={selectedMarket}
-            onChange={(val) => {
-              setSelectedMarket(val);
-              triggerFilter({ market: val });
-            }}
+            onChange={(val) => triggerFilter({ market: val })}
             options={[
               { value: '', label: 'Всі ринки' },
               { value: 'CRYPTO', label: 'Crypto' },
@@ -127,10 +156,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
           <GlassSelect
             value={selectedDirection}
-            onChange={(val) => {
-              setSelectedDirection(val);
-              triggerFilter({ direction: val });
-            }}
+            onChange={(val) => triggerFilter({ direction: val })}
             options={[
               { value: '', label: 'Всі сторони' },
               { value: 'LONG', label: 'Long' },
@@ -140,10 +166,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
           <GlassSelect
             value={selectedStatus}
-            onChange={(val) => {
-              setSelectedStatus(val);
-              triggerFilter({ status: val });
-            }}
+            onChange={(val) => triggerFilter({ status: val })}
             options={[
               { value: '', label: 'Всі статуси' },
               { value: 'CLOSED', label: 'Закриті' },
@@ -154,10 +177,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
           <GlassSelect
             value={sortBy}
-            onChange={(val) => {
-              setSortBy(val);
-              triggerFilter({ sort_by: val });
-            }}
+            onChange={(val) => triggerFilter({ sort_by: val })}
             options={[
               { value: 'date_desc', label: 'Спочатку новіші' },
               { value: 'date_asc', label: 'Спочатку старіші' },
@@ -381,6 +401,18 @@ export const TradeList: React.FC<TradeListProps> = ({
           </div>
         )}
       </div>
+
+      {/* Pagination Bar */}
+      <PaginationBar
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        loading={loading}
+        ariaLabel="Пагінація журналу угод"
+        onAfterPageSelect={() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
     </div>
   );
 };

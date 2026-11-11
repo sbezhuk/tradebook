@@ -14,6 +14,7 @@ interface GlassSelectProps {
   highlight?: boolean;
   className?: string;
   menuAlign?: 'left' | 'right';
+  menuDirection?: 'down' | 'up';
 }
 
 export const GlassSelect: React.FC<GlassSelectProps> = ({
@@ -24,6 +25,7 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
   highlight = false,
   className = '',
   menuAlign = 'left',
+  menuDirection = 'down',
 }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -73,9 +75,9 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
 
       {open && (
         <div
-          className={`absolute top-full mt-1.5 min-w-full w-max max-w-[240px] glass-popover rounded-2xl p-1.5 z-50 max-h-64 overflow-y-auto ${
-            menuAlign === 'right' ? 'right-0' : 'left-0'
-          }`}
+          className={`absolute min-w-full w-max max-w-[240px] glass-popover rounded-2xl p-1.5 z-50 max-h-64 overflow-y-auto ${
+            menuDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          } ${menuAlign === 'right' ? 'right-0' : 'left-0'}`}
         >
           {options.map((opt) => {
             const isSelected = opt.value === value;

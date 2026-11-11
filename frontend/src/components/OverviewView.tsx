@@ -214,7 +214,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     </linearGradient>
                   </defs>
                   <Tooltip
-                    formatter={(val: any) => [`$${val}`, 'Equity']}
+                    cursor={{ stroke: 'rgba(196, 155, 255, 0.35)', strokeWidth: 1 }}
+                    labelFormatter={(_label, payload) => {
+                      const point = payload?.[0]?.payload;
+                      return point?.symbol ? `${point.symbol} • ${point.date}` : '';
+                    }}
+                    formatter={(val: any) => {
+                      const num = Number(val);
+                      const sign = num > 0 ? '+' : num < 0 ? '-' : '';
+                      return [`${sign}$${Math.abs(num).toFixed(2)}`, 'Equity'];
+                    }}
                     contentStyle={{
                       backgroundColor: 'var(--tooltip-bg)',
                       borderColor: 'var(--tooltip-border)',
@@ -222,6 +231,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       fontSize: '11px',
                       color: 'var(--tooltip-text)',
                     }}
+                    labelStyle={{ color: 'var(--tooltip-text)', fontWeight: 600, marginBottom: '2px' }}
+                    itemStyle={{ color: '#c49bff' }}
                   />
                   <Area
                     type="monotone"

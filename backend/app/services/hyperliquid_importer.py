@@ -40,6 +40,25 @@ class _PositionTracker:
     fills_count: int = 0
 
 
+@dataclass
+class ParsedHyperliquidDeposit:
+    amount: float
+    deposit_date: datetime
+    action: str
+    note: str
+
+
+def _parse_hl_amount(raw_val: str) -> Tuple[float, str]:
+    """Parse Hyperliquid amount strings like '52.604246 USDC' or '-100 USDC'."""
+    s = (raw_val or "").strip()
+    if not s:
+        return 0.0, ""
+    parts = s.split()
+    num_str = parts[0].replace(",", "")
+    unit = " ".join(parts[1:]).strip()
+    return float(num_str), unit
+
+
 def _parse_hl_time(time_str: str) -> datetime:
     s = time_str.strip()
     for fmt in (
@@ -265,3 +284,61 @@ def parse_hyperliquid_csv(csv_content: str) -> List[ParsedHyperliquidTrade]:
             _finalize_position(pos, force_open=True)
 
     return completed_trades
+
+
+def parse_hyperliquid_deposits_csv(csv_content: str) -> List[ParsedHyperliquidDeposit]:
+    """Parse Hyperliquid deposits_and_withdrawals.csv rows into normalized deposit items."""
+    reader = csv.DictReader(io.StringIO(csv_content.strip()))
+    if not reader.fieldnames:
+        raise ValueError("CSV файл порожній або не містить заголовків")
+
+    required_cols = {"time", "action", "accountValueChange"}
+    missing = required_cols - set(f.strip() for f in reader.fieldnames if f)
+    if missing:
+        raise ValueError(
+            f"Невірний формат файлу депозитів Hyperliquid. Відсутні колонки: {', '.join(sorted(missing))}"
+        )
+
+    parsed: List[ParsedHyperliquidDeposit] = []
+    for raw in reader:
+        row = {k.strip(): (v.strip() if v is not None else "") for k, v in raw.items() if k}
+        if not row.get("time") or not row.get("accountValueChange"):
+            continue
+
+        dt = _parse_hl_time(row["time"])
+        action = row.get("action") or "deposit"
+        source = row.get("source", "")
+        destination = row.get("destination", "")
+        amount, unit = _parse_hl_amount(row["accountValueChange"])
+        fee_val, fee_unit = _parse_hl_amount(row.get("fee", ""))
+
+        if action.lower() in ("withdraw", "withdrawal") and amount > 0:
+            amount = -abs(amount)
+
+        if abs(amount) <= 1e-9:
+            continue
+
+        route = ""
+        if source and destination:
+            route = f" ({source} → {destination})"
+        elif source or destination:
+            route = f" ({source or destination})"
+
+        fee_suffix = ""
+        if abs(fee_val) > 1e-9:
+            unit_label = f" {fee_unit or unit}".rstrip()
+            fee_suffix = f" • fee {fee_val:g}{unit_label}"
+
+        note = f"Hyperliquid: {action}{route}{fee_suffix}"[:255]
+
+        parsed.append(
+            ParsedHyperliquidDeposit(
+                amount=round(amount, 6),
+                deposit_date=dt,
+                action=action,
+                note=note,
+            )
+        )
+
+    parsed.sort(key=lambda d: d.deposit_date)
+    return parsed

@@ -365,3 +365,137 @@ def test_deposits_and_growth_percentages():
     after_months = {m["month"]: m for m in after_del["available_months"]}
     assert after_months["2026-10"]["deposit_growth_pct"] is None
     assert after_months["2026-11"]["deposit_growth_pct"] == 10.0
+
+
+def test_trades_pagination():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"pag_{suffix}",
+        "email": f"pag_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    # Create 7 trades with identical entry_date to also verify deterministic tie-breaker sorting
+    for i in range(7):
+        r = client.post("/api/v1/trades", headers=headers, json={
+            "symbol": f"PAIR{i}/USDT",
+            "market": "CRYPTO",
+            "direction": "LONG",
+            "status": "CLOSED" if i < 5 else "OPEN",
+            "entry_price": 100.0,
+            "exit_price": 110.0 if i < 5 else None,
+            "quantity": 1.0,
+            "entry_date": "2026-11-10T10:00:00",
+            "exit_date": "2026-11-10T12:00:00" if i < 5 else None,
+        })
+        assert r.status_code == 201
+
+    page1 = client.get("/api/v1/trades?skip=0&limit=3&sort_by=date_desc", headers=headers)
+    assert page1.status_code == 200
+    p1_data = page1.json()
+    assert p1_data["total"] == 7
+    assert len(p1_data["items"]) == 3
+
+    page2 = client.get("/api/v1/trades?skip=3&limit=3&sort_by=date_desc", headers=headers)
+    assert page2.status_code == 200
+    p2_data = page2.json()
+    assert p2_data["total"] == 7
+    assert len(p2_data["items"]) == 3
+
+    page3 = client.get("/api/v1/trades?skip=6&limit=3&sort_by=date_desc", headers=headers)
+    assert page3.status_code == 200
+    p3_data = page3.json()
+    assert p3_data["total"] == 7
+    assert len(p3_data["items"]) == 1
+
+    # All returned IDs across pages must be disjoint and cover all 7 trades
+    all_ids = [t["id"] for t in p1_data["items"] + p2_data["items"] + p3_data["items"]]
+    assert len(all_ids) == 7
+    assert len(set(all_ids)) == 7
+
+    # Filtered pagination
+    open_page = client.get("/api/v1/trades?status=OPEN&skip=0&limit=3", headers=headers)
+    assert open_page.status_code == 200
+    assert open_page.json()["total"] == 2
+    assert len(open_page.json()["items"]) == 2
+
+    # Out-of-range skip returns empty items while keeping accurate total
+    empty_page = client.get("/api/v1/trades?skip=100&limit=10", headers=headers)
+    assert empty_page.status_code == 200
+    assert empty_page.json()["total"] == 7
+    assert empty_page.json()["items"] == []
+
+
+def test_hyperliquid_deposit_import():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"depimp_{suffix}",
+        "email": f"depimp_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    sample_csv = (
+        "time,action,source,destination,accountValueChange,fee\n"
+        "10/17/2026 - 20:13:44,deposit,hyperevm,trading,52.604246 USDC,0 USDC\n"
+        "11/4/2026 - 19:05:39,deposit,hyperevm,trading,11.717616 USDC,0 USDC\n"
+        "11/9/2026 - 17:57:12,deposit,hyperevm,trading,53.38464 USDC,0 USDC\n"
+        "11/10/2026 - 16:17:16,send,trading,trading,1.889331 USDC,0 USDC\n"
+    )
+    files = {"file": ("deposits_and_withdrawals.csv", sample_csv, "text/csv")}
+    imp_res = client.post("/api/v1/deposits/import/hyperliquid", headers=headers, files=files)
+    assert imp_res.status_code == 200
+    imp_data = imp_res.json()
+    assert imp_data["imported_count"] == 4
+    assert imp_data["skipped_duplicates"] == 0
+    assert imp_data["total_amount"] == 119.6
+    assert len(imp_data["deposits"]) == 4
+    assert "Hyperliquid: deposit (hyperevm → trading)" in imp_data["deposits"][0]["note"]
+    assert "Hyperliquid: send (trading → trading)" in imp_data["deposits"][3]["note"]
+
+    # Re-importing the same CSV skips all duplicates
+    imp_res2 = client.post("/api/v1/deposits/import/hyperliquid", headers=headers, files=files)
+    assert imp_res2.status_code == 200
+    assert imp_res2.json()["imported_count"] == 0
+    assert imp_res2.json()["skipped_duplicates"] == 4
+    assert imp_res2.json()["total_amount"] == 0.0
+
+    # List deposits and analytics reflect total
+    dep_list = client.get("/api/v1/deposits", headers=headers)
+    assert dep_list.status_code == 200
+    assert dep_list.json()["count"] == 4
+    assert dep_list.json()["total_amount"] == 119.6
+
+    # Withdraw row reduces net total and serializes properly
+    withdraw_csv = (
+        "time,action,source,destination,accountValueChange,fee\n"
+        "11/11/2026 - 10:00:00,withdraw,trading,arbitrum,-19.60 USDC,1 USDC\n"
+    )
+    w_res = client.post(
+        "/api/v1/deposits/import/hyperliquid",
+        headers=headers,
+        files={"file": ("deposits_and_withdrawals.csv", withdraw_csv, "text/csv")},
+    )
+    assert w_res.status_code == 200
+    assert w_res.json()["imported_count"] == 1
+    assert w_res.json()["total_amount"] == -19.6
+    assert "fee 1 USDC" in w_res.json()["deposits"][0]["note"]
+
+    dep_list2 = client.get("/api/v1/deposits", headers=headers)
+    assert dep_list2.status_code == 200
+    assert dep_list2.json()["count"] == 5
+    assert dep_list2.json()["total_amount"] == 100.0
+
+    # Missing required columns returns 400
+    bad_csv = "time,coin,px\n10/17/2026 - 20:13:44,BTC,50000\n"
+    bad_res = client.post(
+        "/api/v1/deposits/import/hyperliquid",
+        headers=headers,
+        files={"file": ("bad.csv", bad_csv, "text/csv")},
+    )
+    assert bad_res.status_code == 400

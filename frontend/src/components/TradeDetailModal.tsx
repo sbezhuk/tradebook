@@ -63,49 +63,54 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
     return `${hours} год. ${mins} хв.`;
   };
 
+  const formatSignedCurrency = (value: number) => {
+    const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+    return `${sign}$${Math.abs(value).toFixed(2)}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-3xl glass-popover rounded-3xl overflow-hidden my-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/15 bg-purple-950/40">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div className="flex items-center space-x-3.5">
             <span
-              className={`p-2.5 rounded-2xl flex items-center justify-center backdrop-blur-md ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                 isLong
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-                  : 'bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+                  ? 'bg-[#c49bff]/15 text-[#c49bff] border-[#c49bff]/25'
+                  : 'bg-rose-500/15 text-rose-400 border-rose-500/25'
               }`}
             >
               {isLong ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
             </span>
             <div>
               <div className="flex items-center space-x-2.5">
-                <h2 className="text-xl font-black text-white tracking-tight">{trade.symbol}</h2>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-900/40 border border-purple-500/20 text-purple-300 font-mono">
+                <h2 className="text-xl font-bold text-white tracking-tight">{trade.symbol}</h2>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-purple-200/75 font-mono">
                   {trade.market}
                 </span>
                 <span
-                  className={`text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full ${
-                    isOpenTrade 
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]' 
-                      : 'bg-purple-950/60 text-purple-300 border border-purple-500/20'
+                  className={`text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full ${
+                    isOpenTrade
+                      ? 'bg-amber-400/15 text-amber-300 border border-amber-400/25'
+                      : 'bg-white/[0.05] text-purple-200/65 border border-white/[0.08]'
                   }`}
                 >
                   {trade.status}
                 </span>
               </div>
-              <p className="text-xs text-purple-300/60 mt-0.5 font-medium">
+              <p className="text-xs text-purple-200/50 mt-0.5 font-medium">
                 {trade.direction} позиція • {getDuration()}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             {isOpenTrade && (
               <button
                 type="button"
                 onClick={() => onEdit(trade, true)}
-                className="accent-pill inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
+                className="accent-pill inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer mr-1"
                 title="Вказати ціну виходу та закрити угоду"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -114,7 +119,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             )}
             <button
               onClick={() => onEdit(trade)}
-              className="p-2 text-purple-300/70 hover:text-amber-300 hover:bg-purple-900/40 rounded-xl transition-colors"
+              className="p-2 text-purple-200/55 hover:text-[#c49bff] hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
               title="Редагувати"
             >
               <Edit3 className="w-4 h-4" />
@@ -126,61 +131,65 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                   onClose();
                 }
               }}
-              className="p-2 text-purple-300/70 hover:text-rose-400 hover:bg-purple-900/40 rounded-xl transition-colors"
+              className="p-2 text-purple-200/55 hover:text-rose-400 hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
               title="Видалити"
             >
               <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-purple-300/70 hover:text-white hover:bg-purple-900/40 rounded-xl transition-colors"
+              className="p-2 text-purple-200/55 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           {/* Main Financial Result Banner */}
-          <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/20 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shadow-[0_4px_25px_rgba(147,51,234,0.15)]">
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs text-purple-300/60 font-semibold mb-0.5">Результат угоди (Net PnL)</div>
+              <div className="text-xs text-purple-200/55 font-medium mb-0.5">Результат угоди (Net PnL)</div>
               <div
-                className={`text-3xl font-black font-mono drop-shadow-sm ${
+                className={`text-3xl font-bold font-mono tracking-tight ${
                   isOpenTrade
                     ? 'text-amber-300'
                     : isWin
-                    ? 'text-emerald-400'
+                    ? 'text-[#c49bff]'
                     : isLoss
                     ? 'text-rose-400'
                     : 'text-purple-200'
                 }`}
               >
-                {isOpenTrade ? 'Відкрита' : `${isWin ? '+' : ''}$${trade.pnl.toFixed(2)}`}
+                {isOpenTrade ? 'Відкрита' : formatSignedCurrency(trade.pnl)}
               </div>
             </div>
 
             {!isOpenTrade && (
               <div className="flex items-center space-x-6 text-sm font-mono">
                 <div>
-                  <div className="text-xs text-purple-300/60 font-semibold">ROI %</div>
-                  <div className={`text-base font-black ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="text-xs text-purple-200/55 font-sans font-medium">ROI %</div>
+                  <div
+                    className={`text-base font-bold ${
+                      isWin ? 'text-[#c49bff]' : isLoss ? 'text-rose-400' : 'text-purple-200'
+                    }`}
+                  >
                     {isWin ? '+' : ''}{trade.pnl_percentage.toFixed(2)}%
                   </div>
                 </div>
 
                 {trade.r_multiple !== null && trade.r_multiple !== undefined && (
                   <div>
-                    <div className="text-xs text-purple-300/60 font-semibold">R:R Multiple</div>
-                    <div className="text-base font-black text-purple-300">
+                    <div className="text-xs text-purple-200/55 font-sans font-medium">R:R Multiple</div>
+                    <div className="text-base font-bold text-[#c49bff]">
                       {trade.r_multiple > 0 ? `+${trade.r_multiple}R` : `${trade.r_multiple}R`}
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <div className="text-xs text-purple-300/60 font-semibold">Комісія</div>
-                  <div className="text-base text-purple-200 font-bold">${trade.fees.toFixed(2)}</div>
+                  <div className="text-xs text-purple-200/55 font-sans font-medium">Комісія</div>
+                  <div className="text-base text-purple-100/85 font-semibold">${trade.fees.toFixed(2)}</div>
                 </div>
               </div>
             )}
@@ -188,41 +197,43 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
 
           {/* Pricing & Execution Details */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-              <span className="text-[11px] text-purple-300/60 font-semibold block">Ціна входу</span>
-              <span className="text-sm font-black text-white font-mono">{trade.entry_price}</span>
+            <div className="p-3.5 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+              <span className="text-[11px] text-purple-200/50 font-medium block mb-0.5">Ціна входу</span>
+              <span className="text-sm font-bold text-white font-mono">{trade.entry_price}</span>
             </div>
 
-            <div className="p-3 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-              <span className="text-[11px] text-purple-300/60 font-semibold block">Ціна виходу</span>
-              <span className="text-sm font-black text-white font-mono">
+            <div className="p-3.5 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+              <span className="text-[11px] text-purple-200/50 font-medium block mb-0.5">Ціна виходу</span>
+              <span className="text-sm font-bold text-white font-mono">
                 {trade.exit_price ? trade.exit_price : '—'}
               </span>
             </div>
 
-            <div className="p-3 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-              <span className="text-[11px] text-purple-300/60 font-semibold block">Об'єм позиції</span>
-              <span className="text-sm font-black text-purple-200 font-mono">{trade.quantity}</span>
+            <div className="p-3.5 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+              <span className="text-[11px] text-purple-200/50 font-medium block mb-0.5">Об'єм позиції</span>
+              <span className="text-sm font-bold text-purple-100/90 font-mono">{trade.quantity}</span>
             </div>
 
-            <div className="p-3 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-              <span className="text-[11px] text-purple-300/60 font-semibold block">SL / TP</span>
-              <span className="text-xs font-mono font-bold block mt-0.5">
-                <span className="text-rose-400">{trade.stop_loss ?? '—'}</span> / <span className="text-emerald-400">{trade.take_profit ?? '—'}</span>
+            <div className="p-3.5 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+              <span className="text-[11px] text-purple-200/50 font-medium block mb-0.5">SL / TP</span>
+              <span className="text-xs font-mono font-semibold block mt-1">
+                <span className="text-rose-400/85">{trade.stop_loss ?? '—'}</span>
+                <span className="text-purple-200/35 mx-1">/</span>
+                <span className="text-[#c49bff]/85">{trade.take_profit ?? '—'}</span>
               </span>
             </div>
           </div>
 
           {/* Timestamps */}
-          <div className="p-3 bg-purple-950/30 border border-purple-500/15 rounded-2xl flex flex-col sm:flex-row justify-between text-xs text-purple-300/70 gap-2 font-medium">
+          <div className="p-3.5 bg-white/[0.025] border border-white/[0.06] rounded-2xl flex flex-col sm:flex-row justify-between text-xs text-purple-200/65 gap-2 font-medium">
             <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-purple-400" />
-              <span>Відкрито: <strong className="text-white font-mono">{formatDate(trade.entry_date)}</strong></span>
+              <Calendar className="w-4 h-4 text-[#c49bff]/75" />
+              <span>Відкрито: <strong className="text-white font-mono font-semibold">{formatDate(trade.entry_date)}</strong></span>
             </div>
             {trade.exit_date && (
               <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-purple-400" />
-                <span>Закрито: <strong className="text-white font-mono">{formatDate(trade.exit_date)}</strong></span>
+                <Clock className="w-4 h-4 text-[#c49bff]/75" />
+                <span>Закрито: <strong className="text-white font-mono font-semibold">{formatDate(trade.exit_date)}</strong></span>
               </div>
             )}
           </div>
@@ -230,15 +241,15 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           {/* Tags */}
           {trade.tags && (
             <div>
-              <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                <TagIcon className="w-3.5 h-3.5 text-purple-400" />
+              <h4 className="text-[11px] font-semibold text-purple-200/55 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                <TagIcon className="w-3.5 h-3.5 text-[#c49bff]/75" />
                 <span>Теги та сетапи</span>
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {trade.tags.split(',').map((t, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 rounded-full bg-purple-900/40 border border-purple-400/25 text-purple-200 text-xs font-bold backdrop-blur-sm"
+                    className="px-3 py-1 rounded-full bg-[#c49bff]/15 border border-[#c49bff]/25 text-[#d8b4fe] text-xs font-semibold"
                   >
                     #{t.trim()}
                   </span>
@@ -248,11 +259,11 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           )}
 
           {/* Psychology & Discipline Box */}
-          <div className="p-4 bg-purple-950/40 border border-purple-500/20 rounded-2xl backdrop-blur-md space-y-3">
+          <div className="p-4 bg-white/[0.025] border border-white/[0.06] rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-white">Психологія та дисципліна</span>
-                <span className="text-[11px] text-purple-300/60 block">Оцінка виконання торгового плану</span>
+                <span className="text-xs font-semibold text-white">Психологія та дисципліна</span>
+                <span className="text-[11px] text-purple-200/50 block">Оцінка виконання торгового плану</span>
               </div>
               <div className="flex items-center space-x-1">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -260,23 +271,23 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                     key={star}
                     className={`w-4 h-4 ${
                       star <= trade.discipline_rating
-                        ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                        : 'text-purple-900/60'
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-white/10'
                     }`}
                   />
                 ))}
               </div>
             </div>
 
-            <div className="pt-2.5 border-t border-purple-500/15 flex items-center space-x-2 text-xs">
+            <div className="pt-2.5 border-t border-white/[0.06] flex items-center space-x-2 text-xs">
               {trade.followed_rules ? (
-                <div className="flex items-center space-x-1.5 text-emerald-400 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
+                <div className="flex items-center space-x-1.5 text-[#c49bff] font-semibold">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>Правил торгової стратегії та ризик-менеджменту повністю дотримано.</span>
                 </div>
               ) : (
-                <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
-                  <ShieldAlert className="w-4 h-4" />
+                <div className="flex items-center space-x-1.5 text-rose-400 font-semibold">
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
                   <span>Увага: правила торгової стратегії або ризику було порушено!</span>
                 </div>
               )}
@@ -284,42 +295,44 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </div>
 
           {/* Setup notes & Post trade notes */}
-          <div className="space-y-4">
-            {trade.setup_notes && (
-              <div className="p-4 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-                <h4 className="text-xs font-bold text-purple-300 mb-1.5">Сетап та причини входу:</h4>
-                <p className="text-xs text-purple-100 whitespace-pre-wrap leading-relaxed">
-                  {trade.setup_notes}
-                </p>
-              </div>
-            )}
+          {(trade.setup_notes || trade.post_trade_notes) && (
+            <div className="space-y-3">
+              {trade.setup_notes && (
+                <div className="p-4 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+                  <h4 className="text-xs font-semibold text-[#c49bff]/90 mb-1.5">Сетап та причини входу:</h4>
+                  <p className="text-xs text-purple-100/80 whitespace-pre-wrap leading-relaxed">
+                    {trade.setup_notes}
+                  </p>
+                </div>
+              )}
 
-            {trade.post_trade_notes && (
-              <div className="p-4 bg-purple-950/30 border border-purple-500/15 rounded-2xl backdrop-blur-sm">
-                <h4 className="text-xs font-bold text-purple-300 mb-1.5">Ретроспектива та висновки:</h4>
-                <p className="text-xs text-purple-100 whitespace-pre-wrap leading-relaxed">
-                  {trade.post_trade_notes}
-                </p>
-              </div>
-            )}
-          </div>
+              {trade.post_trade_notes && (
+                <div className="p-4 bg-white/[0.025] border border-white/[0.06] rounded-2xl">
+                  <h4 className="text-xs font-semibold text-[#c49bff]/90 mb-1.5">Ретроспектива та висновки:</h4>
+                  <p className="text-xs text-purple-100/80 whitespace-pre-wrap leading-relaxed">
+                    {trade.post_trade_notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Chart Screenshot */}
           {trade.chart_url && (
             <div>
-              <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+              <h4 className="text-[11px] font-semibold text-purple-200/55 uppercase tracking-wider mb-2.5 flex items-center justify-between">
                 <span>Графік / Скріншот угоди</span>
                 <a
                   href={trade.chart_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-purple-400 hover:text-purple-300 hover:underline flex items-center space-x-1"
+                  className="text-xs text-[#c49bff] hover:underline flex items-center space-x-1 normal-case tracking-normal"
                 >
                   <span>Відкрити в повному розмірі</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </h4>
-              <div className="rounded-2xl overflow-hidden border border-purple-500/20 bg-[#0c0618] max-h-96 flex items-center justify-center shadow-lg">
+              <div className="rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02] max-h-96 flex items-center justify-center">
                 <img
                   src={trade.chart_url}
                   alt={`Графік ${trade.symbol}`}

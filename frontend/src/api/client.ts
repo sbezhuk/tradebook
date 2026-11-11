@@ -5,6 +5,7 @@ import type {
   TradeFormData,
   AnalyticsData,
   HyperliquidImportResponse,
+  HyperliquidDepositImportResponse,
   Deposit,
   DepositFormData,
   DepositListResponse,
@@ -164,8 +165,7 @@ class ApiClient {
     });
   }
 
-  // Import Hyperliquid CSV
-  async importHyperliquidCsv(file: File): Promise<HyperliquidImportResponse> {
+  private async uploadFile<T>(endpoint: string, file: File, fallbackError: string): Promise<T> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -174,7 +174,7 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE}/trades/import/hyperliquid`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method: 'POST',
       headers,
       body: formData,
@@ -188,10 +188,27 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Не вдалося імпортувати файл Hyperliquid');
+      throw new Error(errorData.detail || fallbackError);
     }
 
     return response.json();
+  }
+
+  // Import Hyperliquid CSV
+  async importHyperliquidCsv(file: File): Promise<HyperliquidImportResponse> {
+    return this.uploadFile<HyperliquidImportResponse>(
+      '/trades/import/hyperliquid',
+      file,
+      'Не вдалося імпортувати файл Hyperliquid'
+    );
+  }
+
+  async importHyperliquidDepositsCsv(file: File): Promise<HyperliquidDepositImportResponse> {
+    return this.uploadFile<HyperliquidDepositImportResponse>(
+      '/deposits/import/hyperliquid',
+      file,
+      'Не вдалося імпортувати депозити з файлу Hyperliquid'
+    );
   }
 
   // File Upload

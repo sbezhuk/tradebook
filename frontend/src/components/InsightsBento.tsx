@@ -36,6 +36,90 @@ const BAR_COLORS = [
   '#fb7185', // coral rose
 ];
 
+const formatSignedUsd = (val: number): string => {
+  const sign = val > 0 ? '+' : val < 0 ? '-' : '';
+  return `${sign}$${Math.abs(val).toFixed(2)}`;
+};
+
+const formatAxisUsd = (val: number): string => {
+  return `${val < 0 ? '-' : ''}$${Math.abs(val)}`;
+};
+
+interface EquityTooltipPayloadItem {
+  payload?: {
+    date: string;
+    symbol: string;
+    pnl: number;
+    cumulative_pnl: number;
+  };
+}
+
+const CustomEquityTooltip: React.FC<{ active?: boolean; payload?: EquityTooltipPayloadItem[] }> = ({
+  active,
+  payload,
+}) => {
+  if (!active || !payload?.length || !payload[0]?.payload) return null;
+  const data = payload[0].payload;
+  return (
+    <div className="glass-popover p-3 rounded-2xl text-xs">
+      <div className="text-purple-200/60 mb-1 font-mono text-[10px]">{data.date}</div>
+      <div className="font-bold text-white mb-0.5">{data.symbol}</div>
+      <div className="font-mono text-purple-200">
+        Угода:{' '}
+        <span className={data.pnl >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+          {formatSignedUsd(data.pnl)}
+        </span>
+      </div>
+      <div className="font-mono text-purple-200 mt-1 pt-1 border-t border-white/[0.08]">
+        Equity: <span className="text-[#c49bff] font-bold">{formatSignedUsd(data.cumulative_pnl)}</span>
+      </div>
+    </div>
+  );
+};
+
+interface BarTooltipPayloadItem {
+  payload?: {
+    label?: string;
+    name?: string;
+    total_pnl: number;
+    trades_count?: number;
+    win_rate?: number;
+  };
+  value?: number;
+}
+
+const BarPnlTooltip: React.FC<{ active?: boolean; payload?: BarTooltipPayloadItem[] }> = ({
+  active,
+  payload,
+}) => {
+  if (!active || !payload?.length) return null;
+  const item = payload[0]?.payload;
+  const pnl = Number(item?.total_pnl ?? payload[0]?.value ?? 0);
+  const title = item?.label || item?.name || '';
+
+  return (
+    <div className="glass-popover px-3.5 py-2.5 rounded-xl text-xs min-w-[148px]">
+      {title && <div className="font-semibold text-white mb-1">{title}</div>}
+      <div className="flex items-center justify-between gap-3 font-mono">
+        <span className="text-purple-200/70">PnL</span>
+        <span
+          className={`font-bold ${
+            pnl > 0 ? 'text-[#c49bff]' : pnl < 0 ? 'text-rose-400' : 'text-purple-200'
+          }`}
+        >
+          {formatSignedUsd(pnl)}
+        </span>
+      </div>
+      {typeof item?.trades_count === 'number' && (
+        <div className="mt-1 pt-1 border-t border-white/[0.08] flex items-center justify-between gap-3 text-[11px] text-purple-200/60 font-mono">
+          <span>Угод: {item.trades_count}</span>
+          {typeof item.win_rate === 'number' && <span>WR: {item.win_rate}%</span>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const InsightsBento: React.FC<InsightsBentoProps> = ({
   analytics,
   loading,
@@ -170,29 +254,6 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
     ...by_direction.map((d) => Math.abs(d.total_pnl)),
     1
   );
-
-  // Custom Equity Tooltip
-  const CustomEquityTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="glass-panel p-3 rounded-2xl text-xs">
-          <div className="text-purple-200/50 mb-1 font-mono text-[10px]">{data.date}</div>
-          <div className="font-bold text-white mb-0.5">{data.symbol}</div>
-          <div className="font-mono text-purple-200">
-            Угода:{' '}
-            <span className={data.pnl >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-              {data.pnl >= 0 ? '+' : ''}${data.pnl}
-            </span>
-          </div>
-          <div className="font-mono text-purple-200 mt-1 pt-1 border-t border-white/[0.08]">
-            Equity: <span className="text-[#c49bff] font-bold">${data.cumulative_pnl}</span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="space-y-6">
@@ -503,7 +564,10 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                 <div className="flex items-center gap-6">
                   {/* SVG Ring */}
                   <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-                    <svg className="w-28 h-28 -rotate-90" viewBox="0 0 112 112">
+                    <svg
+                      className="w-36 h-36 shrink-0 -rotate-90 overflow-visible pointer-events-none"
+                      viewBox="-16 -16 144 144"
+                    >
                       <circle
                         cx="56"
                         cy="56"
@@ -523,7 +587,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         strokeDasharray={ringCircumference}
                         strokeDashoffset={strokeDashoffset}
                         className="transition-all duration-700"
-                        style={{ filter: 'drop-shadow(0 0 8px rgba(196, 155, 255, 0.45))' }}
+                        style={{ filter: 'drop-shadow(0 0 6px rgba(196, 155, 255, 0.35))' }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -766,17 +830,11 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         stroke="var(--chart-axis)"
                         fontSize={11}
                         tickLine={false}
-                        tickFormatter={(v) => `$${v}`}
+                        tickFormatter={formatAxisUsd}
                       />
                       <Tooltip
-                        formatter={(val: any) => [`$${Number(val).toFixed(2)}`, 'Місячний PnL']}
-                        contentStyle={{
-                          backgroundColor: 'var(--tooltip-bg)',
-                          borderColor: 'var(--tooltip-border)',
-                          borderRadius: '1rem',
-                          fontSize: '12px',
-                          color: 'var(--tooltip-text)',
-                        }}
+                        cursor={{ fill: 'rgba(196, 155, 255, 0.08)' }}
+                        content={<BarPnlTooltip />}
                       />
                       <Bar dataKey="total_pnl" radius={[8, 8, 0, 0]}>
                         {[...available_months].reverse().map((entry) => (
@@ -961,9 +1019,12 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                       stroke="var(--chart-axis)"
                       fontSize={11}
                       tickLine={false}
-                      tickFormatter={(val) => `$${val}`}
+                      tickFormatter={formatAxisUsd}
                     />
-                    <Tooltip content={<CustomEquityTooltip />} />
+                    <Tooltip
+                      cursor={{ stroke: 'rgba(196, 155, 255, 0.35)', strokeWidth: 1 }}
+                      content={<CustomEquityTooltip />}
+                    />
                     <Area
                       type="monotone"
                       dataKey="cumulative_pnl"
@@ -990,16 +1051,10 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                 <BarChart data={by_day_of_week}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                   <XAxis dataKey="name" stroke="var(--chart-axis)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                  <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} tickFormatter={formatAxisUsd} />
                   <Tooltip
-                    formatter={(val: any) => [`$${val}`, 'PnL']}
-                    contentStyle={{
-                      backgroundColor: 'var(--tooltip-bg)',
-                      borderColor: 'var(--tooltip-border)',
-                      borderRadius: '1rem',
-                      fontSize: '12px',
-                      color: 'var(--tooltip-text)',
-                    }}
+                    cursor={{ fill: 'rgba(196, 155, 255, 0.08)' }}
+                    content={<BarPnlTooltip />}
                   />
                   <Bar dataKey="total_pnl" radius={[6, 6, 0, 0]}>
                     {by_day_of_week.map((entry, index) => (

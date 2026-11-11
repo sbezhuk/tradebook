@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class DepositBase(BaseModel):
@@ -20,16 +20,25 @@ class DepositCreate(DepositBase):
     pass
 
 
-class DepositResponse(DepositBase):
+class DepositResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
+    amount: float
+    deposit_date: datetime
+    note: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class DepositListResponse(BaseModel):
     items: List[DepositResponse]
     total_amount: float
     count: int
+
+
+class HyperliquidDepositImportResponse(BaseModel):
+    imported_count: int
+    skipped_duplicates: int
+    total_amount: float
+    deposits: List[DepositResponse]

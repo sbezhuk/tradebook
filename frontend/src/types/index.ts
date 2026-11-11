@@ -150,6 +150,13 @@ export interface HyperliquidImportResponse {
   trades: Trade[];
 }
 
+export interface HyperliquidDepositImportResponse {
+  imported_count: number;
+  skipped_duplicates: number;
+  total_amount: number;
+  deposits: Deposit[];
+}
+
 export interface Deposit {
   id: number;
   user_id: number;
