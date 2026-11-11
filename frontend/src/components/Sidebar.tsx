@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import type { SummaryStats } from '../types';
+import type { SummaryStats, TradingAccount } from '../types';
 import {
   LayoutGrid,
   ArrowLeftRight,
@@ -13,6 +13,10 @@ import {
   TrendingUp,
   Wallet,
   UploadCloud,
+  Briefcase,
+  ChevronDown,
+  Check,
+  Settings2,
 } from 'lucide-react';
 
 export type NavTab = 'overview' | 'trades' | 'insights' | 'setups' | 'psychology' | 'import';
@@ -26,6 +30,10 @@ interface SidebarProps {
   totalDeposits?: number;
   overallDepositGrowthPct?: number | null;
   onOpenDeposits?: () => void;
+  accounts?: TradingAccount[];
+  activeAccountId?: number | null;
+  onSelectAccount?: (accountId: number | null) => void;
+  onOpenAccounts?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   mobileOpen?: boolean;
@@ -41,12 +49,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   totalDeposits = 0,
   overallDepositGrowthPct = null,
   onOpenDeposits,
+  accounts = [],
+  activeAccountId = null,
+  onSelectAccount,
+  onOpenAccounts,
   collapsed = false,
   onToggleCollapse,
   mobileOpen = false,
   onCloseMobile,
 }) => {
   const { user, logout } = useAuth();
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAccountMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [accountMenuOpen]);
+
+  const activeAccount = accounts.find((a) => a.id === activeAccountId) ?? null;
 
   const navItems: {
     id: NavTab;
@@ -133,6 +167,146 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <PanelLeft className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Account Switcher */}
+          {accounts.length > 0 && onSelectAccount && (
+            <div ref={switcherRef} className={`relative mb-5 ${isCollapsed ? 'w-full flex justify-center' : ''}`}>
+              {isCollapsed ? (
+                <button
+                  type="button"
+                  onClick={() => (onOpenAccounts ? onOpenAccounts() : setAccountMenuOpen((v) => !v))}
+                  title={
+                    activeAccount
+                      ? `Акаунт: ${activeAccount.name}`
+                      : 'Усі акаунти (натисніть для керування)'
+                  }
+                  className="w-11 h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] flex items-center justify-center relative cursor-pointer transition-colors"
+                >
+                  <Briefcase className="w-4 h-4 text-[#c49bff]" />
+                  <span
+                    className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-[#0f0a1a]"
+                    style={{ backgroundColor: activeAccount?.color || '#c49bff' }}
+                  />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setAccountMenuOpen((prev) => !prev)}
+                    className={`w-full px-3 py-2.5 rounded-xl border text-left flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                      accountMenuOpen
+                        ? 'bg-[#c49bff]/12 border-[#c49bff]/45'
+                        : 'bg-white/[0.035] hover:bg-white/[0.06] border-white/[0.08]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: activeAccount?.color || '#c49bff' }}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-white truncate">
+                          {activeAccount ? activeAccount.name : 'Усі акаунти'}
+                        </div>
+                        <div className="text-[10px] text-purple-200/50 truncate">
+                          {activeAccount
+                            ? `${activeAccount.platform} • ${activeAccount.trades_count} угод`
+                            : `${accounts.length} ${accounts.length === 1 ? 'акаунт' : accounts.length < 5 ? 'акаунти' : 'акаунтів'} разом`}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-purple-200/55 shrink-0 transition-transform ${
+                        accountMenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {accountMenuOpen && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] glass-popover rounded-2xl p-1.5 z-50 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectAccount(null);
+                          setAccountMenuOpen(false);
+                          onCloseMobile?.();
+                        }}
+                        className={`w-full px-2.5 py-2 rounded-xl text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          activeAccountId === null
+                            ? 'bg-[#c49bff]/15 text-white'
+                            : 'text-purple-100/80 hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Briefcase className="w-3.5 h-3.5 text-[#c49bff] shrink-0" />
+                          <span className="text-xs font-semibold truncate">Усі акаунти</span>
+                        </div>
+                        {activeAccountId === null && (
+                          <Check className="w-3.5 h-3.5 text-[#c49bff] shrink-0" />
+                        )}
+                      </button>
+
+                      <div className="max-h-48 overflow-y-auto space-y-0.5 pt-1 border-t border-white/[0.06]">
+                        {accounts.map((acc) => {
+                          const selected = activeAccountId === acc.id;
+                          return (
+                            <button
+                              key={acc.id}
+                              type="button"
+                              onClick={() => {
+                                onSelectAccount(acc.id);
+                                setAccountMenuOpen(false);
+                                onCloseMobile?.();
+                              }}
+                              className={`w-full px-2.5 py-2 rounded-xl text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                                selected
+                                  ? 'bg-[#c49bff]/15 text-white'
+                                  : 'text-purple-100/80 hover:bg-white/[0.06]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: acc.color || '#c49bff' }}
+                                />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-medium truncate">{acc.name}</div>
+                                  <div className="text-[10px] font-mono text-purple-200/45 truncate">
+                                    ${acc.current_balance.toLocaleString('en-US', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                              {selected && <Check className="w-3.5 h-3.5 text-[#c49bff] shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {onOpenAccounts && (
+                        <div className="pt-1 border-t border-white/[0.06]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAccountMenuOpen(false);
+                              onOpenAccounts();
+                              onCloseMobile?.();
+                            }}
+                            className="w-full px-2.5 py-2 rounded-xl text-xs font-semibold text-[#c49bff] hover:bg-[#c49bff]/10 flex items-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <Settings2 className="w-3.5 h-3.5" />
+                            <span>Керувати акаунтами</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Navigation Items */}
           <nav className={`space-y-1.5 ${isCollapsed ? 'w-full flex flex-col items-center' : ''}`}>

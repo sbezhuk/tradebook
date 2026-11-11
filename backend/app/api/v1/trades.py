@@ -17,6 +17,11 @@ from app.schemas.trade import (
 from app.api.deps import get_current_user
 from app.services.trade_calculator import calculate_trade_metrics
 from app.services.hyperliquid_importer import parse_hyperliquid_csv
+from app.services.account_service import (
+    ensure_user_default_account,
+    resolve_user_account,
+    validate_optional_account_filter,
+)
 
 router = APIRouter(prefix="/trades", tags=["Угоди"])
 
@@ -28,13 +33,19 @@ def list_trades(
     status: Optional[str] = Query(None, description="OPEN, CLOSED, CANCELLED"),
     tag: Optional[str] = Query(None, description="Фільтр за тегом"),
     month: Optional[str] = Query(None, description="Фільтр за звітним місяцем (YYYY-MM)"),
+    account_id: Optional[int] = Query(None, description="Фільтр за торговим акаунтом"),
     sort_by: str = Query("date_desc", description="date_desc, date_asc, pnl_desc, pnl_asc"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    ensure_user_default_account(db, current_user.id)
     query = db.query(Trade).filter(Trade.user_id == current_user.id)
+
+    valid_account_id = validate_optional_account_filter(db, current_user.id, account_id)
+    if valid_account_id is not None:
+        query = query.filter(Trade.account_id == valid_account_id)
 
     if market:
         query = query.filter(Trade.market == market)
@@ -110,8 +121,11 @@ def create_trade(
             manual_pnl=trade_in.pnl
         )
 
+    target_account = resolve_user_account(db, current_user.id, trade_in.account_id)
+
     trade = Trade(
         user_id=current_user.id,
+        account_id=target_account.id,
         symbol=trade_in.symbol.upper(),
         market=trade_in.market.upper(),
         direction=trade_in.direction.upper(),
@@ -142,10 +156,15 @@ def create_trade(
 
 @router.get("/tags/all", response_model=List[str])
 def get_user_tags(
+    account_id: Optional[int] = Query(None, description="Фільтр за торговим акаунтом"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    trades = db.query(Trade.tags).filter(Trade.user_id == current_user.id).all()
+    query = db.query(Trade.tags).filter(Trade.user_id == current_user.id)
+    valid_account_id = validate_optional_account_filter(db, current_user.id, account_id)
+    if valid_account_id is not None:
+        query = query.filter(Trade.account_id == valid_account_id)
+    trades = query.all()
     all_tags = set()
     for (tags_str,) in trades:
         if tags_str:
@@ -158,9 +177,11 @@ def get_user_tags(
 @router.post("/import/hyperliquid", response_model=HyperliquidImportResponse)
 async def import_hyperliquid_trades(
     file: UploadFile = File(...),
+    account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    target_account = resolve_user_account(db, current_user.id, account_id)
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Будь ласка, завантажте CSV файл експорту з Hyperliquid")
 
@@ -186,8 +207,12 @@ async def import_hyperliquid_trades(
             trades=[]
         )
 
-    # Fetch existing trades for duplicate check
-    existing = db.query(Trade).filter(Trade.user_id == current_user.id).all()
+    # Fetch existing trades in target account for duplicate check
+    existing = (
+        db.query(Trade)
+        .filter(Trade.user_id == current_user.id, Trade.account_id == target_account.id)
+        .all()
+    )
     existing_keys = set()
     for ex in existing:
         ex_dt = ex.entry_date.replace(tzinfo=None) if ex.entry_date else None
@@ -223,6 +248,7 @@ async def import_hyperliquid_trades(
 
         trade = Trade(
             user_id=current_user.id,
+            account_id=target_account.id,
             symbol=pt.symbol.upper(),
             market=pt.market,
             direction=pt.direction,
@@ -261,14 +287,15 @@ async def import_hyperliquid_trades(
 
 @router.delete("", response_model=DeleteAllTradesResponse)
 def delete_all_trades(
+    account_id: Optional[int] = Query(None, description="Очистити угоди лише вказаного акаунту"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    deleted_count = (
-        db.query(Trade)
-        .filter(Trade.user_id == current_user.id)
-        .delete(synchronize_session=False)
-    )
+    query = db.query(Trade).filter(Trade.user_id == current_user.id)
+    valid_account_id = validate_optional_account_filter(db, current_user.id, account_id)
+    if valid_account_id is not None:
+        query = query.filter(Trade.account_id == valid_account_id)
+    deleted_count = query.delete(synchronize_session=False)
     db.commit()
     return DeleteAllTradesResponse(deleted_count=deleted_count)
 
@@ -295,6 +322,13 @@ def update_trade(
         raise HTTPException(status_code=404, detail="Угоду не знайдено")
 
     update_data = trade_in.model_dump(exclude_unset=True)
+    if "account_id" in update_data:
+        if update_data["account_id"] is not None:
+            resolved_acc = resolve_user_account(db, current_user.id, update_data["account_id"])
+            update_data["account_id"] = resolved_acc.id
+        else:
+            update_data.pop("account_id")
+
     for field, value in update_data.items():
         if field in ("symbol", "market", "direction", "status") and isinstance(value, str):
             setattr(trade, field, value.upper())

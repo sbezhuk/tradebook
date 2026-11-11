@@ -34,6 +34,7 @@ interface TopBarProps {
   onOpenMobileMenu: () => void;
   trades: Trade[];
   totalTradesCount?: number;
+  activeAccountName?: string | null;
   onDeleteAllTrades: () => Promise<void>;
   onSelectTrade: (trade: Trade) => void;
   onSelectTab: (tab: NavTab) => void;
@@ -47,6 +48,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileMenu,
   trades,
   totalTradesCount,
+  activeAccountName,
   onDeleteAllTrades,
   onSelectTrade,
   onSelectTab,
@@ -520,7 +522,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                 >
                   <span className="flex items-center space-x-2">
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Видалити всі угоди</span>
+                    <span>
+                      {activeAccountName ? `Очистити «${activeAccountName}»` : 'Видалити всі угоди'}
+                    </span>
                   </span>
                   {typeof totalTradesCount === 'number' && totalTradesCount > 0 && (
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300">
@@ -531,7 +535,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               ) : (
                 <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 space-y-2">
                   <div className="text-[11px] font-medium text-rose-200 leading-snug">
-                    Очистити весь журнал угод? Цю дію не можна скасувати.
+                    {activeAccountName
+                      ? `Видалити всі угоди акаунту «${activeAccountName}»? Цю дію не можна скасувати.`
+                      : 'Очистити весь журнал угод? Цю дію не можна скасувати.'}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button

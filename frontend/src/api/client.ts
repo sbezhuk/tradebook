@@ -9,6 +9,9 @@ import type {
   Deposit,
   DepositFormData,
   DepositListResponse,
+  TradingAccount,
+  AccountFormData,
+  AccountListResponse,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -95,6 +98,31 @@ class ApiClient {
     return this.request<User>('/auth/me');
   }
 
+  // Accounts
+  async getAccounts(): Promise<AccountListResponse> {
+    return this.request<AccountListResponse>('/accounts');
+  }
+
+  async createAccount(data: AccountFormData): Promise<TradingAccount> {
+    return this.request<TradingAccount>('/accounts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAccount(id: number, data: Partial<AccountFormData>): Promise<TradingAccount> {
+    return this.request<TradingAccount>(`/accounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAccount(id: number, deleteData = false): Promise<void> {
+    return this.request<void>(`/accounts/${id}?delete_data=${deleteData ? 'true' : 'false'}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Trades
   async getTrades(params: Record<string, string | number | undefined> = {}): Promise<{ items: Trade[]; total: number }> {
     const query = new URLSearchParams();
@@ -131,25 +159,31 @@ class ApiClient {
     });
   }
 
-  async deleteAllTrades(): Promise<{ deleted_count: number }> {
-    return this.request<{ deleted_count: number }>('/trades', {
+  async deleteAllTrades(accountId?: number | null): Promise<{ deleted_count: number }> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<{ deleted_count: number }>(`/trades${qs}`, {
       method: 'DELETE',
     });
   }
 
-  async getTags(): Promise<string[]> {
-    return this.request<string[]>('/trades/tags/all');
+  async getTags(accountId?: number | null): Promise<string[]> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<string[]>(`/trades/tags/all${qs}`);
   }
 
   // Analytics
-  async getAnalytics(month?: string): Promise<AnalyticsData> {
-    const qs = month ? `?month=${encodeURIComponent(month)}` : '';
+  async getAnalytics(month?: string, accountId?: number | null): Promise<AnalyticsData> {
+    const query = new URLSearchParams();
+    if (month) query.append('month', month);
+    if (accountId) query.append('account_id', String(accountId));
+    const qs = query.toString() ? `?${query.toString()}` : '';
     return this.request<AnalyticsData>(`/analytics${qs}`);
   }
 
   // Deposits
-  async getDeposits(): Promise<DepositListResponse> {
-    return this.request<DepositListResponse>('/deposits');
+  async getDeposits(accountId?: number | null): Promise<DepositListResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<DepositListResponse>(`/deposits${qs}`);
   }
 
   async createDeposit(data: DepositFormData): Promise<Deposit> {
@@ -195,17 +229,22 @@ class ApiClient {
   }
 
   // Import Hyperliquid CSV
-  async importHyperliquidCsv(file: File): Promise<HyperliquidImportResponse> {
+  async importHyperliquidCsv(file: File, accountId?: number | null): Promise<HyperliquidImportResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
     return this.uploadFile<HyperliquidImportResponse>(
-      '/trades/import/hyperliquid',
+      `/trades/import/hyperliquid${qs}`,
       file,
       'Не вдалося імпортувати файл Hyperliquid'
     );
   }
 
-  async importHyperliquidDepositsCsv(file: File): Promise<HyperliquidDepositImportResponse> {
+  async importHyperliquidDepositsCsv(
+    file: File,
+    accountId?: number | null
+  ): Promise<HyperliquidDepositImportResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
     return this.uploadFile<HyperliquidDepositImportResponse>(
-      '/deposits/import/hyperliquid',
+      `/deposits/import/hyperliquid${qs}`,
       file,
       'Не вдалося імпортувати депозити з файлу Hyperliquid'
     );

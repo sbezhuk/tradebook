@@ -7,6 +7,7 @@ class TradeBase(BaseModel):
     market: str = Field(default="CRYPTO", description="CRYPTO, FOREX, STOCKS, FUTURES, COMMODITIES")
     direction: str = Field(..., description="LONG або SHORT")
     status: str = Field(default="OPEN", description="OPEN, CLOSED, CANCELLED")
+    account_id: Optional[int] = Field(default=None, description="ID торгового акаунту")
     entry_date: datetime
     exit_date: Optional[datetime] = None
     entry_price: float = Field(..., gt=0)
@@ -31,6 +32,7 @@ class TradeUpdate(BaseModel):
     market: Optional[str] = None
     direction: Optional[str] = None
     status: Optional[str] = None
+    account_id: Optional[int] = None
     entry_date: Optional[datetime] = None
     exit_date: Optional[datetime] = None
     entry_price: Optional[float] = None

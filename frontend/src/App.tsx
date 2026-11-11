@@ -13,12 +13,22 @@ import { TradeDetailModal } from './components/TradeDetailModal';
 import { ImportView } from './components/ImportView';
 import type { ImportMode } from './components/ImportView';
 import { DepositModal } from './components/DepositModal';
-import type { Trade, TradeFormData, AnalyticsData, Deposit, DepositFormData } from './types';
+import { AccountModal } from './components/AccountModal';
+import type {
+  Trade,
+  TradeFormData,
+  AnalyticsData,
+  Deposit,
+  DepositFormData,
+  TradingAccount,
+  AccountFormData,
+} from './types';
 import { api } from './api/client';
 import { exportTradesToCsv } from './utils/exportCsv';
 
 const PAGE_SIZE_STORAGE_KEY = 'tradebook_journal_page_size';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'tradebook_sidebar_collapsed';
+const ACTIVE_ACCOUNT_STORAGE_KEY = 'tradebook_active_account_id';
 const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
 
 const getInitialPageSize = (): number => {
@@ -36,6 +46,17 @@ const getInitialSidebarCollapsed = (): boolean => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true';
   } catch {
     return false;
+  }
+};
+
+const getInitialActiveAccountId = (): number | null => {
+  try {
+    const raw = localStorage.getItem(ACTIVE_ACCOUNT_STORAGE_KEY);
+    if (!raw) return null;
+    const num = Number(raw);
+    return Number.isInteger(num) && num > 0 ? num : null;
+  } catch {
+    return null;
   }
 };
 
@@ -85,6 +106,10 @@ export const AppContent: React.FC = () => {
   });
 
   // Modals & Import Page state
+  const [accounts, setAccounts] = useState<TradingAccount[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<number | null>(getInitialActiveAccountId);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [closeTradeMode, setCloseTradeMode] = useState(false);
@@ -96,19 +121,43 @@ export const AppContent: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const monthParam = selectedMonth || undefined;
+  const accountParam = activeAccountId ?? undefined;
+  const activeAccount = accounts.find((a) => a.id === activeAccountId) ?? null;
+
+  const loadAccounts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.getAccounts();
+      setAccounts(res.items);
+      setActiveAccountId((prev) => {
+        if (prev !== null && !res.items.some((a) => a.id === prev)) {
+          try {
+            localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
+          } catch {
+            // ignore storage errors
+          }
+          return null;
+        }
+        return prev;
+      });
+    } catch (err) {
+      console.error('Failed to load accounts:', err);
+    }
+  }, [user]);
 
   const loadTrades = useCallback(async () => {
     if (!user) return;
     try {
       const data = await api.getTrades({
         month: monthParam,
+        account_id: accountParam,
         limit: 500,
       });
       setTrades(data.items);
     } catch (err) {
       console.error('Failed to load trades:', err);
     }
-  }, [user, monthParam]);
+  }, [user, monthParam, accountParam]);
 
   const loadJournalTrades = useCallback(async () => {
     if (!user) return;
@@ -118,6 +167,7 @@ export const AppContent: React.FC = () => {
       const mergedFilters = {
         ...filters,
         month: monthParam,
+        account_id: accountParam,
         symbol: searchQuery.trim() || filters.symbol,
         skip: (journalPage - 1) * journalPageSize,
         limit: journalPageSize,
@@ -142,13 +192,13 @@ export const AppContent: React.FC = () => {
         setJournalLoading(false);
       }
     }
-  }, [user, filters, searchQuery, monthParam, journalPage, journalPageSize]);
+  }, [user, filters, searchQuery, monthParam, accountParam, journalPage, journalPageSize]);
 
   const loadAnalytics = useCallback(async () => {
     if (!user) return;
     setAnalyticsLoading(true);
     try {
-      const analyticsRes = await api.getAnalytics(monthParam);
+      const analyticsRes = await api.getAnalytics(monthParam, activeAccountId);
       setAnalytics(analyticsRes);
       if (selectedMonth === undefined) {
         const latestMonth = analyticsRes.available_months[0]?.month ?? '';
@@ -159,17 +209,23 @@ export const AppContent: React.FC = () => {
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [user, monthParam, selectedMonth]);
+  }, [user, monthParam, selectedMonth, activeAccountId]);
 
   const loadDeposits = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.getDeposits();
+      const res = await api.getDeposits(activeAccountId);
       setDeposits(res.items);
     } catch (err) {
       console.error('Failed to load deposits:', err);
     }
-  }, [user]);
+  }, [user, activeAccountId]);
+
+  useEffect(() => {
+    if (user) {
+      loadAccounts();
+    }
+  }, [user, loadAccounts]);
 
   useEffect(() => {
     if (user) {
@@ -185,14 +241,47 @@ export const AppContent: React.FC = () => {
     }
   }, [user, loadJournalTrades]);
 
+  const handleSelectAccount = (accountId: number | null) => {
+    setActiveAccountId(accountId);
+    setSelectedMonth(undefined);
+    setJournalPage(1);
+    try {
+      if (accountId === null) {
+        localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
+      } else {
+        localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, String(accountId));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const handleCreateAccount = async (data: AccountFormData) => {
+    await api.createAccount(data);
+    await loadAccounts();
+  };
+
+  const handleUpdateAccount = async (id: number, data: Partial<AccountFormData>) => {
+    await api.updateAccount(id, data);
+    await loadAccounts();
+  };
+
+  const handleDeleteAccount = async (id: number, deleteData: boolean) => {
+    await api.deleteAccount(id, deleteData);
+    if (activeAccountId === id) {
+      handleSelectAccount(null);
+    }
+    await Promise.all([loadAccounts(), loadTrades(), loadJournalTrades(), loadDeposits(), loadAnalytics()]);
+  };
+
   const handleAddDeposit = async (data: DepositFormData) => {
     await api.createDeposit(data);
-    await Promise.all([loadDeposits(), loadAnalytics()]);
+    await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
   };
 
   const handleDeleteDeposit = async (id: number) => {
     await api.deleteDeposit(id);
-    await Promise.all([loadDeposits(), loadAnalytics()]);
+    await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
   };
 
   const handleSelectMonth = (month: string) => {
@@ -236,23 +325,23 @@ export const AppContent: React.FC = () => {
     } else {
       await api.createTrade(data);
     }
-    await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics()]);
+    await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics(), loadAccounts()]);
   };
 
   const handleDeleteTrade = async (id: number) => {
     try {
       await api.deleteTrade(id);
-      await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics()]);
+      await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics(), loadAccounts()]);
     } catch (err) {
       console.error('Failed to delete trade:', err);
     }
   };
 
   const handleDeleteAllTrades = async () => {
-    await api.deleteAllTrades();
+    await api.deleteAllTrades(activeAccountId);
     setSelectedMonth(undefined);
     setJournalPage(1);
-    await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics()]);
+    await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics(), loadAccounts()]);
   };
 
   const handleOpenEdit = (trade: Trade, closeMode = false) => {
@@ -308,6 +397,10 @@ export const AppContent: React.FC = () => {
         totalDeposits={analytics?.total_deposits}
         overallDepositGrowthPct={analytics?.overall_deposit_growth_pct}
         onOpenDeposits={() => setIsDepositModalOpen(true)}
+        accounts={accounts}
+        activeAccountId={activeAccountId}
+        onSelectAccount={handleSelectAccount}
+        onOpenAccounts={() => setIsAccountModalOpen(true)}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
         mobileOpen={mobileMenuOpen}
@@ -324,6 +417,7 @@ export const AppContent: React.FC = () => {
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
           totalTradesCount={analytics?.overall_total_trades}
+          activeAccountName={activeAccount?.name ?? null}
           onDeleteAllTrades={handleDeleteAllTrades}
           onSelectTrade={handleOpenDetail}
           onSelectTab={setCurrentTab}
@@ -356,6 +450,7 @@ export const AppContent: React.FC = () => {
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
               availableMonths={analytics?.available_months ?? []}
+              accounts={accounts}
               onSelectTrade={handleOpenDetail}
               onEditTrade={handleOpenEdit}
               onDeleteTrade={handleDeleteTrade}
@@ -406,13 +501,20 @@ export const AppContent: React.FC = () => {
             <ImportView
               mode={importMode}
               onModeChange={setImportMode}
+              accounts={accounts}
+              activeAccountId={activeAccountId}
               onImportSuccess={async (importedMode) => {
                 if (importedMode === 'trades') {
                   setSelectedMonth(undefined);
                   setJournalPage(1);
-                  await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics()]);
+                  await Promise.all([
+                    loadTrades(),
+                    loadJournalTrades(),
+                    loadAnalytics(),
+                    loadAccounts(),
+                  ]);
                 } else {
-                  await Promise.all([loadDeposits(), loadAnalytics()]);
+                  await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
                 }
               }}
               onGoToTrades={() => setCurrentTab('trades')}
@@ -433,11 +535,14 @@ export const AppContent: React.FC = () => {
         onSave={handleSaveTrade}
         editTrade={editingTrade}
         initialCloseMode={closeTradeMode}
+        accounts={accounts}
+        activeAccountId={activeAccountId}
       />
 
       {/* Trade Detail Modal */}
       <TradeDetailModal
         trade={selectedTrade}
+        accounts={accounts}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         onEdit={(tr, closeMode) => {
@@ -457,9 +562,24 @@ export const AppContent: React.FC = () => {
           overallPnl={analytics?.overall_total_pnl ?? 0}
           currentBalance={analytics?.current_balance ?? 0}
           overallGrowthPct={analytics?.overall_deposit_growth_pct ?? null}
+          accounts={accounts}
+          activeAccountId={activeAccountId}
           onAddDeposit={handleAddDeposit}
           onDeleteDeposit={handleDeleteDeposit}
           onOpenImport={() => handleOpenImportPage('deposits')}
+        />
+      )}
+
+      {/* Multi-Account Management Modal */}
+      {isAccountModalOpen && (
+        <AccountModal
+          onClose={() => setIsAccountModalOpen(false)}
+          accounts={accounts}
+          activeAccountId={activeAccountId}
+          onSelectAccount={handleSelectAccount}
+          onCreateAccount={handleCreateAccount}
+          onUpdateAccount={handleUpdateAccount}
+          onDeleteAccount={handleDeleteAccount}
         />
       )}
     </div>

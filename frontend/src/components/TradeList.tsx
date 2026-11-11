@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import type { Trade, MonthlySummaryItem } from '../types';
+import React, { useMemo, useRef } from 'react';
+import type { Trade, MonthlySummaryItem, TradingAccount } from '../types';
 import { GlassSelect } from './GlassSelect';
 import { PaginationBar } from './PaginationBar';
 import {
@@ -36,6 +36,7 @@ interface TradeListProps {
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   availableMonths?: MonthlySummaryItem[];
+  accounts?: TradingAccount[];
   onSelectTrade: (trade: Trade) => void;
   onEditTrade: (trade: Trade, closeMode?: boolean) => void;
   onDeleteTrade: (id: number) => void;
@@ -57,6 +58,7 @@ export const TradeList: React.FC<TradeListProps> = ({
   selectedMonth = '',
   onSelectMonth,
   availableMonths = [],
+  accounts = [],
   onSelectTrade,
   onEditTrade,
   onDeleteTrade,
@@ -70,6 +72,12 @@ export const TradeList: React.FC<TradeListProps> = ({
   const selectedStatus = filters?.status ?? '';
   const sortBy = filters?.sort_by ?? 'date_desc';
   const topRef = useRef<HTMLDivElement>(null);
+
+  const accountMap = useMemo(() => {
+    const map = new Map<number, TradingAccount>();
+    accounts.forEach((a) => map.set(a.id, a));
+    return map;
+  }, [accounts]);
 
   const triggerFilter = (overrides: Record<string, string>) => {
     onFilterChange({
@@ -256,6 +264,25 @@ export const TradeList: React.FC<TradeListProps> = ({
                           </span>
                           <span>•</span>
                           <span>{formatDate(trade.entry_date)}</span>
+                          {accounts.length > 1 &&
+                            trade.account_id &&
+                            accountMap.get(trade.account_id) && (
+                              <>
+                                <span>•</span>
+                                <span className="inline-flex items-center gap-1 text-[10px] text-purple-100/75">
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor:
+                                        accountMap.get(trade.account_id)?.color || '#c49bff',
+                                    }}
+                                  />
+                                  <span className="max-w-[90px] truncate">
+                                    {accountMap.get(trade.account_id)?.name}
+                                  </span>
+                                </span>
+                              </>
+                            )}
                         </div>
                       </td>
 

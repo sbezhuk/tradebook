@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Trade } from '../types';
+import type { Trade, TradingAccount } from '../types';
 import { 
   X, 
   ArrowUpRight, 
@@ -18,6 +18,7 @@ import {
 
 interface TradeDetailModalProps {
   trade: Trade | null;
+  accounts?: TradingAccount[];
   isOpen: boolean;
   onClose: () => void;
   onEdit: (trade: Trade, closeMode?: boolean) => void;
@@ -26,12 +27,14 @@ interface TradeDetailModalProps {
 
 export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
   trade,
+  accounts = [],
   isOpen,
   onClose,
   onEdit,
   onDelete,
 }) => {
   if (!isOpen || !trade) return null;
+  const account = trade.account_id ? accounts.find((a) => a.id === trade.account_id) : undefined;
 
   const isLong = trade.direction === 'LONG';
   const isOpenTrade = trade.status === 'OPEN';
@@ -99,8 +102,22 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                   {trade.status}
                 </span>
               </div>
-              <p className="text-xs text-purple-200/50 mt-0.5 font-medium">
-                {trade.direction} позиція • {getDuration()}
+              <p className="text-xs text-purple-200/50 mt-0.5 font-medium flex items-center gap-1.5 flex-wrap">
+                <span>
+                  {trade.direction} позиція • {getDuration()}
+                </span>
+                {accounts.length > 1 && account && (
+                  <>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-1 text-purple-100/80">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: account.color || '#c49bff' }}
+                      />
+                      <span>{account.name}</span>
+                    </span>
+                  </>
+                )}
               </p>
             </div>
           </div>

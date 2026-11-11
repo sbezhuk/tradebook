@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import type { Deposit, DepositFormData } from '../types';
+import type { Deposit, DepositFormData, TradingAccount } from '../types';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
+import { GlassSelect } from './GlassSelect';
 import {
   Wallet,
   Plus,
@@ -23,6 +24,8 @@ interface DepositModalProps {
   overallPnl: number;
   currentBalance: number;
   overallGrowthPct: number | null;
+  accounts?: TradingAccount[];
+  activeAccountId?: number | null;
   onAddDeposit: (data: DepositFormData) => Promise<void>;
   onDeleteDeposit: (id: number) => Promise<void>;
   onOpenImport?: () => void;
@@ -58,10 +61,16 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   overallPnl,
   currentBalance,
   overallGrowthPct,
+  accounts = [],
+  activeAccountId = null,
   onAddDeposit,
   onDeleteDeposit,
   onOpenImport,
 }) => {
+  const defaultTargetId =
+    activeAccountId ?? accounts.find((a) => a.is_default)?.id ?? accounts[0]?.id ?? null;
+
+  const [targetAccountId, setTargetAccountId] = useState<number | null>(defaultTargetId);
   const [amount, setAmount] = useState('');
   const [depositDate, setDepositDate] = useState(getLocalNowInput);
   const [note, setNote] = useState('');
@@ -70,6 +79,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [historyFilter, setHistoryFilter] = useState<'all' | 'in' | 'out'>('all');
   const [error, setError] = useState<string | null>(null);
+
+  const accountMap = useMemo(() => {
+    const map = new Map<number, TradingAccount>();
+    accounts.forEach((a) => map.set(a.id, a));
+    return map;
+  }, [accounts]);
+
+  const activeAccount = activeAccountId ? accountMap.get(activeAccountId) ?? null : null;
 
   const hasWithdrawals = useMemo(() => deposits.some((d) => d.amount < 0), [deposits]);
 
@@ -93,6 +110,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     setError(null);
     try {
       await onAddDeposit({
+        account_id: targetAccountId,
         amount: numAmount,
         deposit_date: depositDate ? new Date(depositDate).toISOString() : new Date().toISOString(),
         note: note.trim() || null,
@@ -139,7 +157,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             </div>
             <div className="min-w-0">
               <h2 className="text-base font-bold text-white tracking-tight truncate">
-                Управління депозитом
+                Управління депозитом{activeAccount ? ` • ${activeAccount.name}` : ''}
               </h2>
               <p className="text-xs text-purple-200/55 truncate">
                 Поповнення капіталу та контроль приросту за періодами
@@ -239,6 +257,23 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             >
               <div className="space-y-3.5">
                 <div className="text-xs font-semibold text-white">Нове поповнення</div>
+
+                {accounts.length > 1 && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-purple-200/65 mb-1.5">
+                      Торговий акаунт
+                    </label>
+                    <GlassSelect
+                      variant="field"
+                      value={targetAccountId ? String(targetAccountId) : ''}
+                      onChange={(val) => setTargetAccountId(val ? Number(val) : null)}
+                      options={accounts.map((acc) => ({
+                        value: String(acc.id),
+                        label: `${acc.name} (${acc.platform})`,
+                      }))}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] font-medium text-purple-200/65 mb-1.5">
@@ -387,8 +422,23 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                             <div className="text-xs font-medium text-white truncate">
                               {dep.note || (isPositive ? 'Поповнення депозиту' : 'Виведення коштів')}
                             </div>
-                            <div className="text-[11px] text-purple-200/50 font-mono mt-0.5">
-                              {formatDisplayDate(dep.deposit_date)}
+                            <div className="flex items-center gap-2 text-[11px] text-purple-200/50 font-mono mt-0.5 flex-wrap">
+                              <span>{formatDisplayDate(dep.deposit_date)}</span>
+                              {!activeAccountId &&
+                                accounts.length > 1 &&
+                                dep.account_id &&
+                                accountMap.get(dep.account_id) && (
+                                  <span className="inline-flex items-center gap-1 font-sans text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-purple-100/80">
+                                    <span
+                                      className="w-1.5 h-1.5 rounded-full"
+                                      style={{
+                                        backgroundColor:
+                                          accountMap.get(dep.account_id)?.color || '#c49bff',
+                                      }}
+                                    />
+                                    <span>{accountMap.get(dep.account_id)?.name}</span>
+                                  </span>
+                                )}
                             </div>
                           </div>
                         </div>

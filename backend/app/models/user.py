@@ -14,3 +14,4 @@ class User(Base):
 
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
     deposits = relationship("Deposit", back_populates="user", cascade="all, delete-orphan")
+    accounts = relationship("TradingAccount", back_populates="user", cascade="all, delete-orphan")

@@ -14,6 +14,7 @@ class DepositBase(BaseModel):
         max_length=255,
         description="Нотатка або джерело поповнення",
     )
+    account_id: Optional[int] = Field(default=None, description="ID торгового акаунту")
 
 
 class DepositCreate(DepositBase):
@@ -25,6 +26,7 @@ class DepositResponse(BaseModel):
 
     id: int
     user_id: int
+    account_id: Optional[int] = None
     amount: float
     deposit_date: datetime
     note: Optional[str] = None

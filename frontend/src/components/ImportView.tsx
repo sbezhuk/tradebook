@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { api } from '../api/client';
-import type { HyperliquidImportResponse, HyperliquidDepositImportResponse } from '../types';
+import type { HyperliquidImportResponse, HyperliquidDepositImportResponse, TradingAccount } from '../types';
+import { GlassSelect } from './GlassSelect';
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -19,6 +20,8 @@ export type ImportMode = 'trades' | 'deposits';
 interface ImportViewProps {
   mode: ImportMode;
   onModeChange: (mode: ImportMode) => void;
+  accounts?: TradingAccount[];
+  activeAccountId?: number | null;
   onImportSuccess: (mode: ImportMode) => Promise<void>;
   onGoToTrades: () => void;
   onGoToInsights: () => void;
@@ -71,6 +74,8 @@ const HYPERLIQUID_MODE_CONFIG: Record<
 export const ImportView: React.FC<ImportViewProps> = ({
   mode,
   onModeChange,
+  accounts = [],
+  activeAccountId = null,
   onImportSuccess,
   onGoToTrades,
   onGoToInsights,
@@ -78,6 +83,14 @@ export const ImportView: React.FC<ImportViewProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<ImportPlatform>('hyperliquid');
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
+    () =>
+      activeAccountId ??
+      accounts.find((a) => a.platform === 'HYPERLIQUID')?.id ??
+      accounts.find((a) => a.is_default)?.id ??
+      accounts[0]?.id ??
+      null
+  );
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,11 +132,17 @@ export const ImportView: React.FC<ImportViewProps> = ({
     setDepositResult(null);
 
     try {
+      const resolvedTargetId =
+        selectedAccountId ??
+        activeAccountId ??
+        accounts.find((a) => a.is_default)?.id ??
+        accounts[0]?.id ??
+        null;
       if (mode === 'trades') {
-        const res = await api.importHyperliquidCsv(file);
+        const res = await api.importHyperliquidCsv(file, resolvedTargetId);
         setTradeResult(res);
       } else {
-        const res = await api.importHyperliquidDepositsCsv(file);
+        const res = await api.importHyperliquidDepositsCsv(file, resolvedTargetId);
         setDepositResult(res);
       }
       await onImportSuccess(mode);
@@ -269,6 +288,37 @@ export const ImportView: React.FC<ImportViewProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Target Account & Instructions */}
+          {accounts.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+              <div>
+                <div className="text-xs font-semibold text-white">Акаунт призначення</div>
+                <div className="text-[11px] text-purple-200/55 mt-0.5">
+                  Усі імпортовані записи будуть привʼязані до вибраного портфелю.
+                </div>
+              </div>
+              <div className="w-full sm:w-64 shrink-0">
+                <GlassSelect
+                  variant="field"
+                  value={
+                    selectedAccountId
+                      ? String(selectedAccountId)
+                      : activeAccountId
+                      ? String(activeAccountId)
+                      : accounts[0]
+                      ? String(accounts[0].id)
+                      : ''
+                  }
+                  onChange={(val) => setSelectedAccountId(val ? Number(val) : null)}
+                  options={accounts.map((acc) => ({
+                    value: String(acc.id),
+                    label: `${acc.name} (${acc.platform})`,
+                  }))}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Instructions */}
           <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] text-xs text-purple-200/70 space-y-1">

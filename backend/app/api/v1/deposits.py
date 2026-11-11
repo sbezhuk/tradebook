@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
@@ -13,6 +13,11 @@ from app.schemas.deposit import (
 )
 from app.api.deps import get_current_user
 from app.services.hyperliquid_importer import parse_hyperliquid_deposits_csv
+from app.services.account_service import (
+    ensure_user_default_account,
+    resolve_user_account,
+    validate_optional_account_filter,
+)
 
 router = APIRouter(prefix="/deposits", tags=["Депозити"])
 
@@ -25,15 +30,17 @@ def _normalize_utc_naive(dt: datetime) -> datetime:
 
 @router.get("", response_model=DepositListResponse)
 def list_deposits(
+    account_id: Optional[int] = Query(None, description="Фільтр за торговим акаунтом"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    items = (
-        db.query(Deposit)
-        .filter(Deposit.user_id == current_user.id)
-        .order_by(Deposit.deposit_date.desc(), Deposit.id.desc())
-        .all()
-    )
+    ensure_user_default_account(db, current_user.id)
+    query = db.query(Deposit).filter(Deposit.user_id == current_user.id)
+    valid_account_id = validate_optional_account_filter(db, current_user.id, account_id)
+    if valid_account_id is not None:
+        query = query.filter(Deposit.account_id == valid_account_id)
+
+    items = query.order_by(Deposit.deposit_date.desc(), Deposit.id.desc()).all()
     total_amount = round(sum(d.amount for d in items), 2)
     return DepositListResponse(
         items=items,
@@ -48,9 +55,11 @@ def create_deposit(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    target_account = resolve_user_account(db, current_user.id, deposit_in.account_id)
     note_clean = deposit_in.note.strip() if deposit_in.note else None
     deposit = Deposit(
         user_id=current_user.id,
+        account_id=target_account.id,
         amount=round(float(deposit_in.amount), 2),
         deposit_date=_normalize_utc_naive(deposit_in.deposit_date),
         note=note_clean or None,
@@ -64,9 +73,11 @@ def create_deposit(
 @router.post("/import/hyperliquid", response_model=HyperliquidDepositImportResponse)
 async def import_hyperliquid_deposits(
     file: UploadFile = File(...),
+    account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    target_account = resolve_user_account(db, current_user.id, account_id)
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(
             status_code=400,
@@ -94,7 +105,11 @@ async def import_hyperliquid_deposits(
             deposits=[],
         )
 
-    existing = db.query(Deposit).filter(Deposit.user_id == current_user.id).all()
+    existing = (
+        db.query(Deposit)
+        .filter(Deposit.user_id == current_user.id, Deposit.account_id == target_account.id)
+        .all()
+    )
     existing_keys = set()
     for ex in existing:
         ex_dt = ex.deposit_date.replace(tzinfo=None) if ex.deposit_date else None
@@ -123,6 +138,7 @@ async def import_hyperliquid_deposits(
         existing_keys.add(dedup_key)
         deposit = Deposit(
             user_id=current_user.id,
+            account_id=target_account.id,
             amount=round(float(pd.amount), 6),
             deposit_date=dep_naive,
             note=note_clean or None,

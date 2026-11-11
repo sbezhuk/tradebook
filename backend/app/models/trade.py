@@ -8,6 +8,7 @@ class Trade(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("trading_accounts.id"), nullable=True, index=True)
 
     symbol = Column(String(50), nullable=False, index=True)
     market = Column(String(50), default="CRYPTO", index=True)  # CRYPTO, FOREX, STOCKS, FUTURES, OTHER
@@ -42,3 +43,4 @@ class Trade(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="trades")
+    account = relationship("TradingAccount", back_populates="trades")

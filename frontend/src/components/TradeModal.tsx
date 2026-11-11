@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Trade, TradeFormData, MarketType, DirectionType, StatusType } from '../types';
+import type { Trade, TradeFormData, MarketType, DirectionType, StatusType, TradingAccount } from '../types';
 import { api } from '../api/client';
 import { GlassSelect } from './GlassSelect';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
@@ -24,6 +24,8 @@ interface TradeModalProps {
   onSave: (data: TradeFormData, id?: number) => Promise<void>;
   editTrade?: Trade | null;
   initialCloseMode?: boolean;
+  accounts?: TradingAccount[];
+  activeAccountId?: number | null;
 }
 
 const QUICK_SYMBOLS: Record<MarketType, string[]> = {
@@ -43,11 +45,17 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   onSave,
   editTrade,
   initialCloseMode = false,
+  accounts = [],
+  activeAccountId = null,
 }) => {
   const isEditing = !!editTrade;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
+  const defaultAccountId =
+    activeAccountId ?? accounts.find((a) => a.is_default)?.id ?? accounts[0]?.id ?? null;
+
+  const [accountId, setAccountId] = useState<number | null>(defaultAccountId);
   const [symbol, setSymbol] = useState('');
   const [market, setMarket] = useState<MarketType>('CRYPTO');
   const [direction, setDirection] = useState<DirectionType>('LONG');
@@ -90,6 +98,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     if (editTrade) {
       const nextStatus: StatusType =
         initialCloseMode && editTrade.status === 'OPEN' ? 'CLOSED' : editTrade.status;
+      setAccountId(editTrade.account_id ?? defaultAccountId);
       setSymbol(editTrade.symbol);
       setMarket(editTrade.market);
       setDirection(editTrade.direction);
@@ -119,6 +128,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setFollowedRules(editTrade.followed_rules ?? true);
       setChartUrl(editTrade.chart_url || '');
     } else {
+      setAccountId(defaultAccountId);
       setSymbol('');
       setMarket('CRYPTO');
       setDirection('LONG');
@@ -139,7 +149,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setFollowedRules(true);
       setChartUrl('');
     }
-  }, [editTrade, initialCloseMode, isOpen]);
+  }, [editTrade, initialCloseMode, isOpen, defaultAccountId]);
 
   const handleStatusChange = (nextStatus: StatusType) => {
     setStatus(nextStatus);
@@ -254,6 +264,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
     try {
       const payload: TradeFormData = {
+        account_id: accountId,
         symbol: symbol.trim().toUpperCase(),
         market,
         direction,
@@ -358,6 +369,23 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           {/* ==================== STEP 1: CORE POSITION & PRICES ==================== */}
           {step === 1 && (
             <div className="space-y-4">
+              {accounts.length > 1 && (
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">
+                    Торговий акаунт
+                  </label>
+                  <GlassSelect
+                    variant="field"
+                    value={accountId ? String(accountId) : ''}
+                    onChange={(val) => setAccountId(val ? Number(val) : null)}
+                    options={accounts.map((acc) => ({
+                      value: String(acc.id),
+                      label: `${acc.name} (${acc.platform})`,
+                    }))}
+                  />
+                </div>
+              )}
+
               {/* Market, Direction, Status */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>

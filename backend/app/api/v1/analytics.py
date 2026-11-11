@@ -8,15 +8,23 @@ from app.models.deposit import Deposit
 from app.schemas.analytics import AnalyticsResponse
 from app.api.deps import get_current_user
 from app.services.analytics_service import compute_analytics
+from app.services.account_service import (
+    ensure_user_default_account,
+    validate_optional_account_filter,
+)
 
 router = APIRouter(prefix="/analytics", tags=["Аналітика"])
 
 @router.get("", response_model=AnalyticsResponse)
 def get_analytics(
     month: Optional[str] = Query(None, description="Звітний місяць у форматі YYYY-MM"),
+    account_id: Optional[int] = Query(None, description="Фільтр за торговим акаунтом"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    ensure_user_default_account(db, current_user.id)
+    valid_account_id = validate_optional_account_filter(db, current_user.id, account_id)
+
     if month:
         try:
             year_str, month_str = month.split("-")
@@ -27,6 +35,13 @@ def get_analytics(
             month = f"{year:04d}-{m:02d}"
         except ValueError:
             raise HTTPException(status_code=400, detail="Невірний формат місяця. Очікується YYYY-MM")
-    trades = db.query(Trade).filter(Trade.user_id == current_user.id).all()
-    deposits = db.query(Deposit).filter(Deposit.user_id == current_user.id).all()
+
+    trades_query = db.query(Trade).filter(Trade.user_id == current_user.id)
+    deposits_query = db.query(Deposit).filter(Deposit.user_id == current_user.id)
+    if valid_account_id is not None:
+        trades_query = trades_query.filter(Trade.account_id == valid_account_id)
+        deposits_query = deposits_query.filter(Deposit.account_id == valid_account_id)
+
+    trades = trades_query.all()
+    deposits = deposits_query.all()
     return compute_analytics(trades, month=month, deposits=deposits)

@@ -499,3 +499,118 @@ def test_hyperliquid_deposit_import():
         files={"file": ("bad.csv", bad_csv, "text/csv")},
     )
     assert bad_res.status_code == 400
+
+
+def test_multi_accounts_isolation_and_lifecycle():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"multi_{suffix}",
+        "email": f"multi_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    # 1. User automatically gets a default account
+    acc_list = client.get("/api/v1/accounts", headers=headers)
+    assert acc_list.status_code == 200
+    acc_data = acc_list.json()
+    assert acc_data["total"] == 1
+    acc1 = acc_data["items"][0]
+    assert acc1["is_default"] is True
+
+    # Cannot delete the only remaining account
+    del_only = client.delete(f"/api/v1/accounts/{acc1['id']}", headers=headers)
+    assert del_only.status_code == 400
+
+    # 2. Create a second account (Bybit Futures)
+    c_res = client.post("/api/v1/accounts", headers=headers, json={
+        "name": "Bybit Futures",
+        "platform": "BYBIT",
+        "account_type": "FUTURES",
+        "currency": "USD",
+        "color": "#60a5fa",
+    })
+    assert c_res.status_code == 201
+    acc2 = c_res.json()
+    assert acc2["name"] == "Bybit Futures"
+    assert acc2["platform"] == "BYBIT"
+
+    # 3. Add deposits and trades separately to acc1 and acc2
+    d1 = client.post("/api/v1/deposits", headers=headers, json={
+        "account_id": acc1["id"],
+        "amount": 1000.0,
+        "deposit_date": "2026-11-01T10:00:00",
+    })
+    assert d1.status_code == 201
+
+    d2 = client.post("/api/v1/deposits", headers=headers, json={
+        "account_id": acc2["id"],
+        "amount": 500.0,
+        "deposit_date": "2026-11-02T10:00:00",
+    })
+    assert d2.status_code == 201
+
+    t1 = client.post("/api/v1/trades", headers=headers, json={
+        "account_id": acc1["id"],
+        "symbol": "BTC/USDT",
+        "market": "CRYPTO",
+        "direction": "LONG",
+        "status": "CLOSED",
+        "entry_price": 100.0,
+        "exit_price": 120.0,
+        "quantity": 10.0,
+        "entry_date": "2026-11-05T10:00:00",
+        "exit_date": "2026-11-05T12:00:00",
+    })
+    assert t1.status_code == 201  # +200 PnL
+
+    t2 = client.post("/api/v1/trades", headers=headers, json={
+        "account_id": acc2["id"],
+        "symbol": "ETH/USDT",
+        "market": "CRYPTO",
+        "direction": "SHORT",
+        "status": "CLOSED",
+        "entry_price": 100.0,
+        "exit_price": 110.0,
+        "quantity": 5.0,
+        "entry_date": "2026-11-06T10:00:00",
+        "exit_date": "2026-11-06T12:00:00",
+    })
+    assert t2.status_code == 201  # -50 PnL
+
+    # 4. Verify filtered trades, deposits, and analytics per account vs combined
+    assert client.get(f"/api/v1/trades?account_id={acc1['id']}", headers=headers).json()["total"] == 1
+    assert client.get(f"/api/v1/trades?account_id={acc2['id']}", headers=headers).json()["total"] == 1
+    assert client.get("/api/v1/trades", headers=headers).json()["total"] == 2
+
+    an_acc1 = client.get(f"/api/v1/analytics?account_id={acc1['id']}", headers=headers).json()
+    assert an_acc1["overall_total_pnl"] == 200.0
+    assert an_acc1["total_deposits"] == 1000.0
+    assert an_acc1["current_balance"] == 1200.0
+
+    an_acc2 = client.get(f"/api/v1/analytics?account_id={acc2['id']}", headers=headers).json()
+    assert an_acc2["overall_total_pnl"] == -50.0
+    assert an_acc2["total_deposits"] == 500.0
+    assert an_acc2["current_balance"] == 450.0
+
+    an_all = client.get("/api/v1/analytics", headers=headers).json()
+    assert an_all["overall_total_pnl"] == 150.0
+    assert an_all["total_deposits"] == 1500.0
+    assert an_all["current_balance"] == 1650.0
+
+    # 5. Verify account list reflects computed stats
+    acc_list2 = client.get("/api/v1/accounts", headers=headers).json()["items"]
+    by_id = {a["id"]: a for a in acc_list2}
+    assert by_id[acc1["id"]]["total_pnl"] == 200.0
+    assert by_id[acc2["id"]]["total_pnl"] == -50.0
+    assert by_id[acc2["id"]]["current_balance"] == 450.0
+
+    # 6. Delete acc2 transferring data to acc1
+    del_acc2 = client.delete(f"/api/v1/accounts/{acc2['id']}?delete_data=false", headers=headers)
+    assert del_acc2.status_code == 204
+
+    assert client.get("/api/v1/accounts", headers=headers).json()["total"] == 1
+    assert client.get(f"/api/v1/trades?account_id={acc1['id']}", headers=headers).json()["total"] == 2
+    assert client.get(f"/api/v1/deposits?account_id={acc1['id']}", headers=headers).json()["count"] == 2

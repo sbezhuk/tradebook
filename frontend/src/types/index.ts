@@ -1,6 +1,39 @@
 export type MarketType = 'CRYPTO' | 'FOREX' | 'STOCKS' | 'FUTURES' | 'COMMODITIES' | 'OTHER';
 export type DirectionType = 'LONG' | 'SHORT';
 export type StatusType = 'OPEN' | 'CLOSED' | 'CANCELLED';
+export type AccountPlatform = 'HYPERLIQUID' | 'BINANCE' | 'BYBIT' | 'OKX' | 'PROP' | 'CUSTOM';
+export type AccountType = 'PERSONAL' | 'FUTURES' | 'SPOT' | 'PROP' | 'DEMO';
+
+export interface TradingAccount {
+  id: number;
+  user_id: number;
+  name: string;
+  platform: AccountPlatform | string;
+  account_type: AccountType | string;
+  currency: string;
+  color: string;
+  is_default: boolean;
+  created_at: string;
+  trades_count: number;
+  open_trades: number;
+  total_pnl: number;
+  total_deposits: number;
+  current_balance: number;
+}
+
+export interface AccountFormData {
+  name: string;
+  platform: string;
+  account_type: string;
+  currency?: string;
+  color: string;
+  is_default?: boolean;
+}
+
+export interface AccountListResponse {
+  items: TradingAccount[];
+  total: number;
+}
 
 export interface User {
   id: number;
@@ -18,6 +51,7 @@ export interface AuthResponse {
 export interface Trade {
   id: number;
   user_id: number;
+  account_id?: number | null;
   symbol: string;
   market: MarketType;
   direction: DirectionType;
@@ -44,6 +78,7 @@ export interface Trade {
 }
 
 export interface TradeFormData {
+  account_id?: number | null;
   symbol: string;
   market: MarketType;
   direction: DirectionType;
@@ -160,6 +195,7 @@ export interface HyperliquidDepositImportResponse {
 export interface Deposit {
   id: number;
   user_id: number;
+  account_id?: number | null;
   amount: number;
   deposit_date: string;
   note?: string | null;
@@ -167,6 +203,7 @@ export interface Deposit {
 }
 
 export interface DepositFormData {
+  account_id?: number | null;
   amount: number;
   deposit_date: string;
   note?: string | null;
