@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Trade, TradeFormData, MarketType, DirectionType, StatusType } from '../types';
 import { api } from '../api/client';
 import { GlassSelect } from './GlassSelect';
+import { GlassDateTimePicker } from './GlassDateTimePicker';
 import {
   X,
   Upload,
@@ -578,29 +579,36 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                  <label
+                    htmlFor="trade-entry-date"
+                    className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5 cursor-pointer"
+                  >
                     <Clock className="w-3.5 h-3.5 text-[#c49bff]" />
                     <span>Час відкриття</span>
                   </label>
-                  <input
-                    type="datetime-local"
+                  <GlassDateTimePicker
+                    id="trade-entry-date"
                     value={entryDate}
-                    onChange={(e) => setEntryDate(e.target.value)}
-                    className="glass-input w-full rounded-xl px-3 py-2.5 text-xs text-white"
+                    onChange={setEntryDate}
+                    placeholder="Оберіть дату та час"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                  <label
+                    htmlFor="trade-exit-date"
+                    className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5 cursor-pointer"
+                  >
                     <Clock className="w-3.5 h-3.5 text-[#c49bff]" />
                     <span>Час закриття</span>
                   </label>
-                  <input
-                    type="datetime-local"
+                  <GlassDateTimePicker
+                    id="trade-exit-date"
                     disabled={status !== 'CLOSED'}
                     value={exitDate}
-                    onChange={(e) => setExitDate(e.target.value)}
-                    className="glass-input w-full rounded-xl px-3 py-2.5 text-xs text-white disabled:opacity-40"
+                    onChange={setExitDate}
+                    allowClear
+                    placeholder={status === 'CLOSED' ? 'Оберіть дату та час' : 'Лише для закритої угоди'}
                   />
                 </div>
               </div>
