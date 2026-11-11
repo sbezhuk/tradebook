@@ -164,7 +164,9 @@ export const AppContent: React.FC = () => {
           onSearchChange={handleGlobalSearch}
           onOpenNewTrade={handleOpenNew}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          openTradesCount={analytics?.summary.open_trades ?? 0}
+          trades={trades}
+          onSelectTrade={handleOpenDetail}
+          onSelectTab={setCurrentTab}
         />
 
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-7">
