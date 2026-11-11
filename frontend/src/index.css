@@ -200,7 +200,7 @@ html[data-theme="light"] :is([class^="text-white"], [class*=" text-white"]):not(
   color: #1b0f2e;
 }
 
-html[data-theme="light"] :is([class^="text-white/"], [class*=" text-white/"]) {
+html[data-theme="light"] :is([class^="text-white/"], [class*=" text-white/"]):not(.accent-pill):not(.accent-pill *) {
   color: rgba(88, 28, 135, 0.25);
 }
 
