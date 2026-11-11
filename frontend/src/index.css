@@ -39,6 +39,15 @@ html[data-theme="light"] {
     color: #0e071a;
   }
 
+  button:focus {
+    outline: none;
+  }
+
+  button:focus-visible {
+    outline: 2px solid rgba(196, 155, 255, 0.65);
+    outline-offset: 2px;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -68,9 +77,26 @@ html[data-theme="light"] {
 }
 
 html[data-theme="light"] .glass-panel {
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(124, 58, 237, 0.14);
   box-shadow: 0 12px 32px -10px rgba(88, 28, 135, 0.11), inset 0 1px 0 0 rgba(255, 255, 255, 0.92);
+}
+
+/* High-opacity frosted floating menus & popovers so underlying cards never bleed through */
+.glass-popover {
+  background: rgba(16, 10, 29, 0.95);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(216, 180, 254, 0.14);
+  box-shadow: 0 22px 54px -12px rgba(0, 0, 0, 0.78), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] .glass-popover {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  box-shadow: 0 22px 50px -12px rgba(88, 28, 135, 0.22), inset 0 1px 0 0 rgba(255, 255, 255, 1);
 }
 
 .glass-sidebar {
@@ -183,15 +209,15 @@ html[data-theme="light"] :is([class*="hover:text-white"]):hover:not(.accent-pill
 }
 
 html[data-theme="light"] :is([class^="text-purple-100"], [class*=" text-purple-100"]) {
-  color: rgba(36, 17, 68, 0.88);
+  color: rgba(36, 17, 68, 0.92);
 }
 
 html[data-theme="light"] :is([class^="text-purple-200"], [class*=" text-purple-200"]) {
-  color: rgba(74, 42, 128, 0.76);
+  color: rgba(74, 42, 128, 0.82);
 }
 
 html[data-theme="light"] :is([class^="text-purple-300"], [class*=" text-purple-300"]) {
-  color: rgba(91, 33, 182, 0.82);
+  color: rgba(91, 33, 182, 0.88);
 }
 
 html[data-theme="light"] :is([class^="text-[#c49bff]"], [class*=" text-[#c49bff]"]):not(.accent-pill) {

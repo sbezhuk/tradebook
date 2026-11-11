@@ -60,7 +60,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md">
-      <div className="relative w-full max-w-lg glass-panel rounded-3xl overflow-hidden">
+      <div className="relative w-full max-w-lg glass-popover rounded-3xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div className="flex items-center space-x-2.5">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Trade, TradeFormData, MarketType, DirectionType, StatusType } from '../types';
 import { api } from '../api/client';
+import { GlassSelect } from './GlassSelect';
 import {
   X,
   Upload,
@@ -271,7 +272,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-xl glass-panel rounded-3xl overflow-hidden my-6">
+      <div className="relative w-full max-w-xl glass-popover rounded-3xl overflow-hidden my-6">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div>
@@ -339,18 +340,19 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Ринок</label>
-                  <select
+                  <GlassSelect
+                    variant="field"
                     value={market}
-                    onChange={(e) => setMarket(e.target.value as MarketType)}
-                    className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
-                  >
-                    <option value="CRYPTO" className="bg-[#120827]">Crypto</option>
-                    <option value="FOREX" className="bg-[#120827]">Forex</option>
-                    <option value="STOCKS" className="bg-[#120827]">Stocks</option>
-                    <option value="FUTURES" className="bg-[#120827]">Futures</option>
-                    <option value="COMMODITIES" className="bg-[#120827]">Commodities</option>
-                    <option value="OTHER" className="bg-[#120827]">Інше</option>
-                  </select>
+                    onChange={(val) => setMarket(val as MarketType)}
+                    options={[
+                      { value: 'CRYPTO', label: 'Crypto' },
+                      { value: 'FOREX', label: 'Forex' },
+                      { value: 'STOCKS', label: 'Stocks' },
+                      { value: 'FUTURES', label: 'Futures' },
+                      { value: 'COMMODITIES', label: 'Commodities' },
+                      { value: 'OTHER', label: 'Інше' },
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -383,15 +385,16 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Статус</label>
-                  <select
+                  <GlassSelect
+                    variant="field"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as StatusType)}
-                    className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
-                  >
-                    <option value="CLOSED" className="bg-[#120827]">Закрита</option>
-                    <option value="OPEN" className="bg-[#120827]">Відкрита</option>
-                    <option value="CANCELLED" className="bg-[#120827]">Скасована</option>
-                  </select>
+                    onChange={(val) => setStatus(val as StatusType)}
+                    options={[
+                      { value: 'CLOSED', label: 'Закрита' },
+                      { value: 'OPEN', label: 'Відкрита' },
+                      { value: 'CANCELLED', label: 'Скасована' },
+                    ]}
+                  />
                 </div>
               </div>
 

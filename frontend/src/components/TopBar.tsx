@@ -279,7 +279,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: EXPORT & API ==================== */}
         {openMenu === 'export' && (
-          <div className="absolute right-0 top-12 w-64 glass-panel rounded-2xl p-2 shadow-2xl z-40">
+          <div className="absolute right-0 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-semibold text-white">Імпорт / Експорт та API</div>
               <div className="text-[10px] text-purple-200/45">Hyperliquid CSV, звіт та інтеграція</div>
@@ -339,7 +339,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: NOTIFICATIONS ==================== */}
         {openMenu === 'notifications' && (
-          <div className="absolute right-0 top-12 w-72 sm:w-80 glass-panel rounded-2xl p-3 shadow-2xl z-40">
+          <div className="absolute right-0 top-12 w-72 sm:w-80 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-3 z-50">
             <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/[0.06]">
               <span className="text-xs font-semibold text-white">Сповіщення та статус</span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c49bff]/15 text-[#c49bff]">
@@ -404,7 +404,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: THEME ==================== */}
         {openMenu === 'theme' && (
-          <div className="absolute right-10 top-12 w-60 glass-panel rounded-2xl p-2 shadow-2xl z-40">
+          <div className="absolute right-0 sm:right-10 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-semibold text-white">Тема оформлення</div>
               <div className="text-[10px] text-purple-200/45">
@@ -461,7 +461,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: PROFILE ==================== */}
         {openMenu === 'profile' && user && (
-          <div className="absolute right-0 top-12 w-64 glass-panel rounded-2xl p-2 shadow-2xl z-40">
+          <div className="absolute right-0 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-bold text-white">{user.username}</div>
               <div className="text-[11px] text-purple-200/50 truncate">{user.email}</div>

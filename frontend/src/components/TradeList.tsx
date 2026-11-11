@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Trade, MonthlySummaryItem } from '../types';
+import { GlassSelect } from './GlassSelect';
 import {
   Filter,
   ArrowUpRight,
@@ -62,106 +63,107 @@ export const TradeList: React.FC<TradeListProps> = ({
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('uk-UA', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}.${mm}, ${hh}:${min}`;
   };
 
   return (
     <div className="space-y-5">
-      {/* Header + Filter Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Журнал угод</h1>
-          <p className="text-sm text-purple-200/50 mt-1">
-            Всі відкриті та закриті позиції з детальним аналізом виконання.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {onSelectMonth && (
-            <select
-              value={selectedMonth}
-              onChange={(e) => onSelectMonth(e.target.value)}
-              className="glass-input rounded-full px-3.5 py-1.5 text-xs text-[#e2ccff] font-medium cursor-pointer border border-[#c49bff]/25"
-            >
-              <option value="" className="bg-[#120827]">Всі місяці</option>
-              {availableMonths.map((m) => (
-                <option key={m.month} value={m.month} className="bg-[#120827]">
-                  {m.label} ({m.trades_count})
-                </option>
-              ))}
-            </select>
-          )}
-
-          <select
-            value={selectedMarket}
-            onChange={(e) => {
-              setSelectedMarket(e.target.value);
-              triggerFilter({ market: e.target.value });
-            }}
-            className="glass-input rounded-full px-3.5 py-1.5 text-xs text-purple-100 cursor-pointer"
-          >
-            <option value="" className="bg-[#120827]">Всі ринки</option>
-            <option value="CRYPTO" className="bg-[#120827]">Crypto</option>
-            <option value="FOREX" className="bg-[#120827]">Forex</option>
-            <option value="STOCKS" className="bg-[#120827]">Stocks</option>
-            <option value="FUTURES" className="bg-[#120827]">Futures</option>
-            <option value="COMMODITIES" className="bg-[#120827]">Commodities</option>
-          </select>
-
-          <select
-            value={selectedDirection}
-            onChange={(e) => {
-              setSelectedDirection(e.target.value);
-              triggerFilter({ direction: e.target.value });
-            }}
-            className="glass-input rounded-full px-3.5 py-1.5 text-xs text-purple-100 cursor-pointer"
-          >
-            <option value="" className="bg-[#120827]">Всі сторони</option>
-            <option value="LONG" className="bg-[#120827]">Long</option>
-            <option value="SHORT" className="bg-[#120827]">Short</option>
-          </select>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value);
-              triggerFilter({ status: e.target.value });
-            }}
-            className="glass-input rounded-full px-3.5 py-1.5 text-xs text-purple-100 cursor-pointer"
-          >
-            <option value="" className="bg-[#120827]">Всі статуси</option>
-            <option value="CLOSED" className="bg-[#120827]">Закриті</option>
-            <option value="OPEN" className="bg-[#120827]">Відкриті</option>
-            <option value="CANCELLED" className="bg-[#120827]">Скасовані</option>
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              triggerFilter({ sort_by: e.target.value });
-            }}
-            className="glass-input rounded-full px-3.5 py-1.5 text-xs text-purple-100 cursor-pointer"
-          >
-            <option value="date_desc" className="bg-[#120827]">Спочатку новіші</option>
-            <option value="date_asc" className="bg-[#120827]">Спочатку старіші</option>
-            <option value="pnl_desc" className="bg-[#120827]">За прибутком</option>
-            <option value="pnl_asc" className="bg-[#120827]">За збитком</option>
-          </select>
+      {/* Header + Clean Adaptive Filter Toolbar */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Журнал угод</h1>
+            <p className="text-sm text-purple-200/50 mt-1">
+              Всі відкриті та закриті позиції з детальним аналізом виконання.
+            </p>
+          </div>
 
           <button
             type="button"
             onClick={onOpenImport}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer"
+            className="h-9 inline-flex items-center space-x-1.5 px-4 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer self-start sm:self-auto shrink-0 whitespace-nowrap"
           >
             <UploadCloud className="w-3.5 h-3.5 text-[#c49bff]" />
             <span>Імпорт Hyperliquid</span>
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {onSelectMonth && (
+            <GlassSelect
+              value={selectedMonth}
+              onChange={(val) => onSelectMonth(val)}
+              highlight
+              options={[
+                { value: '', label: 'Всі місяці' },
+                ...availableMonths.map((m) => ({
+                  value: m.month,
+                  label: `${m.label} (${m.trades_count})`,
+                })),
+              ]}
+            />
+          )}
+
+          <GlassSelect
+            value={selectedMarket}
+            onChange={(val) => {
+              setSelectedMarket(val);
+              triggerFilter({ market: val });
+            }}
+            options={[
+              { value: '', label: 'Всі ринки' },
+              { value: 'CRYPTO', label: 'Crypto' },
+              { value: 'FOREX', label: 'Forex' },
+              { value: 'STOCKS', label: 'Stocks' },
+              { value: 'FUTURES', label: 'Futures' },
+              { value: 'COMMODITIES', label: 'Commodities' },
+            ]}
+          />
+
+          <GlassSelect
+            value={selectedDirection}
+            onChange={(val) => {
+              setSelectedDirection(val);
+              triggerFilter({ direction: val });
+            }}
+            options={[
+              { value: '', label: 'Всі сторони' },
+              { value: 'LONG', label: 'Long' },
+              { value: 'SHORT', label: 'Short' },
+            ]}
+          />
+
+          <GlassSelect
+            value={selectedStatus}
+            onChange={(val) => {
+              setSelectedStatus(val);
+              triggerFilter({ status: val });
+            }}
+            options={[
+              { value: '', label: 'Всі статуси' },
+              { value: 'CLOSED', label: 'Закриті' },
+              { value: 'OPEN', label: 'Відкриті' },
+              { value: 'CANCELLED', label: 'Скасовані' },
+            ]}
+          />
+
+          <GlassSelect
+            value={sortBy}
+            onChange={(val) => {
+              setSortBy(val);
+              triggerFilter({ sort_by: val });
+            }}
+            options={[
+              { value: 'date_desc', label: 'Спочатку новіші' },
+              { value: 'date_asc', label: 'Спочатку старіші' },
+              { value: 'pnl_desc', label: 'За прибутком' },
+              { value: 'pnl_asc', label: 'За збитком' },
+            ]}
+          />
         </div>
       </div>
 
@@ -192,17 +194,17 @@ export const TradeList: React.FC<TradeListProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-white/[0.06] bg-white/[0.02] text-purple-200/50 font-medium">
-                  <th className="py-3.5 px-5">Інструмент</th>
-                  <th className="py-3.5 px-3">Сторона</th>
-                  <th className="py-3.5 px-3">Статус</th>
-                  <th className="py-3.5 px-3">Вхід / Вихід</th>
-                  <th className="py-3.5 px-3">Об'єм</th>
-                  <th className="py-3.5 px-3">SL / TP</th>
-                  <th className="py-3.5 px-4 text-right">PnL / ROI</th>
-                  <th className="py-3.5 px-3 text-center">R:R</th>
-                  <th className="py-3.5 px-3">Теги</th>
-                  <th className="py-3.5 px-4 text-center">Дії</th>
+                <tr className="border-b border-white/[0.06] bg-white/[0.02] text-purple-200/50 font-medium whitespace-nowrap">
+                  <th className="py-3.5 pl-4 pr-3">Інструмент</th>
+                  <th className="py-3.5 px-2.5">Сторона</th>
+                  <th className="py-3.5 px-2.5">Статус</th>
+                  <th className="py-3.5 px-2.5">Вхід / Вихід</th>
+                  <th className="py-3.5 px-2.5">Об'єм</th>
+                  <th className="py-3.5 px-2.5">SL / TP</th>
+                  <th className="py-3.5 px-3 text-right">PnL / ROI</th>
+                  <th className="py-3.5 px-2.5 text-center">R:R</th>
+                  <th className="py-3.5 px-2.5">Теги</th>
+                  <th className="py-3.5 pl-2.5 pr-4 text-center">Дії</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
@@ -218,7 +220,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                       className="hover:bg-white/[0.03] transition-colors group cursor-pointer"
                       onClick={() => onSelectTrade(trade)}
                     >
-                      <td className="py-3.5 px-5">
+                      <td className="py-3.5 pl-4 pr-3 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-white text-sm group-hover:text-[#c49bff] transition-colors">
                             {trade.symbol}
@@ -227,7 +229,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                             <ImageIcon className="w-3.5 h-3.5 text-[#c49bff]/70" />
                           )}
                         </div>
-                        <div className="flex items-center space-x-2 text-[11px] text-purple-200/45 mt-0.5">
+                        <div className="flex items-center space-x-1.5 text-[11px] text-purple-200/45 mt-0.5 whitespace-nowrap">
                           <span className="font-mono text-[10px] text-purple-200/60">
                             {trade.market}
                           </span>
@@ -236,7 +238,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-3">
+                      <td className="py-3.5 px-2.5 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                             isLong
@@ -249,7 +251,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-3">
+                      <td className="py-3.5 px-2.5 whitespace-nowrap">
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
                             isOpen
@@ -261,23 +263,23 @@ export const TradeList: React.FC<TradeListProps> = ({
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono text-[11px]">
+                      <td className="py-3.5 px-2.5 font-mono text-[11px] whitespace-nowrap">
                         <div className="text-white font-medium">{trade.entry_price}</div>
                         <div className="text-purple-200/45">
                           {trade.exit_price ? trade.exit_price : '—'}
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono text-purple-100/80">
+                      <td className="py-3.5 px-2.5 font-mono text-purple-100/80 whitespace-nowrap">
                         {trade.quantity}
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono text-[11px]">
+                      <td className="py-3.5 px-2.5 font-mono text-[11px] whitespace-nowrap">
                         <div className="text-rose-400/80">{trade.stop_loss ?? '—'}</div>
                         <div className="text-[#c49bff]/80">{trade.take_profit ?? '—'}</div>
                       </td>
 
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-3 text-right whitespace-nowrap">
                         {isOpen ? (
                           <span className="text-amber-300 font-mono text-[11px]">в процесі</span>
                         ) : (
@@ -296,7 +298,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3.5 px-3 text-center">
+                      <td className="py-3.5 px-2.5 text-center whitespace-nowrap">
                         {trade.r_multiple !== null && trade.r_multiple !== undefined ? (
                           <span
                             className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold ${

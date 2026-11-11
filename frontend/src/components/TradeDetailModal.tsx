@@ -64,7 +64,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-3xl glass-panel rounded-3xl overflow-hidden my-8">
+      <div className="relative w-full max-w-3xl glass-popover rounded-3xl overflow-hidden my-8">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/15 bg-purple-950/40">
           <div className="flex items-center space-x-3.5">
