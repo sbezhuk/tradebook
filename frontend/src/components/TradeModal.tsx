@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import type { Trade, TradeFormData, MarketType, DirectionType, StatusType } from '../types';
 import { api } from '../api/client';
-import { 
-  X, 
-  Upload, 
-  Star, 
-  ShieldCheck, 
-  ShieldAlert, 
-  Calculator, 
-  Clock, 
+import {
+  X,
+  Upload,
+  Star,
+  ShieldCheck,
+  ShieldAlert,
+  Calculator,
+  Clock,
   Tag as TagIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ArrowRight,
+  ArrowLeft,
+  Check,
 } from 'lucide-react';
 
 interface TradeModalProps {
@@ -20,6 +23,17 @@ interface TradeModalProps {
   editTrade?: Trade | null;
 }
 
+const QUICK_SYMBOLS: Record<MarketType, string[]> = {
+  CRYPTO: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
+  FOREX: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
+  STOCKS: ['NVDA', 'AAPL', 'TSLA'],
+  FUTURES: ['NQ1!', 'ES1!'],
+  COMMODITIES: ['XAU/USD', 'WTI'],
+  OTHER: [],
+};
+
+const QUICK_TAGS = ['Breakout', 'SupportBounce', 'TrendContinuation', 'FVG', 'LondonOpen', 'NYSession'];
+
 export const TradeModal: React.FC<TradeModalProps> = ({
   isOpen,
   onClose,
@@ -27,6 +41,8 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   editTrade,
 }) => {
   const isEditing = !!editTrade;
+
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [symbol, setSymbol] = useState('');
   const [market, setMarket] = useState<MarketType>('CRYPTO');
@@ -54,7 +70,19 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const formatForInput = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+    } catch {
+      return '';
+    }
+  };
+
   useEffect(() => {
+    setStep(1);
+    setError(null);
     if (editTrade) {
       setSymbol(editTrade.symbol);
       setMarket(editTrade.market);
@@ -63,7 +91,11 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setEntryDate(formatForInput(editTrade.entry_date));
       setExitDate(editTrade.exit_date ? formatForInput(editTrade.exit_date) : '');
       setEntryPrice(String(editTrade.entry_price));
-      setExitPrice(editTrade.exit_price !== null && editTrade.exit_price !== undefined ? String(editTrade.exit_price) : '');
+      setExitPrice(
+        editTrade.exit_price !== null && editTrade.exit_price !== undefined
+          ? String(editTrade.exit_price)
+          : ''
+      );
       setQuantity(String(editTrade.quantity));
       setStopLoss(editTrade.stop_loss ? String(editTrade.stop_loss) : '');
       setTakeProfit(editTrade.take_profit ? String(editTrade.take_profit) : '');
@@ -95,18 +127,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setFollowedRules(true);
       setChartUrl('');
     }
-    setError(null);
   }, [editTrade, isOpen]);
-
-  const formatForInput = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      const tzOffset = d.getTimezoneOffset() * 60000;
-      return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-    } catch {
-      return '';
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -139,6 +160,43 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     }
   }
 
+  const validateStep1 = () => {
+    if (!symbol.trim()) {
+      setError('Будь ласка, вкажіть символ або пару');
+      return false;
+    }
+    if (!numEntry || numEntry <= 0) {
+      setError('Вкажіть коректну ціну входу');
+      return false;
+    }
+    if (!numQty || numQty <= 0) {
+      setError('Вкажіть коректний об’єм / кількість');
+      return false;
+    }
+    if (status === 'CLOSED' && (!numExit || numExit <= 0)) {
+      setError('Для закритої угоди вкажіть ціну виходу (або змініть статус на «Відкрита»)');
+      return false;
+    }
+    setError(null);
+    return true;
+  };
+
+  const handleGoToStep = (target: 1 | 2 | 3) => {
+    if (target > 1 && !validateStep1()) return;
+    setError(null);
+    setStep(target);
+  };
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!validateStep1()) return;
+      setStep(2);
+    } else if (step === 2) {
+      setError(null);
+      setStep(3);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -155,20 +213,21 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!symbol.trim()) {
-      setError('Будь ласка, вкажіть символ');
-      return;
+  const toggleQuickTag = (tag: string) => {
+    const current = tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (current.includes(tag)) {
+      setTags(current.filter((t) => t !== tag).join(', '));
+    } else {
+      setTags([...current, tag].join(', '));
     }
-    if (!numEntry || numEntry <= 0) {
-      setError('Вкажіть коректну ціну входу');
-      return;
-    }
-    if (!numQty || numQty <= 0) {
-      setError('Вкажіть коректний об’єм / кількість');
-      return;
-    }
+  };
+
+  const handleSaveSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!validateStep1()) return;
 
     setSaving(true);
     setError(null);
@@ -179,7 +238,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         market,
         direction,
         status,
-        entry_date: new Date(entryDate).toISOString(),
+        entry_date: entryDate ? new Date(entryDate).toISOString() : new Date().toISOString(),
         exit_date: status === 'CLOSED' && exitDate ? new Date(exitDate).toISOString() : null,
         entry_price: numEntry,
         exit_price: status === 'CLOSED' && numExit > 0 ? numExit : null,
@@ -204,388 +263,507 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     }
   };
 
+  const stepsInfo = [
+    { num: 1 as const, label: 'Позиція та ціни' },
+    { num: 2 as const, label: 'Ризик і час' },
+    { num: 3 as const, label: 'Нотатки та графік' },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-2xl glass-panel rounded-3xl overflow-hidden my-8">
+      <div className="relative w-full max-w-xl glass-panel rounded-3xl overflow-hidden my-6">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/15 bg-purple-950/40">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div>
-            <h2 className="text-lg font-black text-white tracking-tight">
-              {isEditing ? `Редагувати угоду #${editTrade.id} (${editTrade.symbol})` : 'Додати нову угоду'}
+            <h2 className="text-base font-bold text-white tracking-tight">
+              {isEditing ? `Редагувати ${editTrade.symbol}` : 'Нова угода'}
             </h2>
-            <p className="text-xs text-purple-300/70 mt-0.5">
-              Введіть параметри сетапу, ризик-менеджменту та нотатки
+            <p className="text-[11px] text-purple-200/50 mt-0.5">
+              Крок {step} з 3 — {stepsInfo[step - 1].label}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-purple-300/60 hover:text-white hover:bg-purple-900/40 rounded-xl transition-colors"
+            className="p-2 text-purple-200/50 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Clickable Stepper Bar */}
+        <div className="px-6 pt-4 pb-2 flex items-center gap-2">
+          {stepsInfo.map((s) => {
+            const isActive = step === s.num;
+            const isDone = step > s.num;
+            return (
+              <button
+                key={s.num}
+                type="button"
+                onClick={() => handleGoToStep(s.num)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-[#c49bff]/15 text-[#c49bff] border border-[#c49bff]/35'
+                    : isDone
+                    ? 'bg-white/[0.04] text-purple-100/80 border border-white/[0.08]'
+                    : 'bg-white/[0.02] text-purple-200/45 border border-white/[0.05] hover:text-purple-200/80'
+                }`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    isActive
+                      ? 'bg-[#c49bff] text-[#110820]'
+                      : isDone
+                      ? 'bg-[#c49bff]/30 text-[#c49bff]'
+                      : 'bg-white/[0.07] text-purple-200/50'
+                  }`}
+                >
+                  {isDone ? <Check className="w-3 h-3 stroke-[3]" /> : s.num}
+                </span>
+                <span className="hidden sm:inline truncate">{s.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+          <div className="mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
             {error}
           </div>
         )}
 
-        {/* Live Calculation Preview Banner */}
-        {numEntry > 0 && numExit > 0 && status === 'CLOSED' && (
-          <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-purple-950/40 border border-purple-500/20 backdrop-blur-md flex items-center justify-between text-xs shadow-[0_4px_20px_rgba(147,51,234,0.15)]">
-            <div className="flex items-center space-x-2 text-purple-300/80">
-              <Calculator className="w-4 h-4 text-purple-400" />
-              <span className="font-semibold">Розрахунок:</span>
-            </div>
-            <div className="flex items-center space-x-4 font-mono font-bold">
-              <span className={livePnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                PnL: {livePnl >= 0 ? '+' : ''}${livePnl.toFixed(2)}
-              </span>
-              <span className={liveRoi >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                ROI: {liveRoi >= 0 ? '+' : ''}{liveRoi.toFixed(2)}%
-              </span>
-              {liveRR !== null && (
-                <span className="text-purple-300">
-                  R:R: {liveRR > 0 ? `+${liveRR}R` : `${liveRR}R`}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Market & Direction & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Market */}
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Ринок</label>
-              <select
-                value={market}
-                onChange={(e) => setMarket(e.target.value as MarketType)}
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
-              >
-                <option value="CRYPTO" className="bg-[#120827]">Crypto (BTC, ETH...)</option>
-                <option value="FOREX" className="bg-[#120827]">Forex (EUR/USD...)</option>
-                <option value="STOCKS" className="bg-[#120827]">Stocks (NVDA, AAPL...)</option>
-                <option value="FUTURES" className="bg-[#120827]">Futures (NQ, ES...)</option>
-                <option value="COMMODITIES" className="bg-[#120827]">Commodities (Gold, Oil)</option>
-                <option value="OTHER" className="bg-[#120827]">Інше</option>
-              </select>
-            </div>
-
-            {/* Direction */}
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Сторона</label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-purple-950/40 border border-purple-500/20 rounded-xl backdrop-blur-md">
-                <button
-                  type="button"
-                  onClick={() => setDirection('LONG')}
-                  className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                    direction === 'LONG'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                      : 'text-purple-300/60 hover:text-white'
-                  }`}
-                >
-                  LONG 🟢
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDirection('SHORT')}
-                  className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                    direction === 'SHORT'
-                      ? 'bg-rose-500/20 text-rose-400 border border-rose-400/40 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
-                      : 'text-purple-300/60 hover:text-white'
-                  }`}
-                >
-                  SHORT 🔴
-                </button>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Статус угоди</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as StatusType)}
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
-              >
-                <option value="CLOSED" className="bg-[#120827]">Закрита (Фіксований PnL)</option>
-                <option value="OPEN" className="bg-[#120827]">Відкрита (В процесі)</option>
-                <option value="CANCELLED" className="bg-[#120827]">Скасована</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Symbol, Quantity, Fees */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Символ / Пара *</label>
-              <input
-                type="text"
-                required
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="BTC/USDT або AAPL"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40 uppercase font-mono font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Об'єм / Розмір позиції *</label>
-              <input
-                type="number"
-                step="any"
-                required
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="1.0"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Комісії ($)</label>
-              <input
-                type="number"
-                step="any"
-                value={fees}
-                onChange={(e) => setFees(e.target.value)}
-                placeholder="0.0"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Prices: Entry, Exit, SL, TP */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Ціна входу *</label>
-              <input
-                type="number"
-                step="any"
-                required
-                value={entryPrice}
-                onChange={(e) => setEntryPrice(e.target.value)}
-                placeholder="65000"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">
-                Ціна виходу {status === 'CLOSED' ? '*' : '(опц.)'}
-              </label>
-              <input
-                type="number"
-                step="any"
-                disabled={status === 'OPEN'}
-                value={exitPrice}
-                onChange={(e) => setExitPrice(e.target.value)}
-                placeholder={status === 'OPEN' ? 'Відкрита' : '68000'}
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold disabled:opacity-40"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-rose-400 mb-1.5">Stop Loss</label>
-              <input
-                type="number"
-                step="any"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                placeholder="64000"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-rose-300 font-mono font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-emerald-400 mb-1.5">Take Profit</label>
-              <input
-                type="number"
-                step="any"
-                value={takeProfit}
-                onChange={(e) => setTakeProfit(e.target.value)}
-                placeholder="70000"
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono font-semibold"
-              />
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5 flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5 text-purple-400" />
-                <span>Час відкриття</span>
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={entryDate}
-                onChange={(e) => setEntryDate(e.target.value)}
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5 flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5 text-purple-400" />
-                <span>Час закриття</span>
-              </label>
-              <input
-                type="datetime-local"
-                disabled={status === 'OPEN'}
-                value={exitDate}
-                onChange={(e) => setExitDate(e.target.value)}
-                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white disabled:opacity-40"
-              />
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-xs font-semibold text-purple-200 mb-1.5 flex items-center space-x-1">
-              <TagIcon className="w-3.5 h-3.5 text-purple-400" />
-              <span>Теги / Сетапи (через кому)</span>
-            </label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="Breakout, SupportBounce, LondonSession, FVG"
-              className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Причини входу (Сетап)</label>
-              <textarea
-                rows={3}
-                value={setupNotes}
-                onChange={(e) => setSetupNotes(e.target.value)}
-                placeholder="Рівень підтримки на 4H, перекупленість RSI, зняття ліквідності..."
-                className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-purple-200 mb-1.5">Ретроспектива та висновки</label>
-              <textarea
-                rows={3}
-                value={postTradeNotes}
-                onChange={(e) => setPostTradeNotes(e.target.value)}
-                placeholder="Що пішло добре, які помилки було допущено, чи не було FOMO..."
-                className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
-              />
-            </div>
-          </div>
-
-          {/* Discipline & Psychology Rating */}
-          <div className="p-4 bg-purple-950/40 border border-purple-500/20 rounded-2xl backdrop-blur-md space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-xs font-bold text-white block">Оцінка дисципліни плану</span>
-                <span className="text-[11px] text-purple-300/60">Наскільки ви слідували торговій системі?</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setDisciplineRating(star)}
-                    className="p-1 focus:outline-none transition-transform hover:scale-110"
+        <form onSubmit={handleSaveSubmit} className="p-6 space-y-5">
+          {/* ==================== STEP 1: CORE POSITION & PRICES ==================== */}
+          {step === 1 && (
+            <div className="space-y-4">
+              {/* Market, Direction, Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Ринок</label>
+                  <select
+                    value={market}
+                    onChange={(e) => setMarket(e.target.value as MarketType)}
+                    className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
                   >
-                    <Star
-                      className={`w-5 h-5 ${
-                        star <= disciplineRating
-                          ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                          : 'text-purple-900/60'
+                    <option value="CRYPTO" className="bg-[#120827]">Crypto</option>
+                    <option value="FOREX" className="bg-[#120827]">Forex</option>
+                    <option value="STOCKS" className="bg-[#120827]">Stocks</option>
+                    <option value="FUTURES" className="bg-[#120827]">Futures</option>
+                    <option value="COMMODITIES" className="bg-[#120827]">Commodities</option>
+                    <option value="OTHER" className="bg-[#120827]">Інше</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Сторона</label>
+                  <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                    <button
+                      type="button"
+                      onClick={() => setDirection('LONG')}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        direction === 'LONG'
+                          ? 'bg-[#c49bff] text-[#110820]'
+                          : 'text-purple-200/55 hover:text-white'
                       }`}
-                    />
-                  </button>
-                ))}
+                    >
+                      LONG
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDirection('SHORT')}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        direction === 'SHORT'
+                          ? 'bg-rose-500 text-white'
+                          : 'text-purple-200/55 hover:text-white'
+                      }`}
+                    >
+                      SHORT
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Статус</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as StatusType)}
+                    className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
+                  >
+                    <option value="CLOSED" className="bg-[#120827]">Закрита</option>
+                    <option value="OPEN" className="bg-[#120827]">Відкрита</option>
+                    <option value="CANCELLED" className="bg-[#120827]">Скасована</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <div className="pt-2.5 border-t border-purple-500/15 flex items-center justify-between">
-              <label className="flex items-center space-x-2.5 cursor-pointer">
+              {/* Symbol + Quick Suggestions */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-purple-200/70">Символ / Пара *</label>
+                  <div className="flex items-center gap-1">
+                    {QUICK_SYMBOLS[market]?.map((sym) => (
+                      <button
+                        key={sym}
+                        type="button"
+                        onClick={() => setSymbol(sym)}
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-[#c49bff]/20 text-purple-200/65 hover:text-[#c49bff] border border-white/[0.06] transition-colors"
+                      >
+                        {sym}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <input
-                  type="checkbox"
-                  checked={followedRules}
-                  onChange={(e) => setFollowedRules(e.target.checked)}
-                  className="rounded bg-purple-950 border-purple-500/40 text-purple-600 focus:ring-0 w-4 h-4"
+                  type="text"
+                  required
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  placeholder="Напр. BTC/USDT, EUR/USD, NVDA"
+                  className="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-purple-200/35 uppercase font-mono font-bold"
                 />
-                <span className="text-xs text-purple-200 font-medium">Я повністю дотримався правил ризик-менеджменту</span>
-              </label>
+              </div>
 
-              {followedRules ? (
-                <span className="flex items-center space-x-1 text-emerald-400 text-[11px] font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Правил дотримано</span>
-                </span>
-              ) : (
-                <span className="flex items-center space-x-1 text-rose-400 text-[11px] font-bold">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>Порушення правил</span>
-                </span>
+              {/* Quantity, Entry Price, Exit Price */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Об'єм позиції *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="1.0"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Ціна входу *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={entryPrice}
+                    onChange={(e) => setEntryPrice(e.target.value)}
+                    placeholder="65000"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">
+                    Ціна виходу {status === 'CLOSED' ? '*' : ''}
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    disabled={status === 'OPEN'}
+                    value={exitPrice}
+                    onChange={(e) => setExitPrice(e.target.value)}
+                    placeholder={status === 'OPEN' ? 'Відкрита' : '68000'}
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono disabled:opacity-40"
+                  />
+                </div>
+              </div>
+
+              {/* Live PnL Preview */}
+              {numEntry > 0 && numExit > 0 && status === 'CLOSED' && (
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-2 text-purple-200/65">
+                    <Calculator className="w-4 h-4 text-[#c49bff]" />
+                    <span>Попередній результат:</span>
+                  </div>
+                  <div className="flex items-center space-x-4 font-mono font-bold">
+                    <span className={livePnl >= 0 ? 'text-[#c49bff]' : 'text-rose-400'}>
+                      {livePnl >= 0 ? '+' : ''}${livePnl.toFixed(2)}
+                    </span>
+                    <span className={liveRoi >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                      {liveRoi >= 0 ? '+' : ''}{liveRoi.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Screenshot / Chart URL */}
-          <div>
-            <label className="block text-xs font-semibold text-purple-200 mb-1.5 flex items-center space-x-1">
-              <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
-              <span>Скріншот графіку або посилання (TradingView)</span>
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={chartUrl}
-                onChange={(e) => setChartUrl(e.target.value)}
-                placeholder="https://www.tradingview.com/x/... або файл"
-                className="glass-input flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
-              />
-              <label className="inline-flex items-center space-x-1.5 px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-400/30 text-purple-200 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-[0_2px_10px_rgba(147,51,234,0.2)]">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{uploading ? 'Завантаження...' : 'Файл'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </label>
-            </div>
-            {chartUrl && (
-              <div className="mt-2 text-[11px] text-fuchsia-300 truncate flex items-center space-x-1 font-medium">
-                <span>Графік прикріплено:</span>
-                <span className="underline">{chartUrl}</span>
+          {/* ==================== STEP 2: RISK & TIMING ==================== */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-rose-400/90 mb-1.5">Stop Loss</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={stopLoss}
+                    onChange={(e) => setStopLoss(e.target.value)}
+                    placeholder="64000"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-rose-300 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[#c49bff] mb-1.5">Take Profit</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={takeProfit}
+                    onChange={(e) => setTakeProfit(e.target.value)}
+                    placeholder="70000"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-purple-200 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Комісія ($)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={fees}
+                    onChange={(e) => setFees(e.target.value)}
+                    placeholder="0.0"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono"
+                  />
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-purple-500/15">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500/20 text-purple-300 rounded-xl text-xs font-semibold transition-colors"
-            >
-              Скасувати
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="accent-pill px-5 py-2 rounded-full text-xs font-bold transition-all disabled:opacity-50"
-            >
-              {saving ? 'Збереження...' : (isEditing ? 'Оновити угоду' : 'Зберегти угоду')}
-            </button>
+              {/* R:R live indicator */}
+              {liveRR !== null && (
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-between text-xs">
+                  <span className="text-purple-200/60">Реалізований Risk / Reward (R-Multiple):</span>
+                  <span className={`font-mono font-bold ${liveRR >= 0 ? 'text-[#c49bff]' : 'text-rose-400'}`}>
+                    {liveRR > 0 ? `+${liveRR}R` : `${liveRR}R`}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#c49bff]" />
+                    <span>Час відкриття</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={entryDate}
+                    onChange={(e) => setEntryDate(e.target.value)}
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-xs text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#c49bff]" />
+                    <span>Час закриття</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    disabled={status === 'OPEN'}
+                    value={exitDate}
+                    onChange={(e) => setExitDate(e.target.value)}
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-xs text-white disabled:opacity-40"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ==================== STEP 3: NOTES, DISCIPLINE & CHART ==================== */}
+          {step === 3 && (
+            <div className="space-y-4">
+              {/* Tags with quick clickable chips */}
+              <div>
+                <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                  <TagIcon className="w-3.5 h-3.5 text-[#c49bff]" />
+                  <span>Теги / Сетапи</span>
+                </label>
+                <input
+                  type="text"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="Breakout, SupportBounce, FVG..."
+                  className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-200/35"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {QUICK_TAGS.map((qt) => {
+                    const active = tags
+                      .split(',')
+                      .map((t) => t.trim())
+                      .includes(qt);
+                    return (
+                      <button
+                        key={qt}
+                        type="button"
+                        onClick={() => toggleQuickTag(qt)}
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full border transition-all ${
+                          active
+                            ? 'bg-[#c49bff] text-[#110820] border-[#c49bff] font-semibold'
+                            : 'bg-white/[0.03] text-purple-200/60 border-white/[0.07] hover:text-white'
+                        }`}
+                      >
+                        #{qt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Setup & Post-trade notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Причини входу (Сетап)</label>
+                  <textarea
+                    rows={3}
+                    value={setupNotes}
+                    onChange={(e) => setSetupNotes(e.target.value)}
+                    placeholder="Рівень, об'єми, ліквідність..."
+                    className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-200/35"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Ретроспектива та висновки</label>
+                  <textarea
+                    rows={3}
+                    value={postTradeNotes}
+                    onChange={(e) => setPostTradeNotes(e.target.value)}
+                    placeholder="Помилки, емоції, уроки..."
+                    className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-200/35"
+                  />
+                </div>
+              </div>
+
+              {/* Discipline compact box */}
+              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <label className="flex items-center space-x-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={followedRules}
+                    onChange={(e) => setFollowedRules(e.target.checked)}
+                    className="rounded bg-white/10 border-white/20 text-[#c49bff] focus:ring-0 w-4 h-4"
+                  />
+                  <span className="text-xs text-purple-100/85 flex items-center gap-1.5">
+                    {followedRules ? (
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#c49bff]" />
+                    ) : (
+                      <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                    )}
+                    <span>Дотримався правил плану</span>
+                  </span>
+                </label>
+
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDisciplineRating(star)}
+                      className="p-0.5 focus:outline-none transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`w-4 h-4 ${
+                          star <= disciplineRating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-white/15'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Screenshot / Chart URL */}
+              <div>
+                <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center space-x-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#c49bff]" />
+                  <span>Графік / Скріншот</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chartUrl}
+                    onChange={(e) => setChartUrl(e.target.value)}
+                    placeholder="Посилання на TradingView або файл"
+                    className="glass-input flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-200/35"
+                  />
+                  <label className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.1] text-purple-100 rounded-xl text-xs font-medium cursor-pointer transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploading ? '...' : 'Файл'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+                {chartUrl && (
+                  <div className="mt-1.5 text-[11px] text-[#c49bff] truncate">
+                    Прикріплено: {chartUrl}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ==================== WIZARD FOOTER ==================== */}
+          <div className="flex items-center justify-between pt-4 border-t border-white/[0.07]">
+            <div>
+              {step === 1 ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/75 text-xs font-medium transition-colors"
+                >
+                  Скасувати
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setStep((prev) => (prev === 3 ? 2 : 1));
+                  }}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/80 text-xs font-medium transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Назад</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2.5">
+              {step < 3 && (
+                <>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleSaveSubmit()}
+                    className="px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-100 text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    {saving ? 'Збереження...' : 'Зберегти зараз'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="accent-pill inline-flex items-center space-x-1.5 px-5 py-2 rounded-full text-xs font-bold"
+                  >
+                    <span>Далі</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+
+              {step === 3 && (
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="accent-pill px-5 py-2 rounded-full text-xs font-bold disabled:opacity-50"
+                >
+                  {saving ? 'Збереження...' : isEditing ? 'Оновити угоду' : 'Зберегти угоду'}
+                </button>
+              )}
+            </div>
           </div>
         </form>
       </div>
