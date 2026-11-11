@@ -75,11 +75,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const sidebarContent = (
-    <aside className="w-64 h-full glass-sidebar flex flex-col justify-between p-4 select-none">
+    <aside className="w-64 h-full glass-sidebar flex flex-col justify-between p-5 select-none">
       {/* Top section */}
       <div>
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-1.5 mb-7">
+        <div className="flex items-center justify-between px-1 mb-7">
           <div
             className="flex items-center space-x-3 cursor-pointer"
             onClick={() => handleNav('insights')}
@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation Items */}
-        <nav className="space-y-1">
+        <nav className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = currentTab === item.id;

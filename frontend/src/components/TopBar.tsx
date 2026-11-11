@@ -156,13 +156,14 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 border-b border-white/[0.05] bg-[#0b0714]/50 backdrop-blur-xl sticky top-0 z-30">
+    <header className="border-b border-white/[0.05] bg-[#0b0714]/50 backdrop-blur-xl sticky top-0 z-30">
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-3.5 flex items-center justify-between gap-4">
       {/* Mobile Menu Trigger + Search Bar */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-purple-200/70 hover:text-white cursor-pointer"
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08] text-purple-200/70 hover:text-white cursor-pointer shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -175,16 +176,16 @@ export const TopBar: React.FC<TopBarProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Пошук угод, символів, тегів..."
-            className="glass-input w-full rounded-full pl-10 pr-14 py-2 text-xs text-white placeholder-purple-200/40"
+            className="glass-input w-full h-10 rounded-full pl-11 pr-14 text-xs text-white placeholder-purple-200/40"
           />
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-white/[0.06] text-purple-200/50 border border-white/[0.08] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-md bg-white/[0.06] text-purple-200/50 border border-white/[0.08] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
             ⌘K
           </span>
         </div>
       </div>
 
       {/* Right circular action controls */}
-      <div ref={actionsRef} className="relative flex items-center space-x-2.5">
+      <div ref={actionsRef} className="relative flex items-center space-x-2.5 shrink-0">
         {/* 1. Add Trade (+) */}
         <button
           type="button"
@@ -193,7 +194,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             onOpenNewTrade();
           }}
           title="Додати нову угоду"
-          className="accent-pill w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+          className="accent-pill w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
         </button>
@@ -203,13 +204,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={() => setOpenMenu((prev) => (prev === 'export' ? null : 'export'))}
           title="Експорт та API посилання"
-          className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
             openMenu === 'export'
               ? 'bg-[#c49bff]/20 border-[#c49bff]/50 text-[#c49bff]'
               : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/[0.08] text-purple-200/70 hover:text-white'
           }`}
         >
-          <Send className="w-3.5 h-3.5" />
+          <Send className="w-4 h-4" />
         </button>
 
         {/* 3. Swagger REST API (</>) */}
@@ -218,9 +219,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           target="_blank"
           rel="noreferrer"
           title="Відкрити Swagger REST API"
-          className="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
-          <Code2 className="w-3.5 h-3.5" />
+          <Code2 className="w-4 h-4" />
         </a>
 
         {/* 3.5 Theme Switcher (Light / Dark / System) */}
@@ -228,18 +229,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={() => setOpenMenu((prev) => (prev === 'theme' ? null : 'theme'))}
           title="Змінити тему (Світла / Темна / Системна)"
-          className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+          className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
             openMenu === 'theme'
               ? 'bg-[#c49bff]/20 border-[#c49bff]/50 text-[#c49bff]'
               : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/[0.08] text-purple-200/70 hover:text-white'
           }`}
         >
           {theme === 'light' ? (
-            <Sun className="w-3.5 h-3.5" />
+            <Sun className="w-4 h-4" />
           ) : theme === 'dark' ? (
-            <Moon className="w-3.5 h-3.5" />
+            <Moon className="w-4 h-4" />
           ) : (
-            <Monitor className="w-3.5 h-3.5" />
+            <Monitor className="w-4 h-4" />
           )}
         </button>
 
@@ -248,15 +249,15 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={() => setOpenMenu((prev) => (prev === 'notifications' ? null : 'notifications'))}
           title="Сповіщення та відкриті позиції"
-          className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+          className={`relative w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
             openMenu === 'notifications'
               ? 'bg-[#c49bff]/20 border-[#c49bff]/50 text-[#c49bff]'
               : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/[0.08] text-purple-200/70 hover:text-white'
           }`}
         >
-          <Bell className="w-3.5 h-3.5" />
+          <Bell className="w-4 h-4" />
           {hasNotifications && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c49bff] shadow-[0_0_8px_#c49bff]" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#c49bff] shadow-[0_0_8px_#c49bff]" />
           )}
         </button>
 
@@ -268,7 +269,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             setOpenMenu((prev) => (prev === 'profile' ? null : 'profile'));
           }}
           title="Профіль користувача"
-          className={`w-9 h-9 rounded-full border font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-10 h-10 rounded-full border font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
             openMenu === 'profile'
               ? 'bg-[#c49bff] text-[#110820] border-[#c49bff]'
               : 'bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border-[#c49bff]/35 text-[#e2ccff]'
@@ -279,7 +280,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: EXPORT & API ==================== */}
         {openMenu === 'export' && (
-          <div className="absolute right-0 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
+          <div className="absolute right-0 top-13 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-semibold text-white">Імпорт / Експорт та API</div>
               <div className="text-[10px] text-purple-200/45">Hyperliquid CSV, звіт та інтеграція</div>
@@ -339,7 +340,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: NOTIFICATIONS ==================== */}
         {openMenu === 'notifications' && (
-          <div className="absolute right-0 top-12 w-72 sm:w-80 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-3 z-50">
+          <div className="absolute right-0 top-13 w-72 sm:w-80 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-3 z-50">
             <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/[0.06]">
               <span className="text-xs font-semibold text-white">Сповіщення та статус</span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c49bff]/15 text-[#c49bff]">
@@ -404,7 +405,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: THEME ==================== */}
         {openMenu === 'theme' && (
-          <div className="absolute right-0 sm:right-10 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
+          <div className="absolute right-0 sm:right-10 top-13 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-semibold text-white">Тема оформлення</div>
               <div className="text-[10px] text-purple-200/45">
@@ -461,7 +462,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* ==================== POPOVER: PROFILE ==================== */}
         {openMenu === 'profile' && user && (
-          <div className="absolute right-0 top-12 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
+          <div className="absolute right-0 top-13 w-64 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-2 z-50">
             <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
               <div className="text-xs font-bold text-white">{user.username}</div>
               <div className="text-[11px] text-purple-200/50 truncate">{user.email}</div>
@@ -599,6 +600,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             </div>
           </div>
         )}
+      </div>
       </div>
     </header>
   );

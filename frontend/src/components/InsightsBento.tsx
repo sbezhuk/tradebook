@@ -315,49 +315,49 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
       {subTab === 'bento' && (
         <div className="space-y-5">
           {/* Monthly Reporting Period KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="glass-panel rounded-2xl p-4">
-              <div className="text-[11px] text-purple-200/55 font-medium">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="glass-panel rounded-2xl p-5">
+              <div className="text-xs text-purple-200/55 font-medium">
                 PnL періоду ({periodLabel})
               </div>
               <div
-                className={`text-xl font-bold font-mono mt-1 ${
+                className={`text-2xl font-bold font-mono mt-1.5 ${
                   isPeriodPositive ? 'text-[#c49bff]' : 'text-rose-400'
                 }`}
               >
                 {isPeriodPositive ? '+' : '-'}${formatUsd(summary.total_pnl)}
               </div>
-              <div className="text-[11px] text-purple-200/45 mt-1">
+              <div className="text-[11px] text-purple-200/45 mt-1.5">
                 Середня угода: {summary.average_trade >= 0 ? '+' : '-'}${formatUsd(summary.average_trade)}
               </div>
             </div>
 
-            <div className="glass-panel rounded-2xl p-4">
-              <div className="text-[11px] text-purple-200/55 font-medium">Угод за період</div>
-              <div className="text-xl font-bold font-mono text-white mt-1">
+            <div className="glass-panel rounded-2xl p-5">
+              <div className="text-xs text-purple-200/55 font-medium">Угод за період</div>
+              <div className="text-2xl font-bold font-mono text-white mt-1.5">
                 {summary.total_trades}
               </div>
-              <div className="text-[11px] text-purple-200/45 mt-1">
+              <div className="text-[11px] text-purple-200/45 mt-1.5">
                 {summary.winning_trades} прибуткових • {summary.losing_trades} збиткових
               </div>
             </div>
 
-            <div className="glass-panel rounded-2xl p-4">
-              <div className="text-[11px] text-purple-200/55 font-medium">Вінрейт періоду</div>
-              <div className="text-xl font-bold font-mono text-white mt-1">
+            <div className="glass-panel rounded-2xl p-5">
+              <div className="text-xs text-purple-200/55 font-medium">Вінрейт періоду</div>
+              <div className="text-2xl font-bold font-mono text-white mt-1.5">
                 {summary.win_rate}%
               </div>
-              <div className="text-[11px] text-purple-200/45 mt-1">
+              <div className="text-[11px] text-purple-200/45 mt-1.5">
                 Найкраща: +${formatUsd(summary.best_trade)}
               </div>
             </div>
 
-            <div className="glass-panel rounded-2xl p-4">
-              <div className="text-[11px] text-purple-200/55 font-medium">Profit Factor</div>
-              <div className="text-xl font-bold font-mono text-[#c49bff] mt-1">
+            <div className="glass-panel rounded-2xl p-5">
+              <div className="text-xs text-purple-200/55 font-medium">Profit Factor</div>
+              <div className="text-2xl font-bold font-mono text-[#c49bff] mt-1.5">
                 {summary.profit_factor}
               </div>
-              <div className="text-[11px] text-purple-200/45 mt-1">
+              <div className="text-[11px] text-purple-200/45 mt-1.5">
                 Дисципліна: {summary.rule_discipline_rate}%
               </div>
             </div>

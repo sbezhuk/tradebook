@@ -195,16 +195,16 @@ export const TradeList: React.FC<TradeListProps> = ({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.02] text-purple-200/50 font-medium whitespace-nowrap">
-                  <th className="py-3.5 pl-4 pr-3">Інструмент</th>
-                  <th className="py-3.5 px-2.5">Сторона</th>
-                  <th className="py-3.5 px-2.5">Статус</th>
-                  <th className="py-3.5 px-2.5">Вхід / Вихід</th>
-                  <th className="py-3.5 px-2.5">Об'єм</th>
-                  <th className="py-3.5 px-2.5">SL / TP</th>
-                  <th className="py-3.5 px-3 text-right">PnL / ROI</th>
-                  <th className="py-3.5 px-2.5 text-center">R:R</th>
-                  <th className="py-3.5 px-2.5">Теги</th>
-                  <th className="py-3.5 pl-2.5 pr-4 text-center">Дії</th>
+                  <th className="py-4 pl-5 pr-3">Інструмент</th>
+                  <th className="py-4 px-3">Сторона</th>
+                  <th className="py-4 px-3">Статус</th>
+                  <th className="py-4 px-3">Вхід / Вихід</th>
+                  <th className="py-4 px-3">Об'єм</th>
+                  <th className="py-4 px-3">SL / TP</th>
+                  <th className="py-4 px-3 text-right">PnL / ROI</th>
+                  <th className="py-4 px-3 text-center">R:R</th>
+                  <th className="py-4 px-3">Теги</th>
+                  <th className="py-4 pl-3 pr-5 text-center">Дії</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
@@ -220,7 +220,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                       className="hover:bg-white/[0.03] transition-colors group cursor-pointer"
                       onClick={() => onSelectTrade(trade)}
                     >
-                      <td className="py-3.5 pl-4 pr-3 whitespace-nowrap">
+                      <td className="py-4 pl-5 pr-3 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-white text-sm group-hover:text-[#c49bff] transition-colors">
                             {trade.symbol}
@@ -316,7 +316,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3.5 px-3">
+                      <td className="py-4 px-3">
                         <div className="flex flex-wrap gap-1 max-w-[140px]">
                           {trade.tags ? (
                             trade.tags.split(',').slice(0, 2).map((t, idx) => (
@@ -333,7 +333,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-4 pl-3 pr-5 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => onSelectTrade(trade)}
