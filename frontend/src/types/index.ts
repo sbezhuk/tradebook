@@ -84,6 +84,9 @@ export interface SummaryStats {
   max_consecutive_wins: number;
   max_consecutive_losses: number;
   rule_discipline_rate: number;
+  period_deposits: number;
+  period_cumulative_deposits: number;
+  period_deposit_growth_pct: number | null;
 }
 
 export interface EquityPoint {
@@ -116,11 +119,17 @@ export interface MonthlySummaryItem {
   win_rate: number;
   total_pnl: number;
   profit_factor: number;
+  deposits_amount: number;
+  cumulative_deposits: number;
+  deposit_growth_pct: number | null;
 }
 
 export interface AnalyticsData {
   overall_total_pnl: number;
   overall_total_trades: number;
+  total_deposits: number;
+  current_balance: number;
+  overall_deposit_growth_pct: number | null;
   selected_month: string | null;
   available_months: MonthlySummaryItem[];
   summary: SummaryStats;
@@ -139,4 +148,25 @@ export interface HyperliquidImportResponse {
   open_count: number;
   total_pnl: number;
   trades: Trade[];
+}
+
+export interface Deposit {
+  id: number;
+  user_id: number;
+  amount: number;
+  deposit_date: string;
+  note?: string | null;
+  created_at: string;
+}
+
+export interface DepositFormData {
+  amount: number;
+  deposit_date: string;
+  note?: string | null;
+}
+
+export interface DepositListResponse {
+  items: Deposit[];
+  total_amount: number;
+  count: number;
 }

@@ -268,3 +268,100 @@ def test_open_trade_lifecycle_and_close():
     finally:
         if created_id is not None:
             client.delete(f"/api/v1/trades/{created_id}", headers=headers)
+
+
+def test_deposits_and_growth_percentages():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"dep_{suffix}",
+        "email": f"dep_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    # Add Deposit #1 ($1000 in Oct 2026) and Deposit #2 ($1000 in Nov 2026)
+    d1 = client.post("/api/v1/deposits", headers=headers, json={
+        "amount": 1000.0,
+        "deposit_date": "2026-10-01T10:00:00",
+        "note": "Oct initial",
+    })
+    assert d1.status_code == 201
+    d1_id = d1.json()["id"]
+
+    d2 = client.post("/api/v1/deposits", headers=headers, json={
+        "amount": 1000.0,
+        "deposit_date": "2026-11-01T10:00:00",
+        "note": "Nov top-up",
+    })
+    assert d2.status_code == 201
+
+    # Invalid deposit (<= 0) rejected with 422
+    bad_dep = client.post("/api/v1/deposits", headers=headers, json={"amount": -50})
+    assert bad_dep.status_code == 422
+
+    # Trades: +$250 in Oct 2026, +$100 in Nov 2026
+    t_oct = client.post("/api/v1/trades", headers=headers, json={
+        "symbol": "BTC/USDT",
+        "market": "CRYPTO",
+        "direction": "LONG",
+        "status": "CLOSED",
+        "entry_price": 1000.0,
+        "exit_price": 1250.0,
+        "quantity": 1.0,
+        "entry_date": "2026-10-10T10:00:00",
+        "exit_date": "2026-10-10T15:00:00",
+    })
+    assert t_oct.status_code == 201
+
+    t_nov = client.post("/api/v1/trades", headers=headers, json={
+        "symbol": "ETH/USDT",
+        "market": "CRYPTO",
+        "direction": "LONG",
+        "status": "CLOSED",
+        "entry_price": 1000.0,
+        "exit_price": 1100.0,
+        "quantity": 1.0,
+        "entry_date": "2026-11-05T10:00:00",
+        "exit_date": "2026-11-05T15:00:00",
+    })
+    assert t_nov.status_code == 201
+
+    # Check Deposit list
+    dep_list = client.get("/api/v1/deposits", headers=headers)
+    assert dep_list.status_code == 200
+    assert dep_list.json()["count"] == 2
+    assert dep_list.json()["total_amount"] == 2000.0
+
+    # Check Overall Analytics: total_deposits=2000, overall_total_pnl=350 -> +17.5%, balance=2350
+    all_an = client.get("/api/v1/analytics", headers=headers).json()
+    assert all_an["total_deposits"] == 2000.0
+    assert all_an["overall_total_pnl"] == 350.0
+    assert all_an["current_balance"] == 2350.0
+    assert all_an["overall_deposit_growth_pct"] == 17.5
+    assert all_an["summary"]["period_deposit_growth_pct"] == 17.5
+
+    months_map = {m["month"]: m for m in all_an["available_months"]}
+    assert months_map["2026-10"]["cumulative_deposits"] == 1000.0
+    assert months_map["2026-10"]["deposit_growth_pct"] == 25.0  # +250 / 1000
+    assert months_map["2026-11"]["cumulative_deposits"] == 2000.0
+    assert months_map["2026-11"]["deposit_growth_pct"] == 5.0   # +100 / 2000
+
+    # Check Period Filtered Analytics (?month=2026-10)
+    oct_an = client.get("/api/v1/analytics?month=2026-10", headers=headers).json()
+    assert oct_an["summary"]["period_deposits"] == 1000.0
+    assert oct_an["summary"]["period_cumulative_deposits"] == 1000.0
+    assert oct_an["summary"]["period_deposit_growth_pct"] == 25.0
+    # Overall remains 17.5% across all months
+    assert oct_an["overall_deposit_growth_pct"] == 17.5
+
+    # Delete Deposit #1 -> remaining $1000 in Nov; Oct has no cumulative deposits (None), overall = 350 / 1000 = +35.0%
+    del_res = client.delete(f"/api/v1/deposits/{d1_id}", headers=headers)
+    assert del_res.status_code == 204
+    after_del = client.get("/api/v1/analytics", headers=headers).json()
+    assert after_del["total_deposits"] == 1000.0
+    assert after_del["overall_deposit_growth_pct"] == 35.0
+    after_months = {m["month"]: m for m in after_del["available_months"]}
+    assert after_months["2026-10"]["deposit_growth_pct"] is None
+    assert after_months["2026-11"]["deposit_growth_pct"] == 10.0

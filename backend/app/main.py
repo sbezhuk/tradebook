@@ -25,6 +25,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "Автентифікація", "description": "Реєстрація, вхід та отримання профілю"},
         {"name": "Угоди", "description": "Створення, редагування, фільтрація та список угод"},
+        {"name": "Депозити", "description": "Поповнення депозиту та розрахунок приросту капіталу"},
         {"name": "Аналітика", "description": "Статистика, показники ефективності та графік еквайті"},
         {"name": "Завантаження файлів", "description": "Завантаження скріншотів угод та графіків"},
     ]
@@ -45,11 +46,13 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 # Include Routers
 from app.api.v1.auth import router as auth_router
 from app.api.v1.trades import router as trades_router
+from app.api.v1.deposits import router as deposits_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.upload import router as upload_router
 
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(trades_router, prefix=settings.API_V1_STR)
+app.include_router(deposits_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(upload_router, prefix=settings.API_V1_STR)
 

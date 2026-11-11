@@ -13,3 +13,4 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
+    deposits = relationship("Deposit", back_populates="user", cascade="all, delete-orphan")

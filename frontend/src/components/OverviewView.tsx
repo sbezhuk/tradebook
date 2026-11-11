@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Trade, AnalyticsData } from '../types';
-import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Wallet, Plus } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface OverviewViewProps {
@@ -8,6 +8,7 @@ interface OverviewViewProps {
   analytics: AnalyticsData | null;
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
+  onOpenDeposits?: () => void;
   onSelectTrade: (trade: Trade) => void;
   onGoToTrades: () => void;
   onGoToInsights: () => void;
@@ -18,6 +19,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   analytics,
   selectedMonth = '',
   onSelectMonth,
+  onOpenDeposits,
   onSelectTrade,
   onGoToTrades,
   onGoToInsights,
@@ -30,6 +32,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   const overallPnl = analytics?.overall_total_pnl ?? stats?.total_pnl ?? 0;
   const overallTrades = analytics?.overall_total_trades ?? stats?.total_trades ?? 0;
+  const totalDeposits = analytics?.total_deposits ?? 0;
+  const currentBalance = analytics?.current_balance ?? overallPnl;
+  const overallGrowthPct = analytics?.overall_deposit_growth_pct ?? null;
+  const periodGrowthPct = stats?.period_deposit_growth_pct ?? null;
+  const periodCumDeposits = stats?.period_cumulative_deposits ?? 0;
   const isOverallPos = overallPnl >= 0;
   const isPeriodPos = (stats?.total_pnl ?? 0) >= 0;
 
@@ -43,22 +50,62 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </p>
         </div>
 
-        {/* Separate Overall Total PnL Card */}
-        <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20 self-start">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
-              Загальний PnL (весь час)
+        {/* Separate Overall Total PnL + Deposit Growth Cards */}
+        <div className="flex flex-wrap items-stretch gap-3 self-start">
+          <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
+                Загальний PnL (весь час)
+              </div>
+              <div className="text-[11px] text-purple-200/45 mt-0.5">
+                {overallTrades} закритих угод
+              </div>
             </div>
-            <div className="text-[11px] text-purple-200/45 mt-0.5">
-              {overallTrades} закритих угод
+            <div className="text-right">
+              <div
+                className={`text-xl font-bold font-mono ${
+                  isOverallPos ? 'text-[#c49bff]' : 'text-rose-400'
+                }`}
+              >
+                {isOverallPos ? '+' : '-'}${Math.abs(overallPnl).toFixed(2)}
+              </div>
+              {overallGrowthPct !== null && (
+                <div
+                  className={`text-[11px] font-mono font-bold ${
+                    overallGrowthPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {overallGrowthPct >= 0 ? '+' : ''}
+                  {overallGrowthPct.toFixed(2)}% до депозиту
+                </div>
+              )}
             </div>
           </div>
-          <div
-            className={`text-xl font-bold font-mono ${
-              isOverallPos ? 'text-[#c49bff]' : 'text-rose-400'
-            }`}
-          >
-            {isOverallPos ? '+' : '-'}${Math.abs(overallPnl).toFixed(2)}
+
+          <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5 text-[#c49bff]" />
+                <span>Депозит і баланс</span>
+              </div>
+              <div className="text-xs font-mono font-bold text-white mt-0.5">
+                ${totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                <span className="text-purple-200/45 font-normal">→</span>{' '}
+                <span className="text-[#c49bff]">
+                  ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+            {onOpenDeposits && (
+              <button
+                type="button"
+                onClick={onOpenDeposits}
+                className="px-3 py-1.5 rounded-xl bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/30 text-[#c49bff] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Депозит</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -90,6 +137,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   }`}
                 >
                   {m.total_pnl >= 0 ? '+' : '-'}${Math.abs(m.total_pnl).toFixed(2)}
+                  {m.deposit_growth_pct !== null && (
+                    <span className="opacity-85 ml-1">
+                      ({m.deposit_growth_pct >= 0 ? '+' : ''}
+                      {m.deposit_growth_pct.toFixed(1)}%)
+                    </span>
+                  )}
                 </span>
               </button>
             );
@@ -111,8 +164,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       {/* 4 Sleek Glass Metric Cards for Selected Month */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel rounded-2xl p-5">
-          <div className="text-xs text-purple-200/55 font-medium">
-            PnL ({periodLabel})
+          <div className="text-xs text-purple-200/55 font-medium flex items-center justify-between gap-2">
+            <span className="truncate">PnL ({periodLabel})</span>
+            {periodGrowthPct !== null && (
+              <span
+                className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                  periodGrowthPct >= 0
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'bg-rose-500/15 text-rose-400'
+                }`}
+              >
+                {periodGrowthPct >= 0 ? '+' : ''}
+                {periodGrowthPct.toFixed(2)}%
+              </span>
+            )}
           </div>
           <div
             className={`text-2xl font-bold font-mono mt-1.5 ${
@@ -122,8 +187,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             {isPeriodPos ? '+' : '-'}${Math.abs(stats?.total_pnl ?? 0).toFixed(2)}
           </div>
           <div className="text-[11px] text-purple-200/45 mt-1">
-            Середній трейд: {stats && stats.average_trade >= 0 ? '+' : '-'}$
-            {Math.abs(stats?.average_trade ?? 0).toFixed(2)}
+            {periodCumDeposits > 0 ? (
+              <span>
+                Від депозиту ${periodCumDeposits.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </span>
+            ) : (
+              <span>
+                Середній трейд: {stats && stats.average_trade >= 0 ? '+' : '-'}$
+                {Math.abs(stats?.average_trade ?? 0).toFixed(2)}
+              </span>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { AnalyticsData, BreakdownItem, DailyActivityItem } from '../types';
+import { Wallet, Plus } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -18,6 +19,7 @@ interface InsightsBentoProps {
   loading: boolean;
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
+  onOpenDeposits?: () => void;
   pageTitle?: string;
   pageSubtitle?: string;
   defaultSubTab?: 'bento' | 'months' | 'equity' | 'setups';
@@ -39,6 +41,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
   loading,
   selectedMonth = '',
   onSelectMonth,
+  onOpenDeposits,
   pageTitle = 'Аналітика',
   pageSubtitle = 'Скільки ви заробляєте, утримуєте та де ваша перевага на ринку.',
   defaultSubTab = 'bento',
@@ -134,6 +137,9 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
     available_months,
     overall_total_pnl,
     overall_total_trades,
+    total_deposits,
+    current_balance,
+    overall_deposit_growth_pct,
   } = analytics;
 
   const activeMonthObj = available_months.find((m) => m.month === selectedMonth);
@@ -201,22 +207,60 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
             </p>
           </div>
 
-          {/* Separate All-Time Overall Total PnL Badge */}
-          <div className="glass-panel rounded-2xl px-5 py-3.5 border border-[#c49bff]/25 flex items-center gap-5 self-start">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
-                Загальний PnL (весь час)
+          {/* Separate All-Time Overall Total PnL & Deposit Growth Badges */}
+          <div className="flex flex-wrap items-stretch gap-3 self-start">
+            <div className="glass-panel rounded-2xl px-5 py-3.5 border border-[#c49bff]/25 flex items-center gap-5">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
+                  Загальний PnL (весь час)
+                </div>
+                <div className="text-[11px] text-purple-200/45 mt-0.5">
+                  {overall_total_trades} закритих угод • {available_months.length} міс.
+                </div>
               </div>
-              <div className="text-[11px] text-purple-200/45 mt-0.5">
-                {overall_total_trades} закритих угод • {available_months.length} міс.
+              <div className="text-right">
+                <div
+                  className={`text-2xl font-bold font-mono tracking-tight ${
+                    isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
+                  }`}
+                >
+                  {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
+                </div>
+                {overall_deposit_growth_pct !== null && (
+                  <div
+                    className={`text-[11px] font-mono font-bold ${
+                      overall_deposit_growth_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {overall_deposit_growth_pct >= 0 ? '+' : ''}
+                    {overall_deposit_growth_pct.toFixed(2)}% до депозиту
+                  </div>
+                )}
               </div>
             </div>
-            <div
-              className={`text-2xl font-bold font-mono tracking-tight ${
-                isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
-              }`}
-            >
-              {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
+
+            <div className="glass-panel rounded-2xl px-4 py-3.5 border border-[#c49bff]/25 flex items-center gap-4">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold flex items-center gap-1.5">
+                  <Wallet className="w-3.5 h-3.5 text-[#c49bff]" />
+                  <span>Депозит / Баланс</span>
+                </div>
+                <div className="text-xs font-mono font-bold text-white mt-1">
+                  ${formatUsd(total_deposits)}{' '}
+                  <span className="text-purple-200/45 font-normal">→</span>{' '}
+                  <span className="text-[#c49bff]">${formatUsd(current_balance)}</span>
+                </div>
+              </div>
+              {onOpenDeposits && (
+                <button
+                  type="button"
+                  onClick={onOpenDeposits}
+                  className="px-3 py-1.5 rounded-xl bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/30 text-[#c49bff] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Депозит</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -248,6 +292,12 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                     }`}
                   >
                     {m.total_pnl >= 0 ? '+' : '-'}${formatUsd(m.total_pnl)}
+                    {m.deposit_growth_pct !== null && (
+                      <span className="opacity-85 ml-1">
+                        ({m.deposit_growth_pct >= 0 ? '+' : ''}
+                        {m.deposit_growth_pct.toFixed(1)}%)
+                      </span>
+                    )}
                   </span>
                 </button>
               );
@@ -317,8 +367,20 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
           {/* Monthly Reporting Period KPI Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="glass-panel rounded-2xl p-5">
-              <div className="text-xs text-purple-200/55 font-medium">
-                PnL періоду ({periodLabel})
+              <div className="text-xs text-purple-200/55 font-medium flex items-center justify-between gap-2">
+                <span className="truncate">PnL періоду ({periodLabel})</span>
+                {summary.period_deposit_growth_pct !== null && (
+                  <span
+                    className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      summary.period_deposit_growth_pct >= 0
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-rose-500/15 text-rose-400'
+                    }`}
+                  >
+                    {summary.period_deposit_growth_pct >= 0 ? '+' : ''}
+                    {summary.period_deposit_growth_pct.toFixed(2)}%
+                  </span>
+                )}
               </div>
               <div
                 className={`text-2xl font-bold font-mono mt-1.5 ${
@@ -328,7 +390,16 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                 {isPeriodPositive ? '+' : '-'}${formatUsd(summary.total_pnl)}
               </div>
               <div className="text-[11px] text-purple-200/45 mt-1.5">
-                Середня угода: {summary.average_trade >= 0 ? '+' : '-'}${formatUsd(summary.average_trade)}
+                {summary.period_cumulative_deposits > 0 ? (
+                  <span>
+                    Депозит періоду: ${formatUsd(summary.period_cumulative_deposits)}
+                    {summary.period_deposits > 0 && ` (+$${formatUsd(summary.period_deposits)} внесено)`}
+                  </span>
+                ) : (
+                  <span>
+                    Середня угода: {summary.average_trade >= 0 ? '+' : '-'}${formatUsd(summary.average_trade)}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -775,6 +846,8 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         <th className="py-3 px-3 text-right">W / L</th>
                         <th className="py-3 px-3 text-right">Win Rate</th>
                         <th className="py-3 px-3 text-right">Profit Factor</th>
+                        <th className="py-3 px-3 text-right">Депозит (накоп.)</th>
+                        <th className="py-3 px-3 text-right">Ріст (%)</th>
                         <th className="py-3 px-3 text-right">PnL періоду</th>
                       </tr>
                     </thead>
@@ -817,6 +890,27 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                             <td className="py-3.5 px-3 text-right font-mono text-purple-200">
                               {m.profit_factor}
                             </td>
+                            <td className="py-3.5 px-3 text-right font-mono text-purple-100">
+                              {m.cumulative_deposits > 0 ? `$${formatUsd(m.cumulative_deposits)}` : '—'}
+                              {m.deposits_amount > 0 && (
+                                <span className="block text-[10px] text-[#c49bff]">
+                                  +${formatUsd(m.deposits_amount)} у міс.
+                                </span>
+                              )}
+                            </td>
+                            <td
+                              className={`py-3.5 px-3 text-right font-mono font-bold ${
+                                m.deposit_growth_pct === null
+                                  ? 'text-purple-200/45'
+                                  : m.deposit_growth_pct >= 0
+                                  ? 'text-emerald-400'
+                                  : 'text-rose-400'
+                              }`}
+                            >
+                              {m.deposit_growth_pct === null
+                                ? '—'
+                                : `${m.deposit_growth_pct >= 0 ? '+' : ''}${m.deposit_growth_pct.toFixed(2)}%`}
+                            </td>
                             <td
                               className={`py-3.5 px-3 text-right font-mono font-bold ${
                                 pos ? 'text-[#c49bff]' : 'text-rose-400'
@@ -838,6 +932,22 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         </td>
                         <td className="py-3.5 px-3 text-right text-purple-200/45" colSpan={3}>
                           Окремий підсумок усіх закритих періодів
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono font-bold text-white">
+                          ${formatUsd(total_deposits)}
+                        </td>
+                        <td
+                          className={`py-3.5 px-3 text-right font-mono font-bold ${
+                            overall_deposit_growth_pct === null
+                              ? 'text-purple-200/45'
+                              : overall_deposit_growth_pct >= 0
+                              ? 'text-emerald-400'
+                              : 'text-rose-400'
+                          }`}
+                        >
+                          {overall_deposit_growth_pct === null
+                            ? '—'
+                            : `${overall_deposit_growth_pct >= 0 ? '+' : ''}${overall_deposit_growth_pct.toFixed(2)}%`}
                         </td>
                         <td
                           className={`py-3.5 px-3 text-right font-mono font-bold text-sm ${

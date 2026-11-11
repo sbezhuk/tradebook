@@ -1,4 +1,14 @@
-import type { AuthResponse, User, Trade, TradeFormData, AnalyticsData, HyperliquidImportResponse } from '../types';
+import type {
+  AuthResponse,
+  User,
+  Trade,
+  TradeFormData,
+  AnalyticsData,
+  HyperliquidImportResponse,
+  Deposit,
+  DepositFormData,
+  DepositListResponse,
+} from '../types';
 
 const API_BASE = '/api/v1';
 
@@ -134,6 +144,24 @@ class ApiClient {
   async getAnalytics(month?: string): Promise<AnalyticsData> {
     const qs = month ? `?month=${encodeURIComponent(month)}` : '';
     return this.request<AnalyticsData>(`/analytics${qs}`);
+  }
+
+  // Deposits
+  async getDeposits(): Promise<DepositListResponse> {
+    return this.request<DepositListResponse>('/deposits');
+  }
+
+  async createDeposit(data: DepositFormData): Promise<Deposit> {
+    return this.request<Deposit>('/deposits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDeposit(id: number): Promise<void> {
+    return this.request<void>(`/deposits/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Import Hyperliquid CSV

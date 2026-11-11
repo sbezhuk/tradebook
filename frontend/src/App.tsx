@@ -11,7 +11,8 @@ import { PsychologyView } from './components/PsychologyView';
 import { TradeModal } from './components/TradeModal';
 import { TradeDetailModal } from './components/TradeDetailModal';
 import { ImportModal } from './components/ImportModal';
-import type { Trade, TradeFormData, AnalyticsData } from './types';
+import { DepositModal } from './components/DepositModal';
+import type { Trade, TradeFormData, AnalyticsData, Deposit, DepositFormData } from './types';
 import { api } from './api/client';
 
 export const AppContent: React.FC = () => {
@@ -46,6 +47,8 @@ export const AppContent: React.FC = () => {
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [closeTradeMode, setCloseTradeMode] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
 
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -91,12 +94,33 @@ export const AppContent: React.FC = () => {
     }
   }, [user, monthParam, selectedMonth]);
 
+  const loadDeposits = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.getDeposits();
+      setDeposits(res.items);
+    } catch (err) {
+      console.error('Failed to load deposits:', err);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       loadTrades();
       loadAnalytics();
+      loadDeposits();
     }
-  }, [user, loadTrades, loadAnalytics]);
+  }, [user, loadTrades, loadAnalytics, loadDeposits]);
+
+  const handleAddDeposit = async (data: DepositFormData) => {
+    await api.createDeposit(data);
+    await Promise.all([loadDeposits(), loadAnalytics()]);
+  };
+
+  const handleDeleteDeposit = async (id: number) => {
+    await api.deleteDeposit(id);
+    await Promise.all([loadDeposits(), loadAnalytics()]);
+  };
 
   const handleGlobalSearch = (q: string) => {
     setSearchQuery(q);
@@ -174,6 +198,9 @@ export const AppContent: React.FC = () => {
         stats={analytics?.summary}
         overallTotalPnl={analytics?.overall_total_pnl}
         overallTotalTrades={analytics?.overall_total_trades}
+        totalDeposits={analytics?.total_deposits}
+        overallDepositGrowthPct={analytics?.overall_deposit_growth_pct}
+        onOpenDeposits={() => setIsDepositModalOpen(true)}
         tagsCount={tagsCount}
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
@@ -185,6 +212,7 @@ export const AppContent: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={handleGlobalSearch}
           onOpenNewTrade={handleOpenNew}
+          onOpenDeposits={() => setIsDepositModalOpen(true)}
           onOpenImport={() => setIsImportModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
@@ -201,6 +229,7 @@ export const AppContent: React.FC = () => {
               analytics={analytics}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={(m) => setSelectedMonth(m)}
+              onOpenDeposits={() => setIsDepositModalOpen(true)}
               onSelectTrade={handleOpenDetail}
               onGoToTrades={() => setCurrentTab('trades')}
               onGoToInsights={() => setCurrentTab('insights')}
@@ -230,6 +259,7 @@ export const AppContent: React.FC = () => {
               loading={analyticsLoading}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={(m) => setSelectedMonth(m)}
+              onOpenDeposits={() => setIsDepositModalOpen(true)}
               pageTitle="Аналітика"
               pageSubtitle="Скільки ви заробляєте, утримуєте та де ваша перевага на ринку."
               defaultSubTab="bento"
@@ -243,6 +273,7 @@ export const AppContent: React.FC = () => {
               loading={analyticsLoading}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={(m) => setSelectedMonth(m)}
+              onOpenDeposits={() => setIsDepositModalOpen(true)}
               pageTitle="Сетапи та активність"
               pageSubtitle="Аналіз ефективності ваших торгових формацій та днів тижня."
               defaultSubTab="setups"
@@ -292,6 +323,19 @@ export const AppContent: React.FC = () => {
           await Promise.all([loadTrades(), loadAnalytics()]);
           setCurrentTab('insights');
         }}
+      />
+
+      {/* Deposit Management Modal */}
+      <DepositModal
+        isOpen={isDepositModalOpen}
+        onClose={() => setIsDepositModalOpen(false)}
+        deposits={deposits}
+        totalDeposits={analytics?.total_deposits ?? 0}
+        overallPnl={analytics?.overall_total_pnl ?? 0}
+        currentBalance={analytics?.current_balance ?? 0}
+        overallGrowthPct={analytics?.overall_deposit_growth_pct ?? null}
+        onAddDeposit={handleAddDeposit}
+        onDeleteDeposit={handleDeleteDeposit}
       />
     </div>
   );

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
 from app.models.trade import Trade
+from app.models.deposit import Deposit
 from app.schemas.analytics import AnalyticsResponse
 from app.api.deps import get_current_user
 from app.services.analytics_service import compute_analytics
@@ -27,4 +28,5 @@ def get_analytics(
         except ValueError:
             raise HTTPException(status_code=400, detail="Невірний формат місяця. Очікується YYYY-MM")
     trades = db.query(Trade).filter(Trade.user_id == current_user.id).all()
-    return compute_analytics(trades, month=month)
+    deposits = db.query(Deposit).filter(Deposit.user_id == current_user.id).all()
+    return compute_analytics(trades, month=month, deposits=deposits)

@@ -2,6 +2,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from collections import defaultdict
 from app.models.trade import Trade
+from app.models.deposit import Deposit
 from app.schemas.analytics import (
     AnalyticsResponse,
     SummaryStats,
@@ -53,7 +54,12 @@ def _compute_profit_factor(gross_profit: float, gross_loss: float) -> float:
     return round(gross_profit, 2) if gross_profit > 0 else 0.0
 
 
-def _empty_summary(open_trades_count: int = 0) -> SummaryStats:
+def _empty_summary(
+    open_trades_count: int = 0,
+    period_deposits: float = 0.0,
+    period_cumulative_deposits: float = 0.0,
+) -> SummaryStats:
+    growth_pct = 0.0 if period_cumulative_deposits > 0 else None
     return SummaryStats(
         total_trades=0,
         winning_trades=0,
@@ -73,12 +79,26 @@ def _empty_summary(open_trades_count: int = 0) -> SummaryStats:
         max_consecutive_wins=0,
         max_consecutive_losses=0,
         rule_discipline_rate=100.0,
+        period_deposits=period_deposits,
+        period_cumulative_deposits=period_cumulative_deposits,
+        period_deposit_growth_pct=growth_pct,
     )
 
 
-def _build_available_months(trades: List[Trade]) -> List[MonthlySummaryItem]:
+def _group_deposits_by_month(deposits: List[Deposit]) -> Dict[str, float]:
+    monthly: Dict[str, float] = defaultdict(float)
+    for d in deposits:
+        if d.deposit_date:
+            monthly[d.deposit_date.strftime("%Y-%m")] += float(d.amount)
+    return {k: round(v, 2) for k, v in monthly.items()}
+
+
+def _build_available_months(
+    trades: List[Trade],
+    monthly_deposits: Dict[str, float],
+) -> List[MonthlySummaryItem]:
     month_closed_groups: Dict[str, List[Trade]] = defaultdict(list)
-    all_months = set()
+    all_months = set(monthly_deposits.keys())
 
     for t in trades:
         m = _get_trade_month(t)
@@ -87,6 +107,13 @@ def _build_available_months(trades: List[Trade]) -> List[MonthlySummaryItem]:
         all_months.add(m)
         if t.status == "CLOSED":
             month_closed_groups[m].append(t)
+
+    # Walk chronologically first to accumulate deposits up to each month
+    cumulative_by_month: Dict[str, float] = {}
+    running_deposit = 0.0
+    for month_key in sorted(all_months):
+        running_deposit = round(running_deposit + monthly_deposits.get(month_key, 0.0), 2)
+        cumulative_by_month[month_key] = running_deposit
 
     items: List[MonthlySummaryItem] = []
     for month_key in sorted(all_months, reverse=True):
@@ -99,6 +126,10 @@ def _build_available_months(trades: List[Trade]) -> List[MonthlySummaryItem]:
         gross_loss = round(abs(sum(t.pnl for t in losses)), 2)
         win_rate = round((len(wins) / cnt * 100), 2) if cnt > 0 else 0.0
 
+        month_dep = round(monthly_deposits.get(month_key, 0.0), 2)
+        cum_dep = cumulative_by_month.get(month_key, 0.0)
+        growth_pct = round((total_pnl / cum_dep) * 100, 2) if cum_dep > 0 else None
+
         items.append(
             MonthlySummaryItem(
                 month=month_key,
@@ -109,16 +140,44 @@ def _build_available_months(trades: List[Trade]) -> List[MonthlySummaryItem]:
                 win_rate=win_rate,
                 total_pnl=total_pnl,
                 profit_factor=_compute_profit_factor(gross_profit, gross_loss),
+                deposits_amount=month_dep,
+                cumulative_deposits=cum_dep,
+                deposit_growth_pct=growth_pct,
             )
         )
     return items
 
 
-def compute_analytics(trades: List[Trade], month: Optional[str] = None) -> AnalyticsResponse:
+def compute_analytics(
+    trades: List[Trade],
+    month: Optional[str] = None,
+    deposits: Optional[List[Deposit]] = None,
+) -> AnalyticsResponse:
+    deposits_list = deposits or []
+    monthly_deposits = _group_deposits_by_month(deposits_list)
+    total_deposits = round(sum(float(d.amount) for d in deposits_list), 2)
+
     overall_closed = [t for t in trades if t.status == "CLOSED"]
     overall_total_pnl = round(sum(t.pnl for t in overall_closed), 2)
     overall_total_trades = len(overall_closed)
-    available_months = _build_available_months(trades)
+    current_balance = round(total_deposits + overall_total_pnl, 2)
+    overall_deposit_growth_pct = (
+        round((overall_total_pnl / total_deposits) * 100, 2)
+        if total_deposits > 0
+        else None
+    )
+
+    available_months = _build_available_months(trades, monthly_deposits)
+
+    if month:
+        period_deposits = round(monthly_deposits.get(month, 0.0), 2)
+        period_cumulative_deposits = round(
+            sum(amt for m_key, amt in monthly_deposits.items() if m_key <= month),
+            2,
+        )
+    else:
+        period_deposits = total_deposits
+        period_cumulative_deposits = total_deposits
 
     period_trades = (
         [t for t in trades if _get_trade_month(t) == month]
@@ -130,9 +189,15 @@ def compute_analytics(trades: List[Trade], month: Optional[str] = None) -> Analy
         return AnalyticsResponse(
             overall_total_pnl=overall_total_pnl,
             overall_total_trades=overall_total_trades,
+            total_deposits=total_deposits,
+            current_balance=current_balance,
+            overall_deposit_growth_pct=overall_deposit_growth_pct,
             selected_month=month,
             available_months=available_months,
-            summary=_empty_summary(),
+            summary=_empty_summary(
+                period_deposits=period_deposits,
+                period_cumulative_deposits=period_cumulative_deposits,
+            ),
             equity_curve=[],
             by_market=[],
             by_direction=[],
@@ -187,6 +252,11 @@ def compute_analytics(trades: List[Trade], month: Optional[str] = None) -> Analy
 
     followed_rules_count = sum(1 for t in closed_trades if t.followed_rules)
     rule_discipline_rate = round((followed_rules_count / total_closed * 100), 2) if total_closed > 0 else 100.0
+    period_deposit_growth_pct = (
+        round((total_pnl / period_cumulative_deposits) * 100, 2)
+        if period_cumulative_deposits > 0
+        else None
+    )
 
     summary = SummaryStats(
         total_trades=total_closed,
@@ -207,6 +277,9 @@ def compute_analytics(trades: List[Trade], month: Optional[str] = None) -> Analy
         max_consecutive_wins=max_wins,
         max_consecutive_losses=max_losses,
         rule_discipline_rate=rule_discipline_rate,
+        period_deposits=period_deposits,
+        period_cumulative_deposits=period_cumulative_deposits,
+        period_deposit_growth_pct=period_deposit_growth_pct,
     )
 
     equity_curve: List[EquityPoint] = []
@@ -295,6 +368,9 @@ def compute_analytics(trades: List[Trade], month: Optional[str] = None) -> Analy
     return AnalyticsResponse(
         overall_total_pnl=overall_total_pnl,
         overall_total_trades=overall_total_trades,
+        total_deposits=total_deposits,
+        current_balance=current_balance,
+        overall_deposit_growth_pct=overall_deposit_growth_pct,
         selected_month=month,
         available_months=available_months,
         summary=summary,

@@ -11,6 +11,7 @@ import {
   LogOut,
   PanelLeft,
   TrendingUp,
+  Wallet,
 } from 'lucide-react';
 
 export type NavTab = 'overview' | 'trades' | 'insights' | 'setups' | 'psychology';
@@ -21,6 +22,9 @@ interface SidebarProps {
   stats?: SummaryStats | null;
   overallTotalPnl?: number;
   overallTotalTrades?: number;
+  totalDeposits?: number;
+  overallDepositGrowthPct?: number | null;
+  onOpenDeposits?: () => void;
   tagsCount?: number;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -32,6 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   stats,
   overallTotalPnl,
   overallTotalTrades,
+  totalDeposits = 0,
+  overallDepositGrowthPct = null,
+  onOpenDeposits,
   tagsCount = 0,
   mobileOpen = false,
   onCloseMobile,
@@ -165,24 +172,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom Summary Widget & User Profile */}
       <div className="space-y-3 pt-4">
-        {/* Mini Glass Metric Box — Always shows overall all-time PnL separately from monthly period */}
-        <div className="glass-card-subtle rounded-2xl p-3.5">
-          <div className="text-[11px] font-medium text-purple-200/55">
-            Загальний PnL (весь час)
+        {/* Mini Glass Metric Box — Always shows overall all-time PnL & Deposit Growth separately from monthly period */}
+        <div className="glass-card-subtle rounded-2xl p-3.5 space-y-2.5">
+          <div>
+            <div className="text-[11px] font-medium text-purple-200/55">
+              Загальний PnL (весь час)
+            </div>
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <div
+                className={`text-xl font-bold font-mono tracking-tight ${
+                  isPnlPositive ? 'text-[#c49bff]' : 'text-rose-400'
+                }`}
+              >
+                {isPnlPositive ? '+' : '-'}$
+                {Math.abs(displayOverallPnl).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+              {overallDepositGrowthPct !== null && (
+                <span
+                  className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                    overallDepositGrowthPct >= 0
+                      ? 'bg-emerald-500/15 text-emerald-400'
+                      : 'bg-rose-500/15 text-rose-400'
+                  }`}
+                >
+                  {overallDepositGrowthPct >= 0 ? '+' : ''}
+                  {overallDepositGrowthPct.toFixed(2)}%
+                </span>
+              )}
+            </div>
+            <div className="text-[11px] text-purple-200/45 mt-1">
+              {displayOverallTrades} закритих угод загалом
+            </div>
           </div>
-          <div
-            className={`text-xl font-bold font-mono mt-1 tracking-tight ${
-              isPnlPositive ? 'text-[#c49bff]' : 'text-rose-400'
-            }`}
-          >
-            {isPnlPositive ? '+' : '-'}$
-            {Math.abs(displayOverallPnl).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-          <div className="text-[11px] text-purple-200/45 mt-1">
-            {displayOverallTrades} закритих угод загалом
+
+          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-purple-200/50">Депозит</div>
+              <div className="text-xs font-mono font-semibold text-white truncate">
+                ${totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+            {onOpenDeposits && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenDeposits();
+                  onCloseMobile?.();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-[#c49bff]/15 hover:bg-[#c49bff]/25 text-[#c49bff] text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+              >
+                <Wallet className="w-3 h-3" />
+                <span>+ Внести</span>
+              </button>
+            )}
           </div>
         </div>
 

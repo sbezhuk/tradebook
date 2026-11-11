@@ -23,12 +23,14 @@ import {
   Sun,
   Moon,
   Monitor,
+  Wallet,
 } from 'lucide-react';
 
 interface TopBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenNewTrade: () => void;
+  onOpenDeposits: () => void;
   onOpenImport: () => void;
   onOpenMobileMenu: () => void;
   trades: Trade[];
@@ -42,6 +44,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   searchQuery,
   onSearchChange,
   onOpenNewTrade,
+  onOpenDeposits,
   onOpenImport,
   onOpenMobileMenu,
   trades,
@@ -197,6 +200,19 @@ export const TopBar: React.FC<TopBarProps> = ({
           className="accent-pill w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
+        </button>
+
+        {/* 1.5 Deposits (Wallet) */}
+        <button
+          type="button"
+          onClick={() => {
+            setOpenMenu(null);
+            onOpenDeposits();
+          }}
+          title="Депозит та поповнення"
+          className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <Wallet className="w-4 h-4" />
         </button>
 
         {/* 2. Export / Share Menu (Send icon) */}
