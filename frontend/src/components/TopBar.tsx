@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import type { ThemeMode } from '../context/ThemeContext';
 import type { Trade } from '../types';
 import type { NavTab } from './Sidebar';
 import {
@@ -18,6 +20,9 @@ import {
   Copy,
   UploadCloud,
   Trash2,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -46,10 +51,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSelectTab,
 }) => {
   const { user, logout } = useAuth();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const [openMenu, setOpenMenu] = useState<'export' | 'notifications' | 'profile' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'export' | 'notifications' | 'theme' | 'profile' | null>(null);
   const [copiedApi, setCopiedApi] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
@@ -162,7 +168,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-purple-200/45 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-purple-200/45 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
           <input
             ref={inputRef}
             type="text"
@@ -171,7 +177,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             placeholder="Пошук угод, символів, тегів..."
             className="glass-input w-full rounded-full pl-10 pr-14 py-2 text-xs text-white placeholder-purple-200/40"
           />
-          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-white/[0.06] text-purple-200/50 border border-white/[0.08] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-white/[0.06] text-purple-200/50 border border-white/[0.08] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
             ⌘K
           </span>
         </div>
@@ -216,6 +222,26 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Code2 className="w-3.5 h-3.5" />
         </a>
+
+        {/* 3.5 Theme Switcher (Light / Dark / System) */}
+        <button
+          type="button"
+          onClick={() => setOpenMenu((prev) => (prev === 'theme' ? null : 'theme'))}
+          title="Змінити тему (Світла / Темна / Системна)"
+          className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+            openMenu === 'theme'
+              ? 'bg-[#c49bff]/20 border-[#c49bff]/50 text-[#c49bff]'
+              : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/[0.08] text-purple-200/70 hover:text-white'
+          }`}
+        >
+          {theme === 'light' ? (
+            <Sun className="w-3.5 h-3.5" />
+          ) : theme === 'dark' ? (
+            <Moon className="w-3.5 h-3.5" />
+          ) : (
+            <Monitor className="w-3.5 h-3.5" />
+          )}
+        </button>
 
         {/* 4. Notifications & Open Trades (Bell) */}
         <button
@@ -376,6 +402,63 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         )}
 
+        {/* ==================== POPOVER: THEME ==================== */}
+        {openMenu === 'theme' && (
+          <div className="absolute right-10 top-12 w-60 glass-panel rounded-2xl p-2 shadow-2xl z-40">
+            <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
+              <div className="text-xs font-semibold text-white">Тема оформлення</div>
+              <div className="text-[10px] text-purple-200/45">
+                Активна: {resolvedTheme === 'light' ? 'Світла' : 'Темна'}
+                {theme === 'system' ? ' (авто)' : ''}
+              </div>
+            </div>
+
+            {(
+              [
+                { id: 'light', label: 'Світла тема', desc: 'Повітряний фіолетовий glass', icon: Sun },
+                { id: 'dark', label: 'Темна тема', desc: 'Глибокий нічний glass', icon: Moon },
+                { id: 'system', label: 'Системний режим', desc: 'Як у налаштуваннях ОС', icon: Monitor },
+              ] as {
+                id: ThemeMode;
+                label: string;
+                desc: string;
+                icon: React.FC<{ className?: string }>;
+              }[]
+            ).map((opt) => {
+              const Icon = opt.icon;
+              const active = theme === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setTheme(opt.id);
+                    setOpenMenu(null);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-[#c49bff]/15 border border-[#c49bff]/30'
+                      : 'hover:bg-white/[0.06] border border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <Icon
+                      className={`w-4 h-4 ${
+                        active ? 'text-[#c49bff]' : 'text-purple-200/60'
+                      }`}
+                    />
+                    <div>
+                      <div className="text-xs font-semibold text-white">{opt.label}</div>
+                      <div className="text-[10px] text-purple-200/50">{opt.desc}</div>
+                    </div>
+                  </div>
+                  {active && <Check className="w-3.5 h-3.5 text-[#c49bff] shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* ==================== POPOVER: PROFILE ==================== */}
         {openMenu === 'profile' && user && (
           <div className="absolute right-0 top-12 w-64 glass-panel rounded-2xl p-2 shadow-2xl z-40">
@@ -414,6 +497,40 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               Психологія та правила
             </button>
+
+            {/* Theme Segmented Control inside Profile Menu */}
+            <div className="mt-1 pt-2 px-1.5 pb-1.5 border-t border-white/[0.06]">
+              <div className="text-[10px] uppercase tracking-wider text-purple-200/45 font-semibold px-1.5 mb-1.5">
+                Тема
+              </div>
+              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.07]">
+                {(
+                  [
+                    { id: 'light', label: 'Світла', icon: Sun },
+                    { id: 'dark', label: 'Темна', icon: Moon },
+                    { id: 'system', label: 'Авто', icon: Monitor },
+                  ] as { id: ThemeMode; label: string; icon: React.FC<{ className?: string }> }[]
+                ).map((opt) => {
+                  const Icon = opt.icon;
+                  const active = theme === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setTheme(opt.id)}
+                      className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                        active
+                          ? 'accent-pill'
+                          : 'text-purple-200/65 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="mt-1 pt-1 border-t border-white/[0.06] space-y-1">
               {!confirmDeleteAll ? (

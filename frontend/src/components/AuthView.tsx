@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { TrendingUp, Lock, Mail, User as UserIcon, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import type { ThemeMode } from '../context/ThemeContext';
+import { TrendingUp, Lock, Mail, User as UserIcon, ArrowRight, Sparkles, CheckCircle2, Sun, Moon, Monitor } from 'lucide-react';
 
 export const AuthView: React.FC = () => {
   const { login, register, loginDemo } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isRegister, setIsRegister] = useState(false);
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -50,6 +53,36 @@ export const AuthView: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#090611] p-4 relative overflow-hidden">
+      {/* Top-right Theme Pill Switcher */}
+      <div className="fixed top-4 right-4 z-20 inline-flex items-center p-1 rounded-full glass-panel gap-1">
+        {(
+          [
+            { id: 'light', icon: Sun, label: 'Світла' },
+            { id: 'dark', icon: Moon, label: 'Темна' },
+            { id: 'system', icon: Monitor, label: 'Система' },
+          ] as { id: ThemeMode; icon: React.FC<{ className?: string }>; label: string }[]
+        ).map((item) => {
+          const Icon = item.icon;
+          const active = theme === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTheme(item.id)}
+              title={item.label}
+              className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                active
+                  ? 'accent-pill'
+                  : 'text-purple-200/70 hover:text-white'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Subtle Ambient Purple Glow */}
       <div className="absolute -top-40 left-1/3 w-[600px] h-[600px] bg-purple-700/15 rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-700/12 rounded-full blur-[160px] pointer-events-none" />
@@ -128,7 +161,7 @@ export const AuthView: React.FC = () => {
               <div>
                 <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40 z-10 pointer-events-none" />
                   <input
                     type="email"
                     required
@@ -146,7 +179,7 @@ export const AuthView: React.FC = () => {
                 {isRegister ? "Ім'я користувача" : "Логін або Email"}
               </label>
               <div className="relative">
-                <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40" />
+                <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40 z-10 pointer-events-none" />
                 <input
                   type="text"
                   required
@@ -161,7 +194,7 @@ export const AuthView: React.FC = () => {
             <div>
               <label className="block text-xs font-medium text-purple-200/70 mb-1.5">Пароль</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-200/40 z-10 pointer-events-none" />
                 <input
                   type="password"
                   required

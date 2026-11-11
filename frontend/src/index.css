@@ -1,4 +1,23 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-axis: rgba(216, 180, 254, 0.45);
+  --tooltip-bg: #140d22;
+  --tooltip-border: rgba(196, 155, 255, 0.25);
+  --tooltip-text: #ffffff;
+  --donut-track: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] {
+  --chart-grid: rgba(109, 40, 217, 0.11);
+  --chart-axis: rgba(88, 28, 135, 0.68);
+  --tooltip-bg: rgba(255, 255, 255, 0.96);
+  --tooltip-border: rgba(124, 58, 237, 0.24);
+  --tooltip-text: #1b0f2e;
+  --donut-track: rgba(109, 40, 217, 0.12);
+}
 
 @layer base {
   body {
@@ -7,6 +26,12 @@
     min-height: 100vh;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  html[data-theme="light"] body {
+    background: linear-gradient(145deg, #f6f2ff 0%, #ede6ff 52%, #f9f7ff 100%);
+    color: #1b0f2e;
   }
 
   ::selection {
@@ -21,12 +46,15 @@
   ::-webkit-scrollbar-track {
     background: rgba(14, 9, 24, 0.6);
   }
+  html[data-theme="light"] ::-webkit-scrollbar-track {
+    background: rgba(237, 230, 255, 0.7);
+  }
   ::-webkit-scrollbar-thumb {
-    background: rgba(192, 132, 252, 0.2);
+    background: rgba(192, 132, 252, 0.25);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(192, 132, 252, 0.45);
+    background: rgba(192, 132, 252, 0.5);
   }
 }
 
@@ -39,6 +67,12 @@
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
+html[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(124, 58, 237, 0.14);
+  box-shadow: 0 12px 32px -10px rgba(88, 28, 135, 0.11), inset 0 1px 0 0 rgba(255, 255, 255, 0.92);
+}
+
 .glass-sidebar {
   background: rgba(15, 10, 26, 0.78);
   backdrop-filter: blur(24px) saturate(170%);
@@ -46,10 +80,20 @@
   border-right: 1px solid rgba(216, 180, 254, 0.07);
 }
 
+html[data-theme="light"] .glass-sidebar {
+  background: rgba(250, 247, 255, 0.86);
+  border-right: 1px solid rgba(124, 58, 237, 0.12);
+}
+
 .glass-card-subtle {
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(216, 180, 254, 0.08);
   backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .glass-card-subtle {
+  background: rgba(124, 58, 237, 0.045);
+  border: 1px solid rgba(124, 58, 237, 0.12);
 }
 
 .glass-input {
@@ -66,7 +110,23 @@
   outline: none;
 }
 
-/* Signature bright lavender pill accent (matches Verdelo mint pill) */
+html[data-theme="light"] .glass-input {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  color: #1b0f2e;
+}
+
+html[data-theme="light"] .glass-input::placeholder {
+  color: rgba(91, 33, 182, 0.45);
+}
+
+html[data-theme="light"] .glass-input:focus {
+  background: #ffffff;
+  border-color: rgba(124, 58, 237, 0.55);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.14);
+}
+
+/* Signature bright lavender pill accent (dark) / royal violet pill (light) */
 .accent-pill {
   background-color: #c49bff;
   color: #110820;
@@ -77,4 +137,101 @@
 .accent-pill:hover {
   background-color: #d2b3ff;
   box-shadow: 0 6px 24px -2px rgba(196, 155, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+html[data-theme="light"] .accent-pill {
+  background-color: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 4px 18px -2px rgba(124, 58, 237, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+html[data-theme="light"] .accent-pill:hover {
+  background-color: #6d28d9;
+  box-shadow: 0 6px 22px -2px rgba(124, 58, 237, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+
+/* Light-mode adaptive palette for existing purple liquid-glass utility tokens */
+html[data-theme="light"] :is([class^="bg-[#090611]"], [class*=" bg-[#090611]"]) {
+  background: linear-gradient(145deg, #f6f2ff 0%, #ede6ff 52%, #f9f7ff 100%);
+  color: #1b0f2e;
+}
+
+html[data-theme="light"] :is([class^="bg-[#0b0714]"], [class*=" bg-[#0b0714]"]) {
+  background-color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(124, 58, 237, 0.11);
+}
+
+html[data-theme="light"] :is([class^="bg-[#07040e]"], [class*=" bg-[#07040e]"]) {
+  background-color: rgba(29, 16, 56, 0.36);
+}
+
+html[data-theme="light"] option:is([class*="bg-[#120827]"]) {
+  background-color: #ffffff;
+  color: #1b0f2e;
+}
+
+html[data-theme="light"] :is([class^="text-white"], [class*=" text-white"]):not(.accent-pill):not(.accent-pill *):not([class*="bg-rose-500"]):not([class*="bg-emerald-500"]):not([class*="text-white/"]) {
+  color: #1b0f2e;
+}
+
+html[data-theme="light"] :is([class^="text-white/"], [class*=" text-white/"]) {
+  color: rgba(88, 28, 135, 0.25);
+}
+
+html[data-theme="light"] :is([class*="hover:text-white"]):hover:not(.accent-pill) {
+  color: #1b0f2e;
+}
+
+html[data-theme="light"] :is([class^="text-purple-100"], [class*=" text-purple-100"]) {
+  color: rgba(36, 17, 68, 0.88);
+}
+
+html[data-theme="light"] :is([class^="text-purple-200"], [class*=" text-purple-200"]) {
+  color: rgba(74, 42, 128, 0.76);
+}
+
+html[data-theme="light"] :is([class^="text-purple-300"], [class*=" text-purple-300"]) {
+  color: rgba(91, 33, 182, 0.82);
+}
+
+html[data-theme="light"] :is([class^="text-[#c49bff]"], [class*=" text-[#c49bff]"]):not(.accent-pill) {
+  color: #6d28d9;
+}
+
+html[data-theme="light"] :is([class^="text-[#d8b4fe]"], [class*=" text-[#d8b4fe]"]),
+html[data-theme="light"] :is([class^="text-[#e2ccff]"], [class*=" text-[#e2ccff]"]) {
+  color: #5b21b6;
+}
+
+html[data-theme="light"] :is([class^="bg-white/["], [class*=" bg-white/["]) {
+  background-color: rgba(109, 40, 217, 0.06);
+}
+
+html[data-theme="light"] :is([class^="hover:bg-white/["], [class*=" hover:bg-white/["]):hover {
+  background-color: rgba(109, 40, 217, 0.11);
+}
+
+html[data-theme="light"] :is([class^="border-white/["], [class*=" border-white/["]) {
+  border-color: rgba(109, 40, 217, 0.13);
+}
+
+html[data-theme="light"] :is([class^="divide-white/["], [class*=" divide-white/["]) > :not(:last-child) {
+  border-color: rgba(109, 40, 217, 0.11);
+}
+
+html[data-theme="light"] :is([class^="bg-purple-950/"], [class*=" bg-purple-950/"]),
+html[data-theme="light"] :is([class^="bg-purple-900/"], [class*=" bg-purple-900/"]) {
+  background-color: rgba(124, 58, 237, 0.06);
+}
+
+html[data-theme="light"] :is([class*="text-emerald-400"], [class*="text-emerald-300"]) {
+  color: #059669;
+}
+
+html[data-theme="light"] :is([class*="text-rose-400"], [class*="text-rose-300"], [class*="text-rose-200"]):not([class*="bg-rose-500/85"]) {
+  color: #e11d48;
+}
+
+html[data-theme="light"] :is([class*="text-amber-400"], [class*="text-amber-300"]) {
+  color: #d97706;
 }

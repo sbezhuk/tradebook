@@ -83,7 +83,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <span
                   className={`font-mono text-[11px] ${
                     active
-                      ? 'text-[#110820]/80 font-bold'
+                      ? 'text-white/90 dark:text-[#110820]/80 font-bold'
                       : m.total_pnl >= 0
                       ? 'text-emerald-400'
                       : 'text-rose-400'
@@ -193,10 +193,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <Tooltip
                     formatter={(val: any) => [`$${val}`, 'Equity']}
                     contentStyle={{
-                      backgroundColor: '#140d22',
-                      borderColor: 'rgba(196,155,255,0.25)',
+                      backgroundColor: 'var(--tooltip-bg)',
+                      borderColor: 'var(--tooltip-border)',
                       borderRadius: '0.75rem',
                       fontSize: '11px',
+                      color: 'var(--tooltip-text)',
                     }}
                   />
                   <Area

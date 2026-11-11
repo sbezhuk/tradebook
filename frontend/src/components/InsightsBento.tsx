@@ -241,7 +241,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                   <span
                     className={`font-mono text-[11px] ${
                       isActive
-                        ? 'text-[#110820]/80 font-bold'
+                        ? 'text-white/90 dark:text-[#110820]/80 font-bold'
                         : m.total_pnl >= 0
                         ? 'text-emerald-400'
                         : 'text-rose-400'
@@ -485,7 +485,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         cy="56"
                         r={ringRadius}
                         fill="transparent"
-                        stroke="rgba(255,255,255,0.08)"
+                        stroke="var(--donut-track)"
                         strokeWidth="11"
                       />
                       <circle
@@ -731,15 +731,15 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                 <div className="h-56 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={[...available_months].reverse()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                       <XAxis
                         dataKey="label"
-                        stroke="rgba(216,180,254,0.45)"
+                        stroke="var(--chart-axis)"
                         fontSize={11}
                         tickLine={false}
                       />
                       <YAxis
-                        stroke="rgba(216,180,254,0.45)"
+                        stroke="var(--chart-axis)"
                         fontSize={11}
                         tickLine={false}
                         tickFormatter={(v) => `$${v}`}
@@ -747,11 +747,11 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                       <Tooltip
                         formatter={(val: any) => [`$${Number(val).toFixed(2)}`, 'Місячний PnL']}
                         contentStyle={{
-                          backgroundColor: '#140d22',
-                          borderColor: 'rgba(196,155,255,0.25)',
+                          backgroundColor: 'var(--tooltip-bg)',
+                          borderColor: 'var(--tooltip-border)',
                           borderRadius: '1rem',
                           fontSize: '12px',
-                          color: '#fff',
+                          color: 'var(--tooltip-text)',
                         }}
                       />
                       <Bar dataKey="total_pnl" radius={[8, 8, 0, 0]}>
@@ -886,16 +886,16 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         <stop offset="95%" stopColor="#7c3aed" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                     <XAxis
                       dataKey="date"
-                      stroke="rgba(216,180,254,0.4)"
+                      stroke="var(--chart-axis)"
                       fontSize={10}
                       tickLine={false}
                       tickFormatter={(val) => val.split(' ')[0]}
                     />
                     <YAxis
-                      stroke="rgba(216,180,254,0.4)"
+                      stroke="var(--chart-axis)"
                       fontSize={11}
                       tickLine={false}
                       tickFormatter={(val) => `$${val}`}
@@ -925,17 +925,17 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={by_day_of_week}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="name" stroke="rgba(216,180,254,0.45)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="rgba(216,180,254,0.45)" fontSize={11} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                  <XAxis dataKey="name" stroke="var(--chart-axis)" fontSize={10} tickLine={false} />
+                  <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} tickFormatter={(v) => `$${v}`} />
                   <Tooltip
                     formatter={(val: any) => [`$${val}`, 'PnL']}
                     contentStyle={{
-                      backgroundColor: '#140d22',
-                      borderColor: 'rgba(196,155,255,0.25)',
+                      backgroundColor: 'var(--tooltip-bg)',
+                      borderColor: 'var(--tooltip-border)',
                       borderRadius: '1rem',
                       fontSize: '12px',
-                      color: '#fff',
+                      color: 'var(--tooltip-text)',
                     }}
                   />
                   <Bar dataKey="total_pnl" radius={[6, 6, 0, 0]}>

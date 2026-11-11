@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center space-x-3">
                   <Icon
                     className={`w-4 h-4 ${
-                      active ? 'text-[#110820]' : 'text-purple-200/55'
+                      active ? 'text-white dark:text-[#110820]' : 'text-purple-200/55'
                     }`}
                   />
                   <span>{item.label}</span>
@@ -133,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span
                     className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                       active
-                        ? 'bg-[#110820]/15 text-[#110820]'
+                        ? 'bg-white/20 text-white dark:bg-[#110820]/15 dark:text-[#110820]'
                         : 'bg-[#c49bff]/15 text-[#c49bff]'
                     }`}
                   >
