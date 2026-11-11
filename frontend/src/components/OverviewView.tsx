@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Trade, AnalyticsData } from '../types';
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Wallet, Plus } from 'lucide-react';
+import { OverallCapitalStrip } from './OverallCapitalStrip';
+import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface OverviewViewProps {
@@ -37,77 +38,26 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const overallGrowthPct = analytics?.overall_deposit_growth_pct ?? null;
   const periodGrowthPct = stats?.period_deposit_growth_pct ?? null;
   const periodCumDeposits = stats?.period_cumulative_deposits ?? 0;
-  const isOverallPos = overallPnl >= 0;
   const isPeriodPos = (stats?.total_pnl ?? 0) >= 0;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold tracking-tight text-white">Огляд портфелю</h1>
           <p className="text-sm text-purple-200/50 mt-1">
             Звітний період: <span className="text-[#c49bff] font-medium">{periodLabel}</span> • статистика розраховується за вибраним місяцем.
           </p>
         </div>
 
-        {/* Separate Overall Total PnL + Deposit Growth Cards */}
-        <div className="flex flex-wrap items-stretch gap-3 self-start">
-          <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
-                Загальний PnL (весь час)
-              </div>
-              <div className="text-[11px] text-purple-200/45 mt-0.5">
-                {overallTrades} закритих угод
-              </div>
-            </div>
-            <div className="text-right">
-              <div
-                className={`text-xl font-bold font-mono ${
-                  isOverallPos ? 'text-[#c49bff]' : 'text-rose-400'
-                }`}
-              >
-                {isOverallPos ? '+' : '-'}${Math.abs(overallPnl).toFixed(2)}
-              </div>
-              {overallGrowthPct !== null && (
-                <div
-                  className={`text-[11px] font-mono font-bold ${
-                    overallGrowthPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {overallGrowthPct >= 0 ? '+' : ''}
-                  {overallGrowthPct.toFixed(2)}% до депозиту
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-4 border border-[#c49bff]/20">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold flex items-center gap-1.5">
-                <Wallet className="w-3.5 h-3.5 text-[#c49bff]" />
-                <span>Депозит і баланс</span>
-              </div>
-              <div className="text-xs font-mono font-bold text-white mt-0.5">
-                ${totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-                <span className="text-purple-200/45 font-normal">→</span>{' '}
-                <span className="text-[#c49bff]">
-                  ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              </div>
-            </div>
-            {onOpenDeposits && (
-              <button
-                type="button"
-                onClick={onOpenDeposits}
-                className="px-3 py-1.5 rounded-xl bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/30 text-[#c49bff] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Депозит</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <OverallCapitalStrip
+          overallPnl={overallPnl}
+          overallTrades={overallTrades}
+          totalDeposits={totalDeposits}
+          currentBalance={currentBalance}
+          overallGrowthPct={overallGrowthPct}
+          onOpenDeposits={onOpenDeposits}
+        />
       </div>
 
       {/* Month Period Selector */}

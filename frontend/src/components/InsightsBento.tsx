@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { AnalyticsData, BreakdownItem, DailyActivityItem } from '../types';
-import { Wallet, Plus } from 'lucide-react';
+import { OverallCapitalStrip } from './OverallCapitalStrip';
 import {
   AreaChart,
   Area,
@@ -196,10 +196,10 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Page Title, Separate Overall Total PnL Card & Month Period Selector */}
+      {/* Page Title, Unified Overall Capital Strip & Month Period Selector */}
       <div>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold tracking-tight text-white">{pageTitle}</h1>
             <p className="text-sm text-purple-200/50 mt-1">
               {pageSubtitle} Звітний період:{' '}
@@ -207,62 +207,15 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
             </p>
           </div>
 
-          {/* Separate All-Time Overall Total PnL & Deposit Growth Badges */}
-          <div className="flex flex-wrap items-stretch gap-3 self-start">
-            <div className="glass-panel rounded-2xl px-5 py-3.5 border border-[#c49bff]/25 flex items-center gap-5">
-              <div>
-                <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold">
-                  Загальний PnL (весь час)
-                </div>
-                <div className="text-[11px] text-purple-200/45 mt-0.5">
-                  {overall_total_trades} закритих угод • {available_months.length} міс.
-                </div>
-              </div>
-              <div className="text-right">
-                <div
-                  className={`text-2xl font-bold font-mono tracking-tight ${
-                    isOverallPositive ? 'text-[#c49bff]' : 'text-rose-400'
-                  }`}
-                >
-                  {isOverallPositive ? '+' : '-'}${formatUsd(overall_total_pnl)}
-                </div>
-                {overall_deposit_growth_pct !== null && (
-                  <div
-                    className={`text-[11px] font-mono font-bold ${
-                      overall_deposit_growth_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                    }`}
-                  >
-                    {overall_deposit_growth_pct >= 0 ? '+' : ''}
-                    {overall_deposit_growth_pct.toFixed(2)}% до депозиту
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-2xl px-4 py-3.5 border border-[#c49bff]/25 flex items-center gap-4">
-              <div>
-                <div className="text-[11px] uppercase tracking-wider text-purple-200/55 font-semibold flex items-center gap-1.5">
-                  <Wallet className="w-3.5 h-3.5 text-[#c49bff]" />
-                  <span>Депозит / Баланс</span>
-                </div>
-                <div className="text-xs font-mono font-bold text-white mt-1">
-                  ${formatUsd(total_deposits)}{' '}
-                  <span className="text-purple-200/45 font-normal">→</span>{' '}
-                  <span className="text-[#c49bff]">${formatUsd(current_balance)}</span>
-                </div>
-              </div>
-              {onOpenDeposits && (
-                <button
-                  type="button"
-                  onClick={onOpenDeposits}
-                  className="px-3 py-1.5 rounded-xl bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/30 text-[#c49bff] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Депозит</span>
-                </button>
-              )}
-            </div>
-          </div>
+          <OverallCapitalStrip
+            overallPnl={overall_total_pnl}
+            overallTrades={overall_total_trades}
+            monthsCount={available_months.length}
+            totalDeposits={total_deposits}
+            currentBalance={current_balance}
+            overallGrowthPct={overall_deposit_growth_pct}
+            onOpenDeposits={onOpenDeposits}
+          />
         </div>
 
         {/* Reporting Month Pill Selector */}
