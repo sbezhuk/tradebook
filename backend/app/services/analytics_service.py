@@ -2,7 +2,13 @@ from typing import List, Dict
 from datetime import datetime
 from collections import defaultdict
 from app.models.trade import Trade
-from app.schemas.analytics import AnalyticsResponse, SummaryStats, EquityPoint, BreakdownItem
+from app.schemas.analytics import (
+    AnalyticsResponse,
+    SummaryStats,
+    EquityPoint,
+    BreakdownItem,
+    DailyActivityItem,
+)
 
 DAYS_MAP = ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"]
 
@@ -16,6 +22,8 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             open_trades=0,
             win_rate=0.0,
             total_pnl=0.0,
+            gross_profit=0.0,
+            gross_loss=0.0,
             profit_factor=0.0,
             average_trade=0.0,
             average_win=0.0,
@@ -32,13 +40,14 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             by_market=[],
             by_direction=[],
             by_tag=[],
-            by_day_of_week=[]
+            by_symbol=[],
+            by_day_of_week=[],
+            daily_activity=[]
         )
 
     open_trades = [t for t in trades if t.status == "OPEN"]
     closed_trades = [t for t in trades if t.status == "CLOSED"]
 
-    # Sort closed trades chronologically by exit_date or entry_date
     def get_trade_time(t: Trade):
         return t.exit_date or t.entry_date or datetime.min
 
@@ -52,10 +61,10 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
     win_rate = round((len(winning) / total_closed * 100), 2) if total_closed > 0 else 0.0
 
     total_pnl = round(sum(t.pnl for t in closed_trades), 2)
-    gross_profit = sum(t.pnl for t in winning)
-    gross_loss = abs(sum(t.pnl for t in losing))
+    gross_profit = round(sum(t.pnl for t in winning), 2)
+    gross_loss = round(abs(sum(t.pnl for t in losing)), 2)
 
-    profit_factor = round(gross_profit / gross_loss, 2) if gross_loss > 0 else (round(gross_profit, 2) if gross_profit > 0 else 0.0)
+    profit_factor = round(gross_profit / gross_loss, 2) if gross_loss > 0 else (gross_profit if gross_profit > 0 else 0.0)
 
     avg_trade = round(total_pnl / total_closed, 2) if total_closed > 0 else 0.0
     avg_win = round(gross_profit / len(winning), 2) if winning else 0.0
@@ -64,7 +73,6 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
     best_trade = max((t.pnl for t in closed_trades), default=0.0)
     worst_trade = min((t.pnl for t in closed_trades), default=0.0)
 
-    # Streaks
     max_wins = 0
     max_losses = 0
     curr_wins = 0
@@ -95,6 +103,8 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
         open_trades=len(open_trades),
         win_rate=win_rate,
         total_pnl=total_pnl,
+        gross_profit=gross_profit,
+        gross_loss=gross_loss,
         profit_factor=profit_factor,
         average_trade=avg_trade,
         average_win=avg_win,
@@ -106,7 +116,6 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
         rule_discipline_rate=rule_discipline_rate
     )
 
-    # Equity Curve
     equity_curve: List[EquityPoint] = []
     cumulative = 0.0
     for t in closed_trades_sorted:
@@ -122,7 +131,6 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             )
         )
 
-    # Helper for breakdown
     def build_breakdown(groups: Dict[str, List[Trade]]) -> List[BreakdownItem]:
         res = []
         for name, tr_list in groups.items():
@@ -131,22 +139,24 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             wr = round((wins / cnt * 100), 2) if cnt > 0 else 0.0
             pnl_sum = round(sum(tr.pnl for tr in tr_list), 2)
             res.append(BreakdownItem(name=name, trades_count=cnt, win_rate=wr, total_pnl=pnl_sum))
-        res.sort(key=lambda x: x.total_pnl, reverse=True)
+        res.sort(key=lambda x: abs(x.total_pnl), reverse=True)
         return res
 
-    # Breakdown by market
     market_groups = defaultdict(list)
     for t in closed_trades:
         market_groups[t.market or "Інше"].append(t)
     by_market = build_breakdown(market_groups)
 
-    # Breakdown by direction
     dir_groups = defaultdict(list)
     for t in closed_trades:
         dir_groups[t.direction].append(t)
     by_direction = build_breakdown(dir_groups)
 
-    # Breakdown by tag
+    symbol_groups = defaultdict(list)
+    for t in closed_trades:
+        symbol_groups[t.symbol].append(t)
+    by_symbol = build_breakdown(symbol_groups)
+
     tag_groups = defaultdict(list)
     for t in closed_trades:
         if t.tags:
@@ -158,7 +168,6 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             tag_groups["Без тегу"].append(t)
     by_tag = build_breakdown(tag_groups)
 
-    # Breakdown by day of week
     day_groups = defaultdict(list)
     for t in closed_trades:
         dt = t.entry_date or t.exit_date
@@ -175,11 +184,28 @@ def compute_analytics(trades: List[Trade]) -> AnalyticsResponse:
             pnl_sum = round(sum(tr.pnl for tr in tr_list), 2)
             by_day_of_week.append(BreakdownItem(name=day, trades_count=cnt, win_rate=wr, total_pnl=pnl_sum))
 
+    daily_map: Dict[str, List[Trade]] = defaultdict(list)
+    for t in closed_trades:
+        dt = t.exit_date or t.entry_date
+        if dt:
+            daily_map[dt.strftime("%Y-%m-%d")].append(t)
+
+    daily_activity = [
+        DailyActivityItem(
+            date=date_str,
+            trades_count=len(tr_list),
+            total_pnl=round(sum(tr.pnl for tr in tr_list), 2)
+        )
+        for date_str, tr_list in sorted(daily_map.items())
+    ]
+
     return AnalyticsResponse(
         summary=summary,
         equity_curve=equity_curve,
         by_market=by_market,
         by_direction=by_direction,
         by_tag=by_tag,
-        by_day_of_week=by_day_of_week
+        by_symbol=by_symbol,
+        by_day_of_week=by_day_of_week,
+        daily_activity=daily_activity
     )

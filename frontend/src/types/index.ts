@@ -73,6 +73,8 @@ export interface SummaryStats {
   open_trades: number;
   win_rate: number;
   total_pnl: number;
+  gross_profit: number;
+  gross_loss: number;
   profit_factor: number;
   average_trade: number;
   average_win: number;
@@ -99,11 +101,19 @@ export interface BreakdownItem {
   total_pnl: number;
 }
 
+export interface DailyActivityItem {
+  date: string;
+  trades_count: number;
+  total_pnl: number;
+}
+
 export interface AnalyticsData {
   summary: SummaryStats;
   equity_curve: EquityPoint[];
   by_market: BreakdownItem[];
   by_direction: BreakdownItem[];
   by_tag: BreakdownItem[];
+  by_symbol: BreakdownItem[];
   by_day_of_week: BreakdownItem[];
+  daily_activity: DailyActivityItem[];
 }

@@ -9,6 +9,8 @@ class SummaryStats(BaseModel):
     open_trades: int
     win_rate: float
     total_pnl: float
+    gross_profit: float
+    gross_loss: float
     profit_factor: float
     average_trade: float
     average_win: float
@@ -32,10 +34,17 @@ class BreakdownItem(BaseModel):
     win_rate: float
     total_pnl: float
 
+class DailyActivityItem(BaseModel):
+    date: str  # YYYY-MM-DD
+    trades_count: int
+    total_pnl: float
+
 class AnalyticsResponse(BaseModel):
     summary: SummaryStats
     equity_curve: List[EquityPoint]
     by_market: List[BreakdownItem]
     by_direction: List[BreakdownItem]
     by_tag: List[BreakdownItem]
+    by_symbol: List[BreakdownItem]
     by_day_of_week: List[BreakdownItem]
+    daily_activity: List[DailyActivityItem]

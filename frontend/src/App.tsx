@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './context/AuthContext';
 import { AuthView } from './components/AuthView';
-import { Navbar } from './components/Navbar';
-import { StatCards } from './components/StatCards';
+import { Sidebar } from './components/Sidebar';
+import type { NavTab } from './components/Sidebar';
+import { TopBar } from './components/TopBar';
+import { OverviewView } from './components/OverviewView';
 import { TradeList } from './components/TradeList';
-import { AnalyticsView } from './components/AnalyticsView';
+import { InsightsBento } from './components/InsightsBento';
+import { PsychologyView } from './components/PsychologyView';
 import { TradeModal } from './components/TradeModal';
 import { TradeDetailModal } from './components/TradeDetailModal';
 import type { Trade, TradeFormData, AnalyticsData } from './types';
@@ -13,13 +16,17 @@ import { api } from './api/client';
 export const AppContent: React.FC = () => {
   const { user, isLoading: authLoading } = useAuth();
 
-  const [currentTab, setCurrentTab] = useState<'trades' | 'analytics'>('trades');
+  const [currentTab, setCurrentTab] = useState<NavTab>('insights');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const [trades, setTrades] = useState<Trade[]>([]);
   const [tradesLoading, setTradesLoading] = useState<boolean>(false);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(false);
+  const [tagsCount, setTagsCount] = useState<number>(0);
 
-  // Filters
+  // Filters & Global Search
+  const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{
     symbol?: string;
     market?: string;
@@ -42,21 +49,29 @@ export const AppContent: React.FC = () => {
     if (!user) return;
     setTradesLoading(true);
     try {
-      const data = await api.getTrades(filters);
+      const mergedFilters = {
+        ...filters,
+        symbol: searchQuery.trim() || filters.symbol,
+      };
+      const data = await api.getTrades(mergedFilters);
       setTrades(data.items);
     } catch (err) {
       console.error('Failed to load trades:', err);
     } finally {
       setTradesLoading(false);
     }
-  }, [user, filters]);
+  }, [user, filters, searchQuery]);
 
   const loadAnalytics = useCallback(async () => {
     if (!user) return;
     setAnalyticsLoading(true);
     try {
-      const data = await api.getAnalytics();
-      setAnalytics(data);
+      const [analyticsRes, tagsRes] = await Promise.all([
+        api.getAnalytics(),
+        api.getTags(),
+      ]);
+      setAnalytics(analyticsRes);
+      setTagsCount(tagsRes.length);
     } catch (err) {
       console.error('Failed to load analytics:', err);
     } finally {
@@ -70,6 +85,13 @@ export const AppContent: React.FC = () => {
       loadAnalytics();
     }
   }, [user, loadTrades, loadAnalytics]);
+
+  const handleGlobalSearch = (q: string) => {
+    setSearchQuery(q);
+    if (q.trim() && currentTab !== 'trades') {
+      setCurrentTab('trades');
+    }
+  };
 
   const handleSaveTrade = async (data: TradeFormData, id?: number) => {
     if (id) {
@@ -106,10 +128,10 @@ export const AppContent: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#090514] text-purple-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#090611] text-purple-200/70">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mb-3" />
-          <p className="text-sm font-medium tracking-wide">Завантаження TradeBook...</p>
+          <div className="inline-block animate-spin rounded-full h-9 w-9 border-b-2 border-[#c49bff] mb-3" />
+          <p className="text-xs font-medium tracking-wide">Завантаження TradeBook...</p>
         </div>
       </div>
     );
@@ -120,37 +142,85 @@ export const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#090514] text-purple-50 flex flex-col relative overflow-hidden">
-      {/* Liquid Ambient Glowing Orbs */}
-      <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-purple-700/12 rounded-full blur-[140px] pointer-events-none -translate-y-1/2" />
-      <div className="fixed top-1/2 right-10 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="fixed bottom-0 left-10 w-[600px] h-[600px] bg-indigo-700/10 rounded-full blur-[160px] pointer-events-none translate-y-1/3" />
+    <div className="min-h-screen bg-[#090611] text-[#f3effb] flex relative overflow-hidden">
+      {/* Subtle Ambient Purple Glow matching Verdelo's soft studio illumination */}
+      <div className="fixed -top-40 left-1/4 w-[700px] h-[550px] bg-purple-700/12 rounded-full blur-[160px] pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-[600px] h-[500px] bg-indigo-800/10 rounded-full blur-[160px] pointer-events-none" />
 
-      <Navbar
+      {/* Left Sidebar Navigation */}
+      <Sidebar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
-        onOpenNewTrade={handleOpenNew}
+        stats={analytics?.summary}
+        tagsCount={tagsCount}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
-        {/* KPI Summary Cards */}
-        {analytics && <StatCards stats={analytics.summary} />}
+      {/* Right Main Area */}
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 h-screen overflow-y-auto">
+        <TopBar
+          searchQuery={searchQuery}
+          onSearchChange={handleGlobalSearch}
+          onOpenNewTrade={handleOpenNew}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          openTradesCount={analytics?.summary.open_trades ?? 0}
+        />
 
-        {/* View Switcher: Trades vs Analytics */}
-        {currentTab === 'trades' ? (
-          <TradeList
-            trades={trades}
-            loading={tradesLoading}
-            onSelectTrade={handleOpenDetail}
-            onEditTrade={handleOpenEdit}
-            onDeleteTrade={handleDeleteTrade}
-            onNewTrade={handleOpenNew}
-            onFilterChange={setFilters}
-          />
-        ) : (
-          <AnalyticsView analytics={analytics} loading={analyticsLoading} />
-        )}
-      </main>
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-7">
+          {currentTab === 'overview' && (
+            <OverviewView
+              trades={trades}
+              analytics={analytics}
+              onSelectTrade={handleOpenDetail}
+              onGoToTrades={() => setCurrentTab('trades')}
+              onGoToInsights={() => setCurrentTab('insights')}
+            />
+          )}
+
+          {currentTab === 'trades' && (
+            <TradeList
+              trades={trades}
+              loading={tradesLoading}
+              onSelectTrade={handleOpenDetail}
+              onEditTrade={handleOpenEdit}
+              onDeleteTrade={handleDeleteTrade}
+              onNewTrade={handleOpenNew}
+              onFilterChange={setFilters}
+            />
+          )}
+
+          {currentTab === 'insights' && (
+            <InsightsBento
+              key="insights-bento"
+              analytics={analytics}
+              loading={analyticsLoading}
+              pageTitle="Аналітика"
+              pageSubtitle="Скільки ви заробляєте, утримуєте та де ваша перевага на ринку."
+              defaultSubTab="bento"
+            />
+          )}
+
+          {currentTab === 'setups' && (
+            <InsightsBento
+              key="setups-bento"
+              analytics={analytics}
+              loading={analyticsLoading}
+              pageTitle="Сетапи та активність"
+              pageSubtitle="Аналіз ефективності ваших торгових формацій та днів тижня."
+              defaultSubTab="setups"
+            />
+          )}
+
+          {currentTab === 'psychology' && (
+            <PsychologyView
+              trades={trades}
+              stats={analytics?.summary ?? null}
+              onSelectTrade={handleOpenDetail}
+            />
+          )}
+        </main>
+      </div>
 
       {/* Trade Edit / Create Modal */}
       <TradeModal

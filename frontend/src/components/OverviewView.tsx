@@ -1,0 +1,211 @@
+import React from 'react';
+import type { Trade, AnalyticsData } from '../types';
+import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
+
+interface OverviewViewProps {
+  trades: Trade[];
+  analytics: AnalyticsData | null;
+  onSelectTrade: (trade: Trade) => void;
+  onGoToTrades: () => void;
+  onGoToInsights: () => void;
+}
+
+export const OverviewView: React.FC<OverviewViewProps> = ({
+  trades,
+  analytics,
+  onSelectTrade,
+  onGoToTrades,
+  onGoToInsights,
+}) => {
+  const stats = analytics?.summary;
+  const equity = analytics?.equity_curve || [];
+  const isPnlPos = (stats?.total_pnl ?? 0) >= 0;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Огляд портфелю</h1>
+        <p className="text-sm text-purple-200/50 mt-1">
+          Ключові показники ефективності та останні операції.
+        </p>
+      </div>
+
+      {/* 4 Sleek Glass Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="text-xs text-purple-200/55 font-medium">Загальний PnL</div>
+          <div
+            className={`text-2xl font-bold font-mono mt-1.5 ${
+              isPnlPos ? 'text-[#c49bff]' : 'text-rose-400'
+            }`}
+          >
+            {isPnlPos ? '+' : ''}${(stats?.total_pnl ?? 0).toFixed(2)}
+          </div>
+          <div className="text-[11px] text-purple-200/45 mt-1">
+            Середній трейд: {stats && stats.average_trade >= 0 ? '+' : ''}${stats?.average_trade ?? 0}
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="text-xs text-purple-200/55 font-medium">Win Rate</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1.5">
+            {stats?.win_rate ?? 0}%
+          </div>
+          <div className="text-[11px] text-purple-200/45 mt-1">
+            {stats?.winning_trades ?? 0} прибуткових / {stats?.losing_trades ?? 0} збиткових
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="text-xs text-purple-200/55 font-medium">Profit Factor</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1.5">
+            {stats?.profit_factor ?? 0}
+          </div>
+          <div className="text-[11px] text-purple-200/45 mt-1">
+            Макс. серія перемог: {stats?.max_consecutive_wins ?? 0}
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="text-xs text-purple-200/55 font-medium">Дисципліна плану</div>
+          <div className="text-2xl font-bold font-mono text-[#c49bff] mt-1.5">
+            {stats?.rule_discipline_rate ?? 100}%
+          </div>
+          <div className="text-[11px] text-purple-200/45 mt-1">
+            Відкритих позицій зараз: {stats?.open_trades ?? 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Mini Equity + Recent Trades */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Equity Preview */}
+        <div className="lg:col-span-5 glass-panel rounded-2xl p-6 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Динаміка капіталу</h2>
+              <p className="text-xs text-purple-200/45 mt-0.5">Крива прибутковості</p>
+            </div>
+            <button
+              onClick={onGoToInsights}
+              className="text-xs text-[#c49bff] hover:underline flex items-center space-x-1"
+            >
+              <span>Аналітика</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="h-48">
+            {equity.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-xs text-purple-200/40">
+                Немає даних для графіка
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={equity}>
+                  <defs>
+                    <linearGradient id="overviewGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#c49bff" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#c49bff" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip
+                    formatter={(val: any) => [`$${val}`, 'Equity']}
+                    contentStyle={{
+                      backgroundColor: '#140d22',
+                      borderColor: 'rgba(196,155,255,0.25)',
+                      borderRadius: '0.75rem',
+                      fontSize: '11px',
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cumulative_pnl"
+                    stroke="#c49bff"
+                    strokeWidth={2.5}
+                    fill="url(#overviewGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Trades */}
+        <div className="lg:col-span-7 glass-panel rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Останні угоди</h2>
+              <p className="text-xs text-purple-200/45 mt-0.5">Швидкий доступ до останніх позицій</p>
+            </div>
+            <button
+              onClick={onGoToTrades}
+              className="text-xs text-[#c49bff] hover:underline flex items-center space-x-1"
+            >
+              <span>Весь журнал</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="divide-y divide-white/[0.05]">
+            {trades.slice(0, 5).map((t) => {
+              const isLong = t.direction === 'LONG';
+              const isOpen = t.status === 'OPEN';
+              const isWin = t.pnl > 0;
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => onSelectTrade(t)}
+                  className="py-3 flex items-center justify-between hover:bg-white/[0.025] px-2 -mx-2 rounded-xl cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                        isLong ? 'bg-[#c49bff]/15 text-[#c49bff]' : 'bg-rose-500/15 text-rose-400'
+                      }`}
+                    >
+                      {isLong ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{t.symbol}</div>
+                      <div className="text-[11px] text-purple-200/45">
+                        {t.market} • {new Date(t.entry_date).toLocaleDateString('uk-UA')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    {isOpen ? (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">
+                        Відкрита
+                      </span>
+                    ) : (
+                      <>
+                        <div
+                          className={`text-xs font-bold font-mono ${
+                            isWin ? 'text-[#c49bff]' : t.pnl < 0 ? 'text-rose-400' : 'text-purple-200'
+                          }`}
+                        >
+                          {isWin ? '+' : ''}${t.pnl.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-purple-200/45 font-mono">
+                          {isWin ? '+' : ''}{t.pnl_percentage.toFixed(2)}%
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {trades.length === 0 && (
+              <div className="py-8 text-center text-xs text-purple-200/40">
+                Поки що немає угод
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

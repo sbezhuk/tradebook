@@ -205,8 +205,8 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090514]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-2xl liquid-glass-card rounded-3xl shadow-[0_20px_60px_rgba(76,29,149,0.45)] overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-2xl glass-panel rounded-3xl overflow-hidden my-8">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/15 bg-purple-950/40">
           <div>
@@ -263,7 +263,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               <select
                 value={market}
                 onChange={(e) => setMarket(e.target.value as MarketType)}
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
               >
                 <option value="CRYPTO" className="bg-[#120827]">Crypto (BTC, ETH...)</option>
                 <option value="FOREX" className="bg-[#120827]">Forex (EUR/USD...)</option>
@@ -309,7 +309,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as StatusType)}
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
               >
                 <option value="CLOSED" className="bg-[#120827]">Закрита (Фіксований PnL)</option>
                 <option value="OPEN" className="bg-[#120827]">Відкрита (В процесі)</option>
@@ -328,7 +328,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="BTC/USDT або AAPL"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40 uppercase font-mono font-bold"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40 uppercase font-mono font-bold"
               />
             </div>
 
@@ -341,7 +341,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="1.0"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-semibold"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-semibold"
               />
             </div>
 
@@ -353,7 +353,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={fees}
                 onChange={(e) => setFees(e.target.value)}
                 placeholder="0.0"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono"
               />
             </div>
           </div>
@@ -369,7 +369,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
                 placeholder="65000"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
               />
             </div>
 
@@ -384,7 +384,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={exitPrice}
                 onChange={(e) => setExitPrice(e.target.value)}
                 placeholder={status === 'OPEN' ? 'Відкрита' : '68000'}
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold disabled:opacity-40"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white font-mono font-bold disabled:opacity-40"
               />
             </div>
 
@@ -396,7 +396,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
                 placeholder="64000"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-rose-300 font-mono font-semibold"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-rose-300 font-mono font-semibold"
               />
             </div>
 
@@ -408,7 +408,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(e.target.value)}
                 placeholder="70000"
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono font-semibold"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono font-semibold"
               />
             </div>
           </div>
@@ -425,7 +425,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 required
                 value={entryDate}
                 onChange={(e) => setEntryDate(e.target.value)}
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white"
               />
             </div>
 
@@ -439,7 +439,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 disabled={status === 'OPEN'}
                 value={exitDate}
                 onChange={(e) => setExitDate(e.target.value)}
-                className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white disabled:opacity-40"
+                className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white disabled:opacity-40"
               />
             </div>
           </div>
@@ -455,7 +455,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Breakout, SupportBounce, LondonSession, FVG"
-              className="liquid-glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
+              className="glass-input w-full rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
             />
           </div>
 
@@ -468,7 +468,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={setupNotes}
                 onChange={(e) => setSetupNotes(e.target.value)}
                 placeholder="Рівень підтримки на 4H, перекупленість RSI, зняття ліквідності..."
-                className="liquid-glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
+                className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
               />
             </div>
 
@@ -479,7 +479,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={postTradeNotes}
                 onChange={(e) => setPostTradeNotes(e.target.value)}
                 placeholder="Що пішло добре, які помилки було допущено, чи не було FOMO..."
-                className="liquid-glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
+                className="glass-input w-full rounded-xl p-2.5 text-xs text-white placeholder-purple-400/40"
               />
             </div>
           </div>
@@ -548,7 +548,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 value={chartUrl}
                 onChange={(e) => setChartUrl(e.target.value)}
                 placeholder="https://www.tradingview.com/x/... або файл"
-                className="liquid-glass-input flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
+                className="glass-input flex-1 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-400/40"
               />
               <label className="inline-flex items-center space-x-1.5 px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-400/30 text-purple-200 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-[0_2px_10px_rgba(147,51,234,0.2)]">
                 <Upload className="w-3.5 h-3.5" />
@@ -582,7 +582,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
             <button
               type="submit"
               disabled={saving}
-              className="liquid-button px-5 py-2 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+              className="accent-pill px-5 py-2 rounded-full text-xs font-bold transition-all disabled:opacity-50"
             >
               {saving ? 'Збереження...' : (isEditing ? 'Оновити угоду' : 'Зберегти угоду')}
             </button>

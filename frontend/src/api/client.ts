@@ -85,7 +85,7 @@ class ApiClient {
   }
 
   // Trades
-  async getTrades(params: Record<string, string | number> = {}): Promise<{ items: Trade[]; total: number }> {
+  async getTrades(params: Record<string, string | number | undefined> = {}): Promise<{ items: Trade[]; total: number }> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
