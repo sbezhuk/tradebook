@@ -61,3 +61,10 @@ class TradeResponse(TradeBase):
 class TradeListResponse(BaseModel):
     items: List[TradeResponse]
     total: int
+
+class HyperliquidImportResponse(BaseModel):
+    imported_count: int
+    skipped_duplicates: int
+    open_count: int
+    total_pnl: float
+    trades: List[TradeResponse]

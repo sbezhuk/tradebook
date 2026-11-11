@@ -16,12 +16,14 @@ import {
   Clock,
   Check,
   Copy,
+  UploadCloud,
 } from 'lucide-react';
 
 interface TopBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenNewTrade: () => void;
+  onOpenImport: () => void;
   onOpenMobileMenu: () => void;
   trades: Trade[];
   onSelectTrade: (trade: Trade) => void;
@@ -32,6 +34,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   searchQuery,
   onSearchChange,
   onOpenNewTrade,
+  onOpenImport,
   onOpenMobileMenu,
   trades,
   onSelectTrade,
@@ -242,9 +245,21 @@ export const TopBar: React.FC<TopBarProps> = ({
         {openMenu === 'export' && (
           <div className="absolute right-0 top-12 w-64 glass-panel rounded-2xl p-2 shadow-2xl z-40">
             <div className="px-3 py-2 border-b border-white/[0.06] mb-1">
-              <div className="text-xs font-semibold text-white">Експорт та інтеграція</div>
-              <div className="text-[10px] text-purple-200/45">Дані журналу та API для мобільних</div>
+              <div className="text-xs font-semibold text-white">Імпорт / Експорт та API</div>
+              <div className="text-[10px] text-purple-200/45">Hyperliquid CSV, звіт та інтеграція</div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenu(null);
+                onOpenImport();
+              }}
+              className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#c49bff] hover:bg-[#c49bff]/10 transition-colors text-left"
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span>Імпорт з Hyperliquid (CSV)</span>
+            </button>
 
             <button
               type="button"
@@ -252,7 +267,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-purple-100 hover:bg-white/[0.06] transition-colors text-left"
             >
               <Download className="w-3.5 h-3.5 text-[#c49bff]" />
-              <span>Завантажити угоди (CSV)</span>
+              <span>Експортувати угоди (CSV)</span>
             </button>
 
             <button

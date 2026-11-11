@@ -117,3 +117,11 @@ export interface AnalyticsData {
   by_day_of_week: BreakdownItem[];
   daily_activity: DailyActivityItem[];
 }
+
+export interface HyperliquidImportResponse {
+  imported_count: number;
+  skipped_duplicates: number;
+  open_count: number;
+  total_pnl: number;
+  trades: Trade[];
+}

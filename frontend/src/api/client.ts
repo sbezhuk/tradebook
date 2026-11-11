@@ -1,4 +1,4 @@
-import type { AuthResponse, User, Trade, TradeFormData, AnalyticsData } from '../types';
+import type { AuthResponse, User, Trade, TradeFormData, AnalyticsData, HyperliquidImportResponse } from '../types';
 
 const API_BASE = '/api/v1';
 
@@ -127,6 +127,36 @@ class ApiClient {
   // Analytics
   async getAnalytics(): Promise<AnalyticsData> {
     return this.request<AnalyticsData>('/analytics');
+  }
+
+  // Import Hyperliquid CSV
+  async importHyperliquidCsv(file: File): Promise<HyperliquidImportResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/trades/import/hyperliquid`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (response.status === 401) {
+      this.setToken(null);
+      window.dispatchEvent(new Event('auth:unauthorized'));
+      throw new Error('Сесія завершилась. Будь ласка, увійдіть знову.');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Не вдалося імпортувати файл Hyperliquid');
+    }
+
+    return response.json();
   }
 
   // File Upload

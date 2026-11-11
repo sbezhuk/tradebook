@@ -1,14 +1,21 @@
 from typing import Optional, List
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
 from app.core.database import get_db
 from app.models.user import User
 from app.models.trade import Trade
-from app.schemas.trade import TradeCreate, TradeUpdate, TradeResponse, TradeListResponse
+from app.schemas.trade import (
+    TradeCreate,
+    TradeUpdate,
+    TradeResponse,
+    TradeListResponse,
+    HyperliquidImportResponse,
+)
 from app.api.deps import get_current_user
 from app.services.trade_calculator import calculate_trade_metrics
+from app.services.hyperliquid_importer import parse_hyperliquid_csv
 
 router = APIRouter(prefix="/trades", tags=["Угоди"])
 
@@ -117,6 +124,110 @@ def get_user_tags(
                 if clean:
                     all_tags.add(clean)
     return sorted(list(all_tags))
+
+@router.post("/import/hyperliquid", response_model=HyperliquidImportResponse)
+async def import_hyperliquid_trades(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Будь ласка, завантажте CSV файл експорту з Hyperliquid")
+
+    raw_bytes = await file.read()
+    try:
+        csv_text = raw_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Файл повинен бути в кодуванні UTF-8")
+
+    try:
+        parsed_trades = parse_hyperliquid_csv(csv_text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Помилка парсингу CSV: {str(e)}")
+
+    if not parsed_trades:
+        return HyperliquidImportResponse(
+            imported_count=0,
+            skipped_duplicates=0,
+            open_count=0,
+            total_pnl=0.0,
+            trades=[]
+        )
+
+    # Fetch existing trades for duplicate check
+    existing = db.query(Trade).filter(Trade.user_id == current_user.id).all()
+    existing_keys = set()
+    for ex in existing:
+        ex_dt = ex.entry_date.replace(tzinfo=None) if ex.entry_date else None
+        existing_keys.add((
+            ex.symbol.upper(),
+            ex.direction.upper(),
+            ex_dt.strftime("%Y-%m-%d %H:%M:%S") if ex_dt else "",
+            round(ex.entry_price, 6),
+            round(ex.quantity, 6),
+        ))
+
+    created_trades: List[Trade] = []
+    skipped = 0
+    open_count = 0
+    total_pnl = 0.0
+
+    for pt in parsed_trades:
+        entry_naive = pt.entry_date.replace(tzinfo=None)
+        exit_naive = pt.exit_date.replace(tzinfo=None) if pt.exit_date else None
+
+        dedup_key = (
+            pt.symbol.upper(),
+            pt.direction.upper(),
+            entry_naive.strftime("%Y-%m-%d %H:%M:%S"),
+            round(pt.entry_price, 6),
+            round(pt.quantity, 6),
+        )
+        if dedup_key in existing_keys:
+            skipped += 1
+            continue
+
+        existing_keys.add(dedup_key)
+
+        trade = Trade(
+            user_id=current_user.id,
+            symbol=pt.symbol.upper(),
+            market=pt.market,
+            direction=pt.direction,
+            status=pt.status,
+            entry_date=entry_naive,
+            exit_date=exit_naive,
+            entry_price=pt.entry_price,
+            exit_price=pt.exit_price,
+            quantity=pt.quantity,
+            fees=pt.fees,
+            pnl=pt.pnl,
+            pnl_percentage=pt.pnl_percentage,
+            tags=pt.tags,
+            setup_notes=pt.setup_notes,
+            discipline_rating=5,
+            followed_rules=True,
+        )
+        db.add(trade)
+        created_trades.append(trade)
+        if pt.status == "OPEN":
+            open_count += 1
+        else:
+            total_pnl += pt.pnl
+
+    db.commit()
+    for tr in created_trades:
+        db.refresh(tr)
+
+    return HyperliquidImportResponse(
+        imported_count=len(created_trades),
+        skipped_duplicates=skipped,
+        open_count=open_count,
+        total_pnl=round(total_pnl, 4),
+        trades=[TradeResponse.model_validate(t) for t in created_trades]
+    )
 
 @router.get("/{trade_id}", response_model=TradeResponse)
 def get_trade(

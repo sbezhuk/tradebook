@@ -44,4 +44,4 @@ def calculate_trade_metrics(
             if total_risk > 0:
                 r_multiple = round(pnl / total_risk, 2)
 
-    return round(pnl, 2), round(pnl_pct, 2), r_multiple
+    return round(pnl, 4), round(pnl_pct, 2), r_multiple

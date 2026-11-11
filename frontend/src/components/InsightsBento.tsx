@@ -43,6 +43,14 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
   const [breakdownMode, setBreakdownMode] = useState<'market' | 'symbol' | 'tag'>('market');
   const [hoveredDay, setHoveredDay] = useState<DailyActivityItem | null>(null);
 
+  const formatUsd = (val: number) => {
+    const abs = Math.abs(val);
+    if (abs > 0 && abs < 100) {
+      return abs.toFixed(2);
+    }
+    return abs.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+
   // Build 12-week calendar grid ending today
   const calendarWeeks = useMemo(() => {
     const activityMap = new Map<string, DailyActivityItem>();
@@ -279,7 +287,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
 
                           <div className="w-24 text-right font-mono text-xs font-semibold shrink-0">
                             <span className={isPositive ? 'text-white' : 'text-rose-400'}>
-                              {isPositive ? '+' : '-'}${Math.abs(item.total_pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                              {isPositive ? '+' : '-'}${formatUsd(item.total_pnl)}
                             </span>
                           </div>
                         </div>
@@ -348,7 +356,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         <span className="text-purple-100/80">Прибуток ({summary.winning_trades})</span>
                       </div>
                       <span className="font-mono font-semibold text-white">
-                        +${summary.gross_profit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        +${formatUsd(summary.gross_profit)}
                       </span>
                     </div>
 
@@ -358,7 +366,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         <span className="text-purple-100/60">Збитки ({summary.losing_trades})</span>
                       </div>
                       <span className="font-mono font-semibold text-purple-200/75">
-                        -${summary.gross_loss.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        -${formatUsd(summary.gross_loss)}
                       </span>
                     </div>
 
@@ -401,7 +409,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                           />
                         </div>
                         <div className="w-20 text-right font-mono text-xs font-semibold text-white shrink-0">
-                          {isPos ? '+' : '-'}${Math.abs(item.total_pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                          {isPos ? '+' : '-'}${formatUsd(item.total_pnl)}
                         </div>
                       </div>
                     );
@@ -421,7 +429,7 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                         />
                       </div>
                       <div className="w-20 text-right font-mono text-xs font-semibold text-purple-200 shrink-0">
-                        {by_tag[0].total_pnl >= 0 ? '+' : '-'}${Math.abs(by_tag[0].total_pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        {by_tag[0].total_pnl >= 0 ? '+' : '-'}${formatUsd(by_tag[0].total_pnl)}
                       </div>
                     </div>
                   )}
@@ -491,7 +499,11 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
                           if (cell.isFuture) {
                             cellStyle = 'bg-transparent border-transparent opacity-20';
                           } else if (act) {
-                            if (act.total_pnl > 500) {
+                            const maxWin = Math.max(
+                              ...analytics.daily_activity.map((d) => d.total_pnl),
+                              0.01
+                            );
+                            if (act.total_pnl > maxWin * 0.4) {
                               cellStyle = 'bg-[#c49bff] border-[#d8b4fe]/60 shadow-[0_0_10px_rgba(196,155,255,0.45)]';
                             } else if (act.total_pnl > 0) {
                               cellStyle = 'bg-[#8b5cf6]/80 border-[#a78bfa]/40';

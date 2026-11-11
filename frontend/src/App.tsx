@@ -10,6 +10,7 @@ import { InsightsBento } from './components/InsightsBento';
 import { PsychologyView } from './components/PsychologyView';
 import { TradeModal } from './components/TradeModal';
 import { TradeDetailModal } from './components/TradeDetailModal';
+import { ImportModal } from './components/ImportModal';
 import type { Trade, TradeFormData, AnalyticsData } from './types';
 import { api } from './api/client';
 
@@ -41,6 +42,7 @@ export const AppContent: React.FC = () => {
   // Modals state
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -163,6 +165,7 @@ export const AppContent: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={handleGlobalSearch}
           onOpenNewTrade={handleOpenNew}
+          onOpenImport={() => setIsImportModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
           onSelectTrade={handleOpenDetail}
@@ -188,6 +191,7 @@ export const AppContent: React.FC = () => {
               onEditTrade={handleOpenEdit}
               onDeleteTrade={handleDeleteTrade}
               onNewTrade={handleOpenNew}
+              onOpenImport={() => setIsImportModalOpen(true)}
               onFilterChange={setFilters}
             />
           )}
@@ -242,6 +246,16 @@ export const AppContent: React.FC = () => {
           handleOpenEdit(tr);
         }}
         onDelete={handleDeleteTrade}
+      />
+
+      {/* Hyperliquid Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportSuccess={async () => {
+          await Promise.all([loadTrades(), loadAnalytics()]);
+          setCurrentTab('trades');
+        }}
       />
     </div>
   );

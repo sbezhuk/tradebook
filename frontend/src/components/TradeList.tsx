@@ -8,6 +8,7 @@ import {
   Edit3,
   Trash2,
   Image as ImageIcon,
+  UploadCloud,
 } from 'lucide-react';
 
 interface TradeListProps {
@@ -17,6 +18,7 @@ interface TradeListProps {
   onEditTrade: (trade: Trade) => void;
   onDeleteTrade: (id: number) => void;
   onNewTrade: () => void;
+  onOpenImport: () => void;
   onFilterChange: (filters: {
     symbol?: string;
     market?: string;
@@ -34,6 +36,7 @@ export const TradeList: React.FC<TradeListProps> = ({
   onEditTrade,
   onDeleteTrade,
   onNewTrade,
+  onOpenImport,
   onFilterChange,
 }) => {
   const [selectedMarket, setSelectedMarket] = useState<string>('');
@@ -129,6 +132,15 @@ export const TradeList: React.FC<TradeListProps> = ({
             <option value="pnl_desc" className="bg-[#120827]">За прибутком</option>
             <option value="pnl_asc" className="bg-[#120827]">За збитком</option>
           </select>
+
+          <button
+            type="button"
+            onClick={onOpenImport}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer"
+          >
+            <UploadCloud className="w-3.5 h-3.5 text-[#c49bff]" />
+            <span>Імпорт Hyperliquid</span>
+          </button>
         </div>
       </div>
 
