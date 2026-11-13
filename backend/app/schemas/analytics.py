@@ -41,6 +41,17 @@ class DailyActivityItem(BaseModel):
     date: str  # YYYY-MM-DD
     trades_count: int
     total_pnl: float
+    winning_trades: int = 0
+    losing_trades: int = 0
+    breakeven_trades: int = 0
+    win_rate: float = 0.0
+    profit_factor: float = 0.0
+    gross_profit: float = 0.0
+    gross_loss: float = 0.0
+    best_trade: float = 0.0
+    worst_trade: float = 0.0
+    total_fees: float = 0.0
+    volume: float = 0.0
 
 class MonthlySummaryItem(BaseModel):
     month: str          # YYYY-MM
@@ -57,6 +68,8 @@ class MonthlySummaryItem(BaseModel):
 
 class AnalyticsResponse(BaseModel):
     overall_total_pnl: float
+    overall_trade_pnl: float = 0.0
+    overall_funding_pnl: float = 0.0
     overall_total_trades: int
     total_deposits: float = 0.0
     current_balance: float = 0.0

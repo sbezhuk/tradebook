@@ -12,6 +12,8 @@ interface PaginationBarProps {
   loading?: boolean;
   ariaLabel?: string;
   onAfterPageSelect?: () => void;
+  className?: string;
+  compact?: boolean;
 }
 
 const getPageNumbers = (currentPage: number, totalPages: number): (number | 'ellipsis')[] => {
@@ -55,6 +57,8 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
   loading = false,
   ariaLabel = 'Пагінація',
   onAfterPageSelect,
+  className = '',
+  compact = false,
 }) => {
   if (total <= 0) {
     return null;
@@ -73,21 +77,31 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
   };
 
   return (
-    <div className="glass-panel rounded-2xl px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-xs text-purple-200/60">
+    <div
+      className={
+        compact
+          ? `px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-2.5 ${className}`
+          : `glass-panel rounded-2xl px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${className}`
+      }
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="text-xs text-purple-900/70 dark:text-purple-200/60 whitespace-nowrap">
           Показано{' '}
-          <span className="font-mono font-semibold text-white">
+          <span className="font-mono font-bold text-purple-950 dark:text-white">
             {startItem}–{endItem}
           </span>{' '}
           з{' '}
-          <span className="font-mono font-semibold text-white">{total}</span>
+          <span className="font-mono font-bold text-purple-950 dark:text-white">{total}</span>
         </span>
 
-        <div className="h-3.5 w-px bg-white/[0.1] hidden sm:block" />
+        <div className="h-3.5 w-px bg-purple-500/20 dark:bg-white/[0.1] shrink-0" />
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-purple-200/45 hidden sm:inline">На сторінці:</span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!compact && (
+            <span className="text-xs text-purple-900/50 dark:text-purple-200/45 hidden sm:inline">
+              На сторінці:
+            </span>
+          )}
           <GlassSelect
             value={String(pageSize)}
             onChange={(val) => onPageSizeChange(Number(val))}
@@ -101,23 +115,27 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
       </div>
 
       {totalPages > 1 && (
-        <nav aria-label={ariaLabel} className="flex flex-wrap items-center gap-1.5">
+        <nav aria-label={ariaLabel} className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => handleSelect(safePage - 1)}
             disabled={safePage <= 1 || loading}
             aria-label="Попередня сторінка"
             title="Попередня сторінка"
-            className="h-8 w-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/75 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-35 disabled:pointer-events-none"
+            className={`${
+              compact ? 'h-7.5 w-7.5 rounded-lg' : 'h-8 w-8 rounded-xl'
+            } bg-purple-500/10 hover:bg-purple-500/20 text-purple-900 border border-purple-500/15 dark:bg-white/[0.04] dark:hover:bg-white/[0.09] dark:border-white/[0.08] dark:text-purple-200/75 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none`}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
           {pageNumbers.map((item, idx) =>
             item === 'ellipsis' ? (
               <span
                 key={`ellipsis-${idx}`}
-                className="h-8 min-w-[24px] px-1 flex items-center justify-center text-xs text-purple-200/45 select-none"
+                className={`${
+                  compact ? 'h-7.5 min-w-[20px]' : 'h-8 min-w-[24px]'
+                } px-1 flex items-center justify-center text-xs text-purple-400 dark:text-purple-200/45 select-none`}
               >
                 ...
               </span>
@@ -128,10 +146,12 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
                 onClick={() => handleSelect(item)}
                 disabled={loading}
                 aria-current={item === safePage ? 'page' : undefined}
-                className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer disabled:opacity-60 ${
+                className={`${
+                  compact ? 'h-7.5 min-w-[28px] px-2 rounded-lg' : 'h-8 min-w-[32px] px-2.5 rounded-xl'
+                } text-xs font-mono font-bold transition-all cursor-pointer disabled:opacity-60 ${
                   item === safePage
-                    ? 'accent-pill'
-                    : 'bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/75 hover:text-white'
+                    ? 'accent-pill shadow-sm'
+                    : 'bg-purple-500/10 hover:bg-purple-500/20 text-purple-900 border border-purple-500/15 dark:bg-white/[0.04] dark:hover:bg-white/[0.09] dark:border-white/[0.08] dark:text-purple-200/75 dark:hover:text-white'
                 }`}
               >
                 {item}
@@ -145,9 +165,11 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
             disabled={safePage >= totalPages || loading}
             aria-label="Наступна сторінка"
             title="Наступна сторінка"
-            className="h-8 w-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/75 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-35 disabled:pointer-events-none"
+            className={`${
+              compact ? 'h-7.5 w-7.5 rounded-lg' : 'h-8 w-8 rounded-xl'
+            } bg-purple-500/10 hover:bg-purple-500/20 text-purple-900 border border-purple-500/15 dark:bg-white/[0.04] dark:hover:bg-white/[0.09] dark:border-white/[0.08] dark:text-purple-200/75 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:pointer-events-none`}
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </nav>
       )}

@@ -6,9 +6,14 @@ import type {
   AnalyticsData,
   HyperliquidImportResponse,
   HyperliquidDepositImportResponse,
+  HyperliquidFundingImportResponse,
   Deposit,
   DepositFormData,
   DepositListResponse,
+  FundingPayment,
+  FundingFormData,
+  FundingUpdateData,
+  FundingListResponse,
   TradingAccount,
   AccountFormData,
   AccountListResponse,
@@ -199,6 +204,58 @@ class ApiClient {
     });
   }
 
+  // Funding
+  async getFunding(
+    accountId?: number | null,
+    coin?: string,
+    direction?: string,
+    limit: number = 100,
+    skip: number = 0
+  ): Promise<FundingListResponse> {
+    const params = new URLSearchParams();
+    if (accountId) params.set('account_id', String(accountId));
+    if (coin) params.set('coin', coin);
+    if (direction) params.set('direction', direction);
+    if (limit) params.set('limit', String(limit));
+    if (skip) params.set('skip', String(skip));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request<FundingListResponse>(`/funding${qs}`);
+  }
+
+  async createFunding(data: FundingFormData): Promise<FundingPayment> {
+    return this.request<FundingPayment>('/funding', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateFunding(id: number, data: FundingUpdateData): Promise<FundingPayment> {
+    return this.request<FundingPayment>(`/funding/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async linkTradeToFunding(fundingId: number, tradeId: number | null): Promise<FundingPayment> {
+    return this.request<FundingPayment>(`/funding/${fundingId}/link-trade`, {
+      method: 'POST',
+      body: JSON.stringify({ trade_id: tradeId }),
+    });
+  }
+
+  async deleteFunding(id: number): Promise<void> {
+    return this.request<void>(`/funding/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllFunding(accountId?: number | null): Promise<{ deleted_count: number }> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<{ deleted_count: number }>(`/funding${qs}`, {
+      method: 'DELETE',
+    });
+  }
+
   private async uploadFile<T>(endpoint: string, file: File, fallbackError: string): Promise<T> {
     const formData = new FormData();
     formData.append('file', file);
@@ -247,6 +304,18 @@ class ApiClient {
       `/deposits/import/hyperliquid${qs}`,
       file,
       'Не вдалося імпортувати депозити з файлу Hyperliquid'
+    );
+  }
+
+  async importHyperliquidFundingCsv(
+    file: File,
+    accountId?: number | null
+  ): Promise<HyperliquidFundingImportResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.uploadFile<HyperliquidFundingImportResponse>(
+      `/trades/import/hyperliquid/funding${qs}`,
+      file,
+      'Не вдалося імпортувати фандінг з файлу Hyperliquid'
     );
   }
 

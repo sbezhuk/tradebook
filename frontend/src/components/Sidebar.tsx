@@ -12,14 +12,16 @@ import {
   PanelLeft,
   TrendingUp,
   Wallet,
+  Percent,
   UploadCloud,
   Briefcase,
   ChevronDown,
   Check,
   Settings2,
+  CalendarDays,
 } from 'lucide-react';
 
-export type NavTab = 'overview' | 'trades' | 'insights' | 'setups' | 'psychology' | 'import';
+export type NavTab = 'overview' | 'trades' | 'calendar' | 'insights' | 'setups' | 'psychology' | 'import';
 
 interface SidebarProps {
   currentTab: NavTab;
@@ -28,8 +30,10 @@ interface SidebarProps {
   overallTotalPnl?: number;
   overallTotalTrades?: number;
   totalDeposits?: number;
+  overallFundingPnl?: number;
   overallDepositGrowthPct?: number | null;
   onOpenDeposits?: () => void;
+  onOpenFunding?: () => void;
   accounts?: TradingAccount[];
   activeAccountId?: number | null;
   onSelectAccount?: (accountId: number | null) => void;
@@ -47,8 +51,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   overallTotalPnl,
   overallTotalTrades,
   totalDeposits = 0,
+  overallFundingPnl,
   overallDepositGrowthPct = null,
   onOpenDeposits,
+  onOpenFunding,
   accounts = [],
   activeAccountId = null,
   onSelectAccount,
@@ -94,6 +100,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Журнал угод',
       icon: ArrowLeftRight,
       badge: stats?.open_trades ? stats.open_trades : undefined,
+    },
+    {
+      id: 'calendar',
+      label: 'Календар PnL',
+      icon: CalendarDays,
     },
     { id: 'insights', label: 'Аналітика', icon: BarChart2 },
     {
@@ -406,6 +417,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             )}
 
+            {onOpenFunding && (
+              <button
+                type="button"
+                onClick={onOpenFunding}
+                title="Фандінг (нарахування, списання та історія)"
+                aria-label="Фандінг"
+                className="w-11 h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] text-purple-200/80 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Percent className="w-4 h-4" />
+              </button>
+            )}
+
             {user && (
               <div className="pt-2.5 border-t border-white/[0.06] w-full flex flex-col items-center gap-2">
                 <div
@@ -485,6 +508,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 )}
               </div>
+
+              {onOpenFunding && (
+                <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-purple-200/50">Фандінг</div>
+                    <div
+                      className={`text-xs font-mono font-semibold truncate ${
+                        (overallFundingPnl ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {overallFundingPnl !== undefined && Math.abs(overallFundingPnl) > 1e-4
+                        ? `${overallFundingPnl >= 0 ? '+' : '-'}$${Math.abs(overallFundingPnl).toFixed(2)}`
+                        : '$0.00'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenFunding();
+                      onCloseMobile?.();
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-purple-200/80 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                  >
+                    <Percent className="w-3 h-3 text-[#c49bff]" />
+                    <span>Управління</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* User Footer */}

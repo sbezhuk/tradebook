@@ -10,32 +10,28 @@ import {
   Bell,
   Menu,
   Code2,
-  Download,
   ExternalLink,
   LogOut,
   ShieldAlert,
   Clock,
   Check,
   Copy,
-  Trash2,
   Sun,
   Moon,
   Monitor,
   Wallet,
+  Percent,
   X,
 } from 'lucide-react';
-import { exportTradesToCsv } from '../utils/exportCsv';
 
 interface TopBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenNewTrade: () => void;
   onOpenDeposits: () => void;
+  onOpenFunding?: () => void;
   onOpenMobileMenu: () => void;
   trades: Trade[];
-  totalTradesCount?: number;
-  activeAccountName?: string | null;
-  onDeleteAllTrades: () => Promise<void>;
   onSelectTrade: (trade: Trade) => void;
   onSelectTab: (tab: NavTab) => void;
 }
@@ -45,11 +41,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSearchChange,
   onOpenNewTrade,
   onOpenDeposits,
+  onOpenFunding,
   onOpenMobileMenu,
   trades,
-  totalTradesCount,
-  activeAccountName,
-  onDeleteAllTrades,
   onSelectTrade,
   onSelectTab,
 }) => {
@@ -60,8 +54,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const [openMenu, setOpenMenu] = useState<'api' | 'notifications' | 'theme' | 'profile' | null>(null);
   const [copiedApi, setCopiedApi] = useState(false);
-  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
-  const [deletingAll, setDeletingAll] = useState(false);
 
   const openTrades = trades.filter((t) => t.status === 'OPEN');
   const ruleAlerts = trades.filter((t) => t.status === 'CLOSED' && !t.followed_rules).slice(0, 3);
@@ -93,11 +85,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
     : 'TR';
-
-  const handleExportCsv = () => {
-    exportTradesToCsv(trades);
-    setOpenMenu(null);
-  };
 
   const handleCopyApiUrl = async () => {
     try {
@@ -179,6 +166,21 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Wallet className="w-4 h-4" />
         </button>
 
+        {/* 1.6 Funding (Percent) */}
+        {onOpenFunding && (
+          <button
+            type="button"
+            onClick={() => {
+              setOpenMenu(null);
+              onOpenFunding();
+            }}
+            title="Фандінг (нарахування, списання та історія)"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <Percent className="w-4 h-4" />
+          </button>
+        )}
+
         {/* 2. REST API Menu (</>) — hidden below lg since also accessible in Sidebar */}
         <button
           type="button"
@@ -233,10 +235,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* 5. User Avatar Menu */}
         <button
           type="button"
-          onClick={() => {
-            setConfirmDeleteAll(false);
-            setOpenMenu((prev) => (prev === 'profile' ? null : 'profile'));
-          }}
+          onClick={() => setOpenMenu((prev) => (prev === 'profile' ? null : 'profile'))}
           title="Профіль користувача"
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
             openMenu === 'profile'
@@ -470,14 +469,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               Імпорт даних
             </button>
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs text-purple-100/80 hover:text-white hover:bg-white/[0.05] transition-colors text-left cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#c49bff]" />
-              <span>Експортувати угоди (CSV)</span>
-            </button>
 
             {/* Theme Segmented Control inside Profile Menu */}
             <div className="mt-1 pt-2 px-1.5 pb-1.5 border-t border-white/[0.06]">
@@ -514,65 +505,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             </div>
 
             <div className="mt-1 pt-1 border-t border-white/[0.06] space-y-1">
-              {!confirmDeleteAll ? (
-                <button
-                  type="button"
-                  onClick={() => setConfirmDeleteAll(true)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-rose-300/90 hover:text-rose-200 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                >
-                  <span className="flex items-center space-x-2">
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>
-                      {activeAccountName ? `Очистити «${activeAccountName}»` : 'Видалити всі угоди'}
-                    </span>
-                  </span>
-                  {typeof totalTradesCount === 'number' && totalTradesCount > 0 && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300">
-                      {totalTradesCount}
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 space-y-2">
-                  <div className="text-[11px] font-medium text-rose-200 leading-snug">
-                    {activeAccountName
-                      ? `Видалити всі угоди акаунту «${activeAccountName}»? Цю дію не можна скасувати.`
-                      : 'Очистити весь журнал угод? Цю дію не можна скасувати.'}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={deletingAll}
-                      onClick={async () => {
-                        setDeletingAll(true);
-                        try {
-                          await onDeleteAllTrades();
-                          setConfirmDeleteAll(false);
-                          setOpenMenu(null);
-                        } finally {
-                          setDeletingAll(false);
-                        }
-                      }}
-                      className="flex-1 px-2.5 py-1.5 rounded-lg bg-rose-500/85 hover:bg-rose-500 text-white text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                      {deletingAll ? 'Видалення...' : 'Підтвердити'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={deletingAll}
-                      onClick={() => setConfirmDeleteAll(false)}
-                      className="px-2.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-purple-100/80 text-[11px] font-medium transition-colors cursor-pointer"
-                    >
-                      Скасувати
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <button
                 type="button"
                 onClick={() => {
-                  setConfirmDeleteAll(false);
                   setOpenMenu(null);
                   logout();
                 }}

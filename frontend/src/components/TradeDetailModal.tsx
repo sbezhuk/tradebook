@@ -1,5 +1,5 @@
-import React from 'react';
-import type { Trade, TradingAccount } from '../types';
+import React, { useMemo } from 'react';
+import type { Trade, TradingAccount, FundingPayment } from '../types';
 import { 
   X, 
   ArrowUpRight, 
@@ -14,25 +14,41 @@ import {
   Edit3,
   Trash2,
   CheckCircle2,
+  Percent,
 } from 'lucide-react';
 
 interface TradeDetailModalProps {
   trade: Trade | null;
   accounts?: TradingAccount[];
+  fundingPayments?: FundingPayment[];
   isOpen: boolean;
   onClose: () => void;
   onEdit: (trade: Trade, closeMode?: boolean) => void;
   onDelete: (id: number) => void;
+  onOpenFunding?: () => void;
 }
 
 export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
   trade,
   accounts = [],
+  fundingPayments = [],
   isOpen,
   onClose,
   onEdit,
   onDelete,
+  onOpenFunding,
 }) => {
+  const linkedFunding = useMemo(() => {
+    if (!trade || !fundingPayments.length) return [];
+    return fundingPayments.filter(
+      (fp) => fp.trade_id === trade.id || fp.trade?.id === trade.id
+    );
+  }, [trade, fundingPayments]);
+
+  const linkedFundingSum = useMemo(() => {
+    return linkedFunding.reduce((acc, cur) => acc + cur.payment, 0);
+  }, [linkedFunding]);
+
   if (!isOpen || !trade) return null;
   const account = trade.account_id ? accounts.find((a) => a.id === trade.account_id) : undefined;
 
@@ -310,6 +326,59 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
               )}
             </div>
           </div>
+
+          {/* Linked Funding Payments */}
+          {linkedFunding.length > 0 && (
+            <div className="p-4 bg-white/[0.025] border border-white/[0.06] rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                  <Percent className="w-3.5 h-3.5 text-[#c49bff]" />
+                  <span>Пов'язаний фандінг ({linkedFunding.length})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-mono text-xs font-bold ${
+                      linkedFundingSum >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {linkedFundingSum >= 0 ? '+' : '-'}${Math.abs(linkedFundingSum).toFixed(4)}
+                  </span>
+                  {onOpenFunding && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenFunding();
+                      }}
+                      className="text-[11px] text-[#c49bff] hover:underline cursor-pointer"
+                    >
+                      Керувати
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="divide-y divide-white/[0.04]">
+                {linkedFunding.map((fp) => (
+                  <div key={fp.id} className="py-1.5 flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-2 font-mono text-purple-200/60">
+                      <span>{formatDate(fp.funding_time)}</span>
+                      <span className="font-bold text-white">{fp.coin}</span>
+                      <span className="text-[10px] px-1 rounded bg-white/[0.05]">{fp.direction}</span>
+                      {fp.note && <span className="text-purple-200/40 truncate max-w-[150px]">• {fp.note}</span>}
+                    </div>
+                    <span
+                      className={`font-mono font-semibold ${
+                        fp.payment >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {fp.payment >= 0 ? '+' : '-'}${Math.abs(fp.payment).toFixed(4)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Setup notes & Post trade notes */}
           {(trade.setup_notes || trade.post_trade_notes) && (

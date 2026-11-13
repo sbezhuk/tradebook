@@ -32,6 +32,16 @@ def ensure_schema_migrations():
                         f"CREATE INDEX IF NOT EXISTS ix_{table_name}_account_id ON {table_name} (account_id)"
                     )
                 )
+            if table_name == "trades" and "funding" not in cols:
+                conn.execute(text("ALTER TABLE trades ADD COLUMN funding FLOAT DEFAULT 0.0"))
+
+        if "funding_payments" in existing_tables:
+            fp_cols = {col["name"] for col in inspector.get_columns("funding_payments")}
+            if "note" not in fp_cols:
+                conn.execute(text("ALTER TABLE funding_payments ADD COLUMN note VARCHAR(255)"))
+            if "trade_id" not in fp_cols:
+                conn.execute(text("ALTER TABLE funding_payments ADD COLUMN trade_id INTEGER REFERENCES trades(id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_funding_payments_trade_id ON funding_payments (trade_id)"))
 
 
 def get_db():

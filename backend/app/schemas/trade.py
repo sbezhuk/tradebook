@@ -16,6 +16,7 @@ class TradeBase(BaseModel):
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
     fees: float = Field(default=0.0, ge=0)
+    funding: float = Field(default=0.0)
     pnl: Optional[float] = None
     tags: Optional[str] = ""
     setup_notes: Optional[str] = None
@@ -41,6 +42,7 @@ class TradeUpdate(BaseModel):
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
     fees: Optional[float] = None
+    funding: Optional[float] = None
     pnl: Optional[float] = None
     tags: Optional[str] = None
     setup_notes: Optional[str] = None
@@ -70,6 +72,13 @@ class HyperliquidImportResponse(BaseModel):
     open_count: int
     total_pnl: float
     trades: List[TradeResponse]
+
+
+class HyperliquidFundingImportResponse(BaseModel):
+    imported_count: int
+    skipped_duplicates: int
+    total_funding: float
+    account_total_funding: float
 
 class DeleteAllTradesResponse(BaseModel):
     deleted_count: int

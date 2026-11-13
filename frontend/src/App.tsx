@@ -6,6 +6,7 @@ import type { NavTab } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { OverviewView } from './components/OverviewView';
 import { TradeList } from './components/TradeList';
+import { PnlCalendarView } from './components/PnlCalendarView';
 import { InsightsBento } from './components/InsightsBento';
 import { PsychologyView } from './components/PsychologyView';
 import { TradeModal } from './components/TradeModal';
@@ -13,6 +14,7 @@ import { TradeDetailModal } from './components/TradeDetailModal';
 import { ImportView } from './components/ImportView';
 import type { ImportMode } from './components/ImportView';
 import { DepositModal } from './components/DepositModal';
+import { FundingModal } from './components/FundingModal';
 import { AccountModal } from './components/AccountModal';
 import type {
   Trade,
@@ -20,6 +22,9 @@ import type {
   AnalyticsData,
   Deposit,
   DepositFormData,
+  FundingPayment,
+  FundingFormData,
+  FundingUpdateData,
   TradingAccount,
   AccountFormData,
 } from './types';
@@ -116,13 +121,15 @@ export const AppContent: React.FC = () => {
   const [importMode, setImportMode] = useState<ImportMode>('trades');
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [isFundingModalOpen, setIsFundingModalOpen] = useState(false);
+  const [fundingPayments, setFundingPayments] = useState<FundingPayment[]>([]);
+  const [totalFunding, setTotalFunding] = useState(0);
 
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const monthParam = selectedMonth || undefined;
   const accountParam = activeAccountId ?? undefined;
-  const activeAccount = accounts.find((a) => a.id === activeAccountId) ?? null;
 
   const loadAccounts = useCallback(async () => {
     if (!user) return;
@@ -221,6 +228,17 @@ export const AppContent: React.FC = () => {
     }
   }, [user, activeAccountId]);
 
+  const loadFunding = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.getFunding(activeAccountId);
+      setFundingPayments(res.items);
+      setTotalFunding(res.total_funding);
+    } catch (err) {
+      console.error('Failed to load funding payments:', err);
+    }
+  }, [user, activeAccountId]);
+
   useEffect(() => {
     if (user) {
       loadAccounts();
@@ -232,8 +250,9 @@ export const AppContent: React.FC = () => {
       loadTrades();
       loadAnalytics();
       loadDeposits();
+      loadFunding();
     }
-  }, [user, loadTrades, loadAnalytics, loadDeposits]);
+  }, [user, loadTrades, loadAnalytics, loadDeposits, loadFunding]);
 
   useEffect(() => {
     if (user) {
@@ -282,6 +301,31 @@ export const AppContent: React.FC = () => {
   const handleDeleteDeposit = async (id: number) => {
     await api.deleteDeposit(id);
     await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
+  };
+
+  const handleAddFunding = async (data: FundingFormData) => {
+    await api.createFunding(data);
+    await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
+  };
+
+  const handleDeleteFunding = async (id: number) => {
+    await api.deleteFunding(id);
+    await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
+  };
+
+  const handleDeleteAllFunding = async (accountId?: number | null) => {
+    await api.deleteAllFunding(accountId);
+    await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
+  };
+
+  const handleUpdateFunding = async (id: number, data: FundingUpdateData) => {
+    await api.updateFunding(id, data);
+    await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
+  };
+
+  const handleLinkTradeToFunding = async (fundingId: number, tradeId: number | null) => {
+    await api.linkTradeToFunding(fundingId, tradeId);
+    await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
   };
 
   const handleSelectMonth = (month: string) => {
@@ -337,8 +381,8 @@ export const AppContent: React.FC = () => {
     }
   };
 
-  const handleDeleteAllTrades = async () => {
-    await api.deleteAllTrades(activeAccountId);
+  const handleClearAccountTrades = async (accountId: number) => {
+    await api.deleteAllTrades(accountId);
     setSelectedMonth(undefined);
     setJournalPage(1);
     await Promise.all([loadTrades(), loadJournalTrades(), loadAnalytics(), loadAccounts()]);
@@ -395,8 +439,10 @@ export const AppContent: React.FC = () => {
         overallTotalPnl={analytics?.overall_total_pnl}
         overallTotalTrades={analytics?.overall_total_trades}
         totalDeposits={analytics?.total_deposits}
+        overallFundingPnl={analytics?.overall_funding_pnl}
         overallDepositGrowthPct={analytics?.overall_deposit_growth_pct}
         onOpenDeposits={() => setIsDepositModalOpen(true)}
+        onOpenFunding={() => setIsFundingModalOpen(true)}
         accounts={accounts}
         activeAccountId={activeAccountId}
         onSelectAccount={handleSelectAccount}
@@ -414,11 +460,9 @@ export const AppContent: React.FC = () => {
           onSearchChange={handleGlobalSearch}
           onOpenNewTrade={handleOpenNew}
           onOpenDeposits={() => setIsDepositModalOpen(true)}
+          onOpenFunding={() => setIsFundingModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
-          totalTradesCount={analytics?.overall_total_trades}
-          activeAccountName={activeAccount?.name ?? null}
-          onDeleteAllTrades={handleDeleteAllTrades}
           onSelectTrade={handleOpenDetail}
           onSelectTab={setCurrentTab}
         />
@@ -431,9 +475,11 @@ export const AppContent: React.FC = () => {
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
               onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenFunding={() => setIsFundingModalOpen(true)}
               onSelectTrade={handleOpenDetail}
               onGoToTrades={() => setCurrentTab('trades')}
               onGoToInsights={() => setCurrentTab('insights')}
+              onGoToCalendar={() => setCurrentTab('calendar')}
             />
           )}
 
@@ -461,6 +507,22 @@ export const AppContent: React.FC = () => {
             />
           )}
 
+          {currentTab === 'calendar' && (
+            <PnlCalendarView
+              analytics={analytics}
+              trades={trades}
+              selectedMonth={selectedMonth ?? ''}
+              onSelectMonth={handleSelectMonth}
+              onSelectTrade={handleOpenDetail}
+              onNewTrade={handleOpenNew}
+              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenFunding={() => setIsFundingModalOpen(true)}
+              onExportCsv={() => exportTradesToCsv(trades)}
+              accounts={accounts}
+              activeAccountId={activeAccountId}
+            />
+          )}
+
           {currentTab === 'insights' && (
             <InsightsBento
               key="insights-bento"
@@ -469,6 +531,8 @@ export const AppContent: React.FC = () => {
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
               onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenFunding={() => setIsFundingModalOpen(true)}
+              onGoToCalendar={() => setCurrentTab('calendar')}
               pageTitle="Аналітика"
               pageSubtitle="Скільки ви заробляєте, утримуєте та де ваша перевага на ринку."
               defaultSubTab="bento"
@@ -483,6 +547,8 @@ export const AppContent: React.FC = () => {
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
               onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenFunding={() => setIsFundingModalOpen(true)}
+              onGoToCalendar={() => setCurrentTab('calendar')}
               pageTitle="Сетапи та активність"
               pageSubtitle="Аналіз ефективності ваших торгових формацій та днів тижня."
               defaultSubTab="setups"
@@ -513,6 +579,8 @@ export const AppContent: React.FC = () => {
                     loadAnalytics(),
                     loadAccounts(),
                   ]);
+                } else if (importedMode === 'funding') {
+                  await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
                 } else {
                   await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
                 }
@@ -520,6 +588,8 @@ export const AppContent: React.FC = () => {
               onGoToTrades={() => setCurrentTab('trades')}
               onGoToInsights={() => setCurrentTab('insights')}
               onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenFunding={() => setIsFundingModalOpen(true)}
+              onExportCsv={() => exportTradesToCsv(trades)}
             />
           )}
         </main>
@@ -543,6 +613,7 @@ export const AppContent: React.FC = () => {
       <TradeDetailModal
         trade={selectedTrade}
         accounts={accounts}
+        fundingPayments={fundingPayments}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         onEdit={(tr, closeMode) => {
@@ -550,6 +621,7 @@ export const AppContent: React.FC = () => {
           handleOpenEdit(tr, closeMode);
         }}
         onDelete={handleDeleteTrade}
+        onOpenFunding={() => setIsFundingModalOpen(true)}
       />
 
       {/* Deposit Management Modal */}
@@ -570,6 +642,26 @@ export const AppContent: React.FC = () => {
         />
       )}
 
+      {/* Funding Management Modal */}
+      {isFundingModalOpen && (
+        <FundingModal
+          isOpen={isFundingModalOpen}
+          onClose={() => setIsFundingModalOpen(false)}
+          fundingPayments={fundingPayments}
+          totalFunding={analytics?.overall_funding_pnl ?? totalFunding}
+          trades={trades}
+          accounts={accounts}
+          activeAccountId={activeAccountId}
+          onAddFunding={handleAddFunding}
+          onUpdateFunding={handleUpdateFunding}
+          onLinkTrade={handleLinkTradeToFunding}
+          onDeleteFunding={handleDeleteFunding}
+          onDeleteAllFunding={handleDeleteAllFunding}
+          onSelectTrade={handleOpenDetail}
+          onOpenImport={() => handleOpenImportPage('funding')}
+        />
+      )}
+
       {/* Multi-Account Management Modal */}
       {isAccountModalOpen && (
         <AccountModal
@@ -580,6 +672,7 @@ export const AppContent: React.FC = () => {
           onCreateAccount={handleCreateAccount}
           onUpdateAccount={handleUpdateAccount}
           onDeleteAccount={handleDeleteAccount}
+          onClearAccountTrades={handleClearAccountTrades}
         />
       )}
     </div>

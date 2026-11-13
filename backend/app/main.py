@@ -50,6 +50,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.accounts import router as accounts_router
 from app.api.v1.trades import router as trades_router
 from app.api.v1.deposits import router as deposits_router
+from app.api.v1.funding import router as funding_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.upload import router as upload_router
 
@@ -57,6 +58,7 @@ app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(accounts_router, prefix=settings.API_V1_STR)
 app.include_router(trades_router, prefix=settings.API_V1_STR)
 app.include_router(deposits_router, prefix=settings.API_V1_STR)
+app.include_router(funding_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(upload_router, prefix=settings.API_V1_STR)
 

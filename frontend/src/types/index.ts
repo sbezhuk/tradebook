@@ -17,6 +17,8 @@ export interface TradingAccount {
   trades_count: number;
   open_trades: number;
   total_pnl: number;
+  trade_pnl?: number;
+  funding_pnl?: number;
   total_deposits: number;
   current_balance: number;
 }
@@ -64,6 +66,7 @@ export interface Trade {
   stop_loss?: number | null;
   take_profit?: number | null;
   fees: number;
+  funding?: number;
   pnl: number;
   pnl_percentage: number;
   r_multiple?: number | null;
@@ -91,6 +94,7 @@ export interface TradeFormData {
   stop_loss?: number | null;
   take_profit?: number | null;
   fees: number;
+  funding?: number;
   pnl?: number | null;
   tags?: string;
   setup_notes?: string | null;
@@ -143,6 +147,17 @@ export interface DailyActivityItem {
   date: string;
   trades_count: number;
   total_pnl: number;
+  winning_trades?: number;
+  losing_trades?: number;
+  breakeven_trades?: number;
+  win_rate?: number;
+  profit_factor?: number;
+  gross_profit?: number;
+  gross_loss?: number;
+  best_trade?: number;
+  worst_trade?: number;
+  total_fees?: number;
+  volume?: number;
 }
 
 export interface MonthlySummaryItem {
@@ -161,6 +176,8 @@ export interface MonthlySummaryItem {
 
 export interface AnalyticsData {
   overall_total_pnl: number;
+  overall_trade_pnl?: number;
+  overall_funding_pnl?: number;
   overall_total_trades: number;
   total_deposits: number;
   current_balance: number;
@@ -192,6 +209,13 @@ export interface HyperliquidDepositImportResponse {
   deposits: Deposit[];
 }
 
+export interface HyperliquidFundingImportResponse {
+  imported_count: number;
+  skipped_duplicates: number;
+  total_funding: number;
+  account_total_funding: number;
+}
+
 export interface Deposit {
   id: number;
   user_id: number;
@@ -212,5 +236,64 @@ export interface DepositFormData {
 export interface DepositListResponse {
   items: Deposit[];
   total_amount: number;
+  count: number;
+}
+
+export interface LinkedTradeBrief {
+  id: number;
+  symbol: string;
+  direction: string;
+  entry_price: number;
+  exit_price?: number | null;
+  entry_date: string;
+  pnl: number;
+  status: string;
+}
+
+export interface FundingPayment {
+  id: number;
+  user_id: number;
+  account_id?: number | null;
+  trade_id?: number | null;
+  coin: string;
+  direction: 'LONG' | 'SHORT' | string;
+  size: number;
+  payment: number;
+  rate: number;
+  note?: string | null;
+  funding_time: string;
+  created_at?: string;
+  trade?: LinkedTradeBrief | null;
+}
+
+export interface FundingFormData {
+  account_id?: number | null;
+  coin: string;
+  direction: 'LONG' | 'SHORT';
+  payment: number;
+  size?: number;
+  rate?: number;
+  funding_time?: string;
+  note?: string | null;
+  trade_id?: number | null;
+}
+
+export interface FundingUpdateData {
+  account_id?: number | null;
+  coin?: string;
+  direction?: 'LONG' | 'SHORT';
+  payment?: number;
+  size?: number;
+  rate?: number;
+  funding_time?: string;
+  note?: string | null;
+  trade_id?: number | null;
+}
+
+export interface FundingListResponse {
+  items: FundingPayment[];
+  total_funding: number;
+  total_received: number;
+  total_paid: number;
   count: number;
 }

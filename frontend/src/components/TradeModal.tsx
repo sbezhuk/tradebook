@@ -70,6 +70,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [stopLoss, setStopLoss] = useState<string>('');
   const [takeProfit, setTakeProfit] = useState<string>('');
   const [fees, setFees] = useState<string>('0');
+  const [funding, setFunding] = useState<string>('0');
 
   const [tags, setTags] = useState('');
   const [setupNotes, setSetupNotes] = useState('');
@@ -121,6 +122,11 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setStopLoss(editTrade.stop_loss ? String(editTrade.stop_loss) : '');
       setTakeProfit(editTrade.take_profit ? String(editTrade.take_profit) : '');
       setFees(String(editTrade.fees || 0));
+      setFunding(
+        editTrade.funding !== undefined && editTrade.funding !== null
+          ? String(editTrade.funding)
+          : '0'
+      );
       setTags(editTrade.tags || '');
       setSetupNotes(editTrade.setup_notes || '');
       setPostTradeNotes(editTrade.post_trade_notes || '');
@@ -142,6 +148,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setStopLoss('');
       setTakeProfit('');
       setFees('0');
+      setFunding('0');
       setTags('');
       setSetupNotes('');
       setPostTradeNotes('');
@@ -166,6 +173,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const numExit = parseFloat(exitPrice) || 0;
   const numQty = parseFloat(quantity) || 0;
   const numFees = parseFloat(fees) || 0;
+  const numFunding = parseFloat(funding) || 0;
   const numSL = parseFloat(stopLoss) || 0;
 
   let livePnl = 0;
@@ -174,14 +182,14 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
   if (numEntry > 0 && numExit > 0 && numQty > 0 && status === 'CLOSED') {
     if (direction === 'LONG') {
-      livePnl = (numExit - numEntry) * numQty - numFees;
+      livePnl = (numExit - numEntry) * numQty - numFees + numFunding;
       liveRoi = ((numExit - numEntry) / numEntry) * 100;
       if (numSL > 0 && numSL < numEntry) {
         const risk = (numEntry - numSL) * numQty;
         if (risk > 0) liveRR = Number((livePnl / risk).toFixed(2));
       }
     } else {
-      livePnl = (numEntry - numExit) * numQty - numFees;
+      livePnl = (numEntry - numExit) * numQty - numFees + numFunding;
       liveRoi = ((numEntry - numExit) / numEntry) * 100;
       if (numSL > 0 && numSL > numEntry) {
         const risk = (numSL - numEntry) * numQty;
@@ -280,6 +288,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         stop_loss: numSL > 0 ? numSL : null,
         take_profit: parseFloat(takeProfit) > 0 ? parseFloat(takeProfit) : null,
         fees: numFees,
+        funding: numFunding,
         tags: tags.trim(),
         setup_notes: setupNotes.trim() || null,
         post_trade_notes: postTradeNotes.trim() || null,
@@ -557,7 +566,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           {/* ==================== STEP 2: RISK & TIMING ==================== */}
           {step === 2 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-rose-400/90 mb-1.5">Stop Loss</label>
                   <input
@@ -589,6 +598,21 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                     step="any"
                     value={fees}
                     onChange={(e) => setFees(e.target.value)}
+                    placeholder="0.0"
+                    className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-purple-200/70 mb-1.5 flex items-center justify-between">
+                    <span>Фандінг ($)</span>
+                    <span className="text-[10px] text-purple-200/40">+/-</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={funding}
+                    onChange={(e) => setFunding(e.target.value)}
                     placeholder="0.0"
                     className="glass-input w-full rounded-xl px-3 py-2.5 text-sm text-white font-mono"
                   />

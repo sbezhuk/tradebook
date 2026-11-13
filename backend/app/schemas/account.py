@@ -34,6 +34,8 @@ class AccountResponse(AccountBase):
     trades_count: int = 0
     open_trades: int = 0
     total_pnl: float = 0.0
+    trade_pnl: float = 0.0
+    funding_pnl: float = 0.0
     total_deposits: float = 0.0
     current_balance: float = 0.0
 

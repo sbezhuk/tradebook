@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Trade, AnalyticsData } from '../types';
 import { OverallCapitalStrip } from './OverallCapitalStrip';
-import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight, CalendarDays } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface OverviewViewProps {
@@ -10,9 +10,11 @@ interface OverviewViewProps {
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   onOpenDeposits?: () => void;
+  onOpenFunding?: () => void;
   onSelectTrade: (trade: Trade) => void;
   onGoToTrades: () => void;
   onGoToInsights: () => void;
+  onGoToCalendar?: () => void;
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({
@@ -21,9 +23,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   selectedMonth = '',
   onSelectMonth,
   onOpenDeposits,
+  onOpenFunding,
   onSelectTrade,
   onGoToTrades,
   onGoToInsights,
+  onGoToCalendar,
 }) => {
   const stats = analytics?.summary;
   const equity = analytics?.equity_curve || [];
@@ -52,11 +56,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         <OverallCapitalStrip
           overallPnl={overallPnl}
+          overallTradePnl={analytics?.overall_trade_pnl}
+          overallFundingPnl={analytics?.overall_funding_pnl}
           overallTrades={overallTrades}
           totalDeposits={totalDeposits}
           currentBalance={currentBalance}
           overallGrowthPct={overallGrowthPct}
           onOpenDeposits={onOpenDeposits}
+          onOpenFunding={onOpenFunding}
         />
       </div>
 
@@ -254,13 +261,25 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <h2 className="text-sm font-semibold text-white">Останні угоди</h2>
               <p className="text-xs text-purple-200/45 mt-0.5">Швидкий доступ до останніх позицій</p>
             </div>
-            <button
-              onClick={onGoToTrades}
-              className="text-xs text-[#c49bff] hover:underline flex items-center space-x-1"
-            >
-              <span>Весь журнал</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-3">
+              {onGoToCalendar && (
+                <button
+                  type="button"
+                  onClick={onGoToCalendar}
+                  className="text-xs text-purple-200/70 hover:text-white flex items-center space-x-1.5 transition-colors cursor-pointer"
+                >
+                  <CalendarDays className="w-3.5 h-3.5 text-[#c49bff]" />
+                  <span>Календар PnL</span>
+                </button>
+              )}
+              <button
+                onClick={onGoToTrades}
+                className="text-xs text-[#c49bff] hover:underline flex items-center space-x-1 cursor-pointer"
+              >
+                <span>Весь журнал</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-white/[0.05]">

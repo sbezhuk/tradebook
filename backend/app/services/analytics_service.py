@@ -3,6 +3,7 @@ from datetime import datetime
 from collections import defaultdict
 from app.models.trade import Trade
 from app.models.deposit import Deposit
+from app.models.funding_payment import FundingPayment
 from app.schemas.analytics import (
     AnalyticsResponse,
     SummaryStats,
@@ -152,13 +153,19 @@ def compute_analytics(
     trades: List[Trade],
     month: Optional[str] = None,
     deposits: Optional[List[Deposit]] = None,
+    funding_payments: Optional[List[FundingPayment]] = None,
 ) -> AnalyticsResponse:
     deposits_list = deposits or []
+    funding_list = funding_payments or []
     monthly_deposits = _group_deposits_by_month(deposits_list)
     total_deposits = round(sum(float(d.amount) for d in deposits_list), 2)
 
     overall_closed = [t for t in trades if t.status == "CLOSED"]
-    overall_total_pnl = round(sum(t.pnl for t in overall_closed), 2)
+    raw_trade_pnl = sum(float(t.pnl or 0.0) for t in overall_closed)
+    raw_funding_pnl = sum(float(fp.payment or 0.0) for fp in funding_list)
+    overall_trade_pnl = round(raw_trade_pnl, 2)
+    overall_funding_pnl = round(raw_funding_pnl, 2)
+    overall_total_pnl = round(raw_trade_pnl + raw_funding_pnl, 2)
     overall_total_trades = len(overall_closed)
     current_balance = round(total_deposits + overall_total_pnl, 2)
     overall_deposit_growth_pct = (
@@ -188,6 +195,8 @@ def compute_analytics(
     if not period_trades:
         return AnalyticsResponse(
             overall_total_pnl=overall_total_pnl,
+            overall_trade_pnl=overall_trade_pnl,
+            overall_funding_pnl=overall_funding_pnl,
             overall_total_trades=overall_total_trades,
             total_deposits=total_deposits,
             current_balance=current_balance,
@@ -356,17 +365,44 @@ def compute_analytics(
         if dt:
             daily_map[dt.strftime("%Y-%m-%d")].append(t)
 
-    daily_activity = [
-        DailyActivityItem(
-            date=date_str,
-            trades_count=len(tr_list),
-            total_pnl=round(sum(tr.pnl for tr in tr_list), 2),
+    daily_activity = []
+    for date_str, tr_list in sorted(daily_map.items()):
+        cnt = len(tr_list)
+        wins = [tr for tr in tr_list if tr.pnl > 0]
+        losses = [tr for tr in tr_list if tr.pnl < 0]
+        be = [tr for tr in tr_list if tr.pnl == 0]
+        gp = round(sum(tr.pnl for tr in wins), 2)
+        gl = round(abs(sum(tr.pnl for tr in losses)), 2)
+        wr = round((len(wins) / cnt * 100), 2) if cnt > 0 else 0.0
+        pf = _compute_profit_factor(gp, gl)
+        best = round(max((tr.pnl for tr in tr_list), default=0.0), 2)
+        worst = round(min((tr.pnl for tr in tr_list), default=0.0), 2)
+        fees = round(sum(((tr.fees or 0.0) + (tr.funding or 0.0)) for tr in tr_list), 2)
+        vol = round(sum(((tr.quantity or 0.0) * (tr.entry_price or 0.0)) for tr in tr_list), 2)
+
+        daily_activity.append(
+            DailyActivityItem(
+                date=date_str,
+                trades_count=cnt,
+                total_pnl=round(sum(tr.pnl for tr in tr_list), 2),
+                winning_trades=len(wins),
+                losing_trades=len(losses),
+                breakeven_trades=len(be),
+                win_rate=wr,
+                profit_factor=pf,
+                gross_profit=gp,
+                gross_loss=gl,
+                best_trade=best,
+                worst_trade=worst,
+                total_fees=fees,
+                volume=vol,
+            )
         )
-        for date_str, tr_list in sorted(daily_map.items())
-    ]
 
     return AnalyticsResponse(
         overall_total_pnl=overall_total_pnl,
+        overall_trade_pnl=overall_trade_pnl,
+        overall_funding_pnl=overall_funding_pnl,
         overall_total_trades=overall_total_trades,
         total_deposits=total_deposits,
         current_balance=current_balance,

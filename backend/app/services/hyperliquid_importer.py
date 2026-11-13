@@ -48,6 +48,16 @@ class ParsedHyperliquidDeposit:
     note: str
 
 
+@dataclass
+class ParsedHyperliquidFunding:
+    funding_time: datetime
+    coin: str
+    direction: str  # LONG or SHORT
+    size: float
+    payment: float
+    rate: float = 0.0
+
+
 def _parse_hl_amount(raw_val: str) -> Tuple[float, str]:
     """Parse Hyperliquid amount strings like '52.604246 USDC' or '-100 USDC'."""
     s = (raw_val or "").strip()
@@ -341,4 +351,54 @@ def parse_hyperliquid_deposits_csv(csv_content: str) -> List[ParsedHyperliquidDe
         )
 
     parsed.sort(key=lambda d: d.deposit_date)
+    return parsed
+
+
+def parse_hyperliquid_funding_csv(csv_content: str) -> List[ParsedHyperliquidFunding]:
+    """Parse Hyperliquid funding_history.csv rows into normalized funding items."""
+    reader = csv.DictReader(io.StringIO(csv_content.strip()))
+    if not reader.fieldnames:
+        raise ValueError("CSV файл порожній або не містить заголовків")
+
+    required_cols = {"time", "coin", "sz", "side", "payment"}
+    missing = required_cols - set(f.strip() for f in reader.fieldnames if f)
+    if missing:
+        raise ValueError(
+            f"Невірний формат файлу фандінгу Hyperliquid. Відсутні колонки: {', '.join(sorted(missing))}"
+        )
+
+    parsed: List[ParsedHyperliquidFunding] = []
+    for raw in reader:
+        row = {k.strip(): (v.strip() if v is not None else "") for k, v in raw.items() if k}
+        if not row.get("time") or not row.get("coin") or not row.get("payment"):
+            continue
+
+        dt = _parse_hl_time(row["time"])
+        side_raw = (row.get("side") or "").strip().lower()
+        if side_raw in ("long", "l", "buy"):
+            direction = "LONG"
+        elif side_raw in ("short", "s", "sell"):
+            direction = "SHORT"
+        else:
+            direction = side_raw.upper() or "LONG"
+
+        sz_val, _ = _parse_hl_amount(row.get("sz", "0"))
+        pay_val, _ = _parse_hl_amount(row["payment"])
+        rate_val, _ = _parse_hl_amount(row.get("rate", "0"))
+
+        if abs(pay_val) <= 1e-12:
+            continue
+
+        parsed.append(
+            ParsedHyperliquidFunding(
+                funding_time=dt,
+                coin=row["coin"].upper(),
+                direction=direction,
+                size=round(abs(sz_val), 8),
+                payment=round(pay_val, 8),
+                rate=rate_val,
+            )
+        )
+
+    parsed.sort(key=lambda f: f.funding_time)
     return parsed

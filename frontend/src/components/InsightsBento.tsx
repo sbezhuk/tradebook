@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { AnalyticsData, BreakdownItem, DailyActivityItem } from '../types';
 import { OverallCapitalStrip } from './OverallCapitalStrip';
+import { CalendarDays } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -20,9 +21,11 @@ interface InsightsBentoProps {
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   onOpenDeposits?: () => void;
+  onOpenFunding?: () => void;
   pageTitle?: string;
   pageSubtitle?: string;
   defaultSubTab?: 'bento' | 'months' | 'equity' | 'setups';
+  onGoToCalendar?: () => void;
 }
 
 const BAR_COLORS = [
@@ -126,9 +129,11 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
   selectedMonth = '',
   onSelectMonth,
   onOpenDeposits,
+  onOpenFunding,
   pageTitle = 'Аналітика',
   pageSubtitle = 'Скільки ви заробляєте, утримуєте та де ваша перевага на ринку.',
   defaultSubTab = 'bento',
+  onGoToCalendar,
 }) => {
   const [subTab, setSubTab] = useState<'bento' | 'months' | 'equity' | 'setups'>(defaultSubTab);
   const [breakdownMode, setBreakdownMode] = useState<'market' | 'symbol' | 'tag'>('market');
@@ -270,12 +275,15 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
 
           <OverallCapitalStrip
             overallPnl={overall_total_pnl}
+            overallTradePnl={analytics.overall_trade_pnl}
+            overallFundingPnl={analytics.overall_funding_pnl}
             overallTrades={overall_total_trades}
             monthsCount={available_months.length}
             totalDeposits={total_deposits}
             currentBalance={current_balance}
             overallGrowthPct={overall_deposit_growth_pct}
             onOpenDeposits={onOpenDeposits}
+            onOpenFunding={onOpenFunding}
           />
         </div>
 
@@ -692,7 +700,19 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
           <div className="glass-panel rounded-2xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
               <div>
-                <h2 className="text-sm font-semibold text-white">Торгівля по днях</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-sm font-semibold text-white">Торгівля по днях</h2>
+                  {onGoToCalendar && (
+                    <button
+                      type="button"
+                      onClick={onGoToCalendar}
+                      className="text-xs text-[#c49bff] hover:text-[#d8b4fe] flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <CalendarDays className="w-3.5 h-3.5" />
+                      <span>Відкрити повний календар PnL →</span>
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-purple-200/45 mt-0.5">
                   Останні 12 тижнів активності • наведення показує денний PnL
                 </p>

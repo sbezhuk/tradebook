@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.trade import Trade
 from app.models.deposit import Deposit
+from app.models.funding_payment import FundingPayment
 from app.schemas.analytics import AnalyticsResponse
 from app.api.deps import get_current_user
 from app.services.analytics_service import compute_analytics
@@ -38,10 +39,13 @@ def get_analytics(
 
     trades_query = db.query(Trade).filter(Trade.user_id == current_user.id)
     deposits_query = db.query(Deposit).filter(Deposit.user_id == current_user.id)
+    funding_query = db.query(FundingPayment).filter(FundingPayment.user_id == current_user.id)
     if valid_account_id is not None:
         trades_query = trades_query.filter(Trade.account_id == valid_account_id)
         deposits_query = deposits_query.filter(Deposit.account_id == valid_account_id)
+        funding_query = funding_query.filter(FundingPayment.account_id == valid_account_id)
 
     trades = trades_query.all()
     deposits = deposits_query.all()
-    return compute_analytics(trades, month=month, deposits=deposits)
+    funding_payments = funding_query.all()
+    return compute_analytics(trades, month=month, deposits=deposits, funding_payments=funding_payments)

@@ -6,6 +6,7 @@ import {
   Plus,
   Edit3,
   Trash2,
+  Eraser,
   X,
   Check,
   Star,
@@ -20,6 +21,7 @@ interface AccountModalProps {
   onCreateAccount: (data: AccountFormData) => Promise<void>;
   onUpdateAccount: (id: number, data: Partial<AccountFormData>) => Promise<void>;
   onDeleteAccount: (id: number, deleteData: boolean) => Promise<void>;
+  onClearAccountTrades: (id: number) => Promise<void>;
 }
 
 const PLATFORM_OPTIONS = [
@@ -78,6 +80,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   onCreateAccount,
   onUpdateAccount,
   onDeleteAccount,
+  onClearAccountTrades,
 }) => {
   const [editingAccount, setEditingAccount] = useState<TradingAccount | null>(null);
   const [name, setName] = useState('');
@@ -89,6 +92,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [clearingId, setClearingId] = useState<number | null>(null);
+  const [confirmClearId, setConfirmClearId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -156,6 +161,19 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setError(err.message || 'Не вдалося видалити акаунт');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleClearTrades = async (id: number) => {
+    setClearingId(id);
+    setError(null);
+    try {
+      await onClearAccountTrades(id);
+      setConfirmClearId(null);
+    } catch (err: any) {
+      setError(err.message || 'Не вдалося очистити угоди акаунту');
+    } finally {
+      setClearingId(null);
     }
   };
 
@@ -411,12 +429,27 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
 
+                          {acc.trades_count > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfirmDeleteId(null);
+                                setConfirmClearId((prev) => (prev === acc.id ? null : acc.id));
+                              }}
+                              title={`Очистити угоди «${acc.name}» (${acc.trades_count})`}
+                              className="p-1.5 rounded-lg text-purple-200/45 hover:text-amber-300 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                            >
+                              <Eraser className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
                           {accounts.length > 1 && (
                             <button
                               type="button"
-                              onClick={() =>
-                                setConfirmDeleteId((prev) => (prev === acc.id ? null : acc.id))
-                              }
+                              onClick={() => {
+                                setConfirmClearId(null);
+                                setConfirmDeleteId((prev) => (prev === acc.id ? null : acc.id));
+                              }}
                               title="Видалити акаунт"
                               className="p-1.5 rounded-lg text-purple-200/45 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             >
@@ -452,10 +485,37 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                         </div>
                       </div>
 
+                      {/* Inline clear trades confirmation */}
+                      {confirmClearId === acc.id && (
+                        <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm">
+                          <div className="text-[11px] font-semibold text-amber-900 dark:text-amber-200 leading-relaxed">
+                            Видалити всі угоди ({acc.trades_count}) акаунту «{acc.name}»? Цю дію не можна скасувати.
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={clearingId === acc.id}
+                              onClick={() => handleClearTrades(acc.id)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
+                            >
+                              {clearingId === acc.id ? 'Очищення...' : 'Підтвердити'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={clearingId === acc.id}
+                              onClick={() => setConfirmClearId(null)}
+                              className="px-2.5 py-1 rounded-lg bg-black/[0.06] hover:bg-black/[0.1] dark:bg-white/[0.08] dark:hover:bg-white/[0.14] text-purple-950 dark:text-purple-100 text-[11px] font-medium cursor-pointer transition-colors"
+                            >
+                              Скасувати
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Inline delete confirmation */}
                       {isConfirming && (
-                        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="text-[11px] text-rose-200">
+                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm">
+                          <div className="text-[11px] font-semibold text-rose-900 dark:text-rose-200 leading-relaxed">
                             {hasData
                               ? 'Що зробити з угодами та депозитами цього акаунту?'
                               : 'Видалити цей порожній акаунт?'}

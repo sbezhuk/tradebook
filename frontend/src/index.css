@@ -254,10 +254,10 @@ html[data-theme="light"] :is([class*="text-emerald-400"], [class*="text-emerald-
   color: #059669;
 }
 
-html[data-theme="light"] :is([class*="text-rose-400"], [class*="text-rose-300"], [class*="text-rose-200"]):not([class*="bg-rose-500/85"]) {
-  color: #e11d48;
+html[data-theme="light"] :is([class*="text-rose-400"], [class*="text-rose-300"], [class*="text-rose-200"]):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *) {
+  color: #be123c;
 }
 
-html[data-theme="light"] :is([class*="text-amber-400"], [class*="text-amber-300"]) {
-  color: #d97706;
+html[data-theme="light"] :is([class*="text-amber-400"], [class*="text-amber-300"], [class*="text-amber-200"], [class*="text-amber-100"], [class*="text-yellow-400"], [class*="text-yellow-300"], [class*="text-yellow-200"]) {
+  color: #b45309;
 }

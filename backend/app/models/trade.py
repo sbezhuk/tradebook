@@ -25,6 +25,7 @@ class Trade(Base):
     stop_loss = Column(Float, nullable=True)
     take_profit = Column(Float, nullable=True)
     fees = Column(Float, default=0.0)
+    funding = Column(Float, default=0.0)
 
     # Calculated metrics
     pnl = Column(Float, default=0.0)

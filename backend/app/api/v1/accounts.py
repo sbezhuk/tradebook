@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.account import TradingAccount
 from app.models.trade import Trade
 from app.models.deposit import Deposit
+from app.models.funding_payment import FundingPayment
 from app.schemas.account import (
     AccountCreate,
     AccountUpdate,
@@ -23,10 +24,15 @@ def _build_account_response(
     acc: TradingAccount,
     trades: list[Trade],
     deposits: list[Deposit],
+    funding_payments: Optional[list[FundingPayment]] = None,
 ) -> AccountResponse:
     closed_trades = [t for t in trades if t.status == "CLOSED"]
     open_trades = sum(1 for t in trades if t.status == "OPEN")
-    total_pnl = round(sum(float(t.pnl or 0.0) for t in closed_trades), 2)
+    raw_trade_pnl = sum(float(t.pnl or 0.0) for t in closed_trades)
+    raw_funding_pnl = sum(float(fp.payment or 0.0) for fp in (funding_payments or []))
+    trade_pnl = round(raw_trade_pnl, 2)
+    funding_pnl = round(raw_funding_pnl, 2)
+    total_pnl = round(raw_trade_pnl + raw_funding_pnl, 2)
     total_deposits = round(sum(float(d.amount or 0.0) for d in deposits), 2)
     current_balance = round(total_deposits + total_pnl, 2)
 
@@ -43,6 +49,8 @@ def _build_account_response(
         trades_count=len(trades),
         open_trades=open_trades,
         total_pnl=total_pnl,
+        trade_pnl=trade_pnl,
+        funding_pnl=funding_pnl,
         total_deposits=total_deposits,
         current_balance=current_balance,
     )
@@ -72,8 +80,13 @@ def list_accounts(
         if d.account_id is not None:
             deposits_by_acc[d.account_id].append(d)
 
+    funding_by_acc: Dict[int, list[FundingPayment]] = defaultdict(list)
+    for fp in db.query(FundingPayment).filter(FundingPayment.user_id == current_user.id).all():
+        if fp.account_id is not None:
+            funding_by_acc[fp.account_id].append(fp)
+
     items = [
-        _build_account_response(acc, trades_by_acc[acc.id], deposits_by_acc[acc.id])
+        _build_account_response(acc, trades_by_acc[acc.id], deposits_by_acc[acc.id], funding_by_acc[acc.id])
         for acc in accounts
     ]
     return AccountListResponse(items=items, total=len(items))
@@ -206,6 +219,10 @@ def delete_account(
             Deposit.user_id == current_user.id,
             Deposit.account_id == account_id,
         ).delete(synchronize_session=False)
+        db.query(FundingPayment).filter(
+            FundingPayment.user_id == current_user.id,
+            FundingPayment.account_id == account_id,
+        ).delete(synchronize_session=False)
     else:
         db.query(Trade).filter(
             Trade.user_id == current_user.id,
@@ -214,6 +231,10 @@ def delete_account(
         db.query(Deposit).filter(
             Deposit.user_id == current_user.id,
             Deposit.account_id == account_id,
+        ).update({"account_id": fallback.id}, synchronize_session=False)
+        db.query(FundingPayment).filter(
+            FundingPayment.user_id == current_user.id,
+            FundingPayment.account_id == account_id,
         ).update({"account_id": fallback.id}, synchronize_session=False)
 
     db.delete(target)

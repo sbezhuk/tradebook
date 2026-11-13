@@ -1,22 +1,27 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc, func
 from app.core.database import get_db
 from app.models.user import User
 from app.models.trade import Trade
+from app.models.funding_payment import FundingPayment
 from app.schemas.trade import (
     TradeCreate,
     TradeUpdate,
     TradeResponse,
     TradeListResponse,
     HyperliquidImportResponse,
+    HyperliquidFundingImportResponse,
     DeleteAllTradesResponse,
 )
 from app.api.deps import get_current_user
 from app.services.trade_calculator import calculate_trade_metrics
-from app.services.hyperliquid_importer import parse_hyperliquid_csv
+from app.services.hyperliquid_importer import (
+    parse_hyperliquid_csv,
+    parse_hyperliquid_funding_csv,
+)
 from app.services.account_service import (
     ensure_user_default_account,
     resolve_user_account,
@@ -33,6 +38,7 @@ def list_trades(
     status: Optional[str] = Query(None, description="OPEN, CLOSED, CANCELLED"),
     tag: Optional[str] = Query(None, description="Фільтр за тегом"),
     month: Optional[str] = Query(None, description="Фільтр за звітним місяцем (YYYY-MM)"),
+    date: Optional[str] = Query(None, description="Фільтр за конкретною датою (YYYY-MM-DD)"),
     account_id: Optional[int] = Query(None, description="Фільтр за торговим акаунтом"),
     sort_by: str = Query("date_desc", description="date_desc, date_asc, pnl_desc, pnl_asc"),
     skip: int = Query(0, ge=0),
@@ -70,6 +76,20 @@ def list_trades(
             raise HTTPException(status_code=400, detail="Невірний формат місяця. Очікується YYYY-MM")
         period_dt = func.coalesce(Trade.exit_date, Trade.entry_date)
         query = query.filter(period_dt >= month_start, period_dt < next_month_start)
+    if date:
+        try:
+            year_str, month_str, day_str = date.split("-")
+            year = int(year_str)
+            m = int(month_str)
+            d = int(day_str)
+            if not (1900 <= year <= 2200 and 1 <= m <= 12 and 1 <= d <= 31):
+                raise ValueError
+            day_start = datetime(year, m, d)
+            day_next = day_start + timedelta(days=1)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Невірний формат дати. Очікується YYYY-MM-DD")
+        period_dt = func.coalesce(Trade.exit_date, Trade.entry_date)
+        query = query.filter(period_dt >= day_start, period_dt < day_next)
 
     total = query.count()
 
@@ -284,6 +304,118 @@ async def import_hyperliquid_trades(
         total_pnl=round(total_pnl, 4),
         trades=[TradeResponse.model_validate(t) for t in created_trades]
     )
+
+
+@router.post("/import/hyperliquid/funding", response_model=HyperliquidFundingImportResponse)
+async def import_hyperliquid_funding(
+    file: UploadFile = File(...),
+    account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту фандінгу"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    target_account = resolve_user_account(db, current_user.id, account_id)
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Будь ласка, завантажте CSV файл фандінгу з Hyperliquid")
+
+    raw_bytes = await file.read()
+    try:
+        csv_text = raw_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Файл повинен бути в кодуванні UTF-8")
+
+    try:
+        parsed_funding = parse_hyperliquid_funding_csv(csv_text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Помилка парсингу CSV: {str(e)}")
+
+    if not parsed_funding:
+        total_in_acc = (
+            db.query(func.coalesce(func.sum(FundingPayment.payment), 0.0))
+            .filter(
+                FundingPayment.user_id == current_user.id,
+                FundingPayment.account_id == target_account.id,
+            )
+            .scalar()
+        )
+        return HyperliquidFundingImportResponse(
+            imported_count=0,
+            skipped_duplicates=0,
+            total_funding=0.0,
+            account_total_funding=round(float(total_in_acc or 0.0), 4),
+        )
+
+    existing_payments = (
+        db.query(FundingPayment)
+        .filter(
+            FundingPayment.user_id == current_user.id,
+            FundingPayment.account_id == target_account.id,
+        )
+        .all()
+    )
+    existing_keys = {
+        (
+            fp.funding_time.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S"),
+            fp.coin.upper(),
+            fp.direction.upper(),
+            round(fp.size, 8),
+            round(fp.payment, 8),
+        )
+        for fp in existing_payments
+    }
+
+    imported_count = 0
+    skipped = 0
+    new_funding_sum = 0.0
+
+    for pf in parsed_funding:
+        f_naive = pf.funding_time.replace(tzinfo=None)
+        dedup_key = (
+            f_naive.strftime("%Y-%m-%d %H:%M:%S"),
+            pf.coin.upper(),
+            pf.direction.upper(),
+            round(pf.size, 8),
+            round(pf.payment, 8),
+        )
+        if dedup_key in existing_keys:
+            skipped += 1
+            continue
+
+        existing_keys.add(dedup_key)
+        fp_record = FundingPayment(
+            user_id=current_user.id,
+            account_id=target_account.id,
+            trade_id=None,  # Never link to trades on import
+            coin=pf.coin.upper(),
+            direction=pf.direction.upper(),
+            funding_time=f_naive,
+            size=pf.size,
+            payment=pf.payment,
+            rate=pf.rate,
+        )
+        db.add(fp_record)
+        imported_count += 1
+        new_funding_sum += pf.payment
+
+    db.commit()
+
+    total_in_acc = (
+        db.query(func.coalesce(func.sum(FundingPayment.payment), 0.0))
+        .filter(
+            FundingPayment.user_id == current_user.id,
+            FundingPayment.account_id == target_account.id,
+        )
+        .scalar()
+    )
+
+    return HyperliquidFundingImportResponse(
+        imported_count=imported_count,
+        skipped_duplicates=skipped,
+        total_funding=round(new_funding_sum, 4),
+        account_total_funding=round(float(total_in_acc or 0.0), 4),
+    )
+
 
 @router.delete("", response_model=DeleteAllTradesResponse)
 def delete_all_trades(
