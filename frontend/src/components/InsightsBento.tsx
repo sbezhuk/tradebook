@@ -740,67 +740,68 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
               </div>
             </div>
 
-            <div className="overflow-x-auto pb-1">
-              <div className="min-w-[680px]">
-                {/* Column Date Headers */}
-                <div className="flex items-center mb-2 pl-9">
+            <div className="w-full">
+              {/* Column Date Headers */}
+              <div className="flex items-center mb-2 gap-1.5">
+                <div className="w-7 shrink-0" />
+                <div className="flex-1 grid grid-cols-12 gap-1.5">
                   {calendarWeeks.map((week, i) => (
                     <div
                       key={i}
-                      className="flex-1 text-[10px] text-purple-200/40 font-medium truncate pr-1"
+                      className="text-[10px] text-purple-200/40 font-medium truncate"
                     >
                       {i % 2 === 0 ? week.label : ''}
                     </div>
                   ))}
                 </div>
+              </div>
 
-                {/* 7 Rows (Mon - Sun) */}
-                <div className="space-y-1.5">
-                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((dayLabel, dIdx) => (
-                    <div key={dayLabel} className="flex items-center gap-1.5">
-                      <div className="w-7 text-[10px] text-purple-200/40 font-medium shrink-0">
-                        {dIdx % 2 === 0 ? dayLabel : ''}
-                      </div>
-                      <div className="flex-1 grid grid-cols-12 gap-1.5">
-                        {calendarWeeks.map((week, wIdx) => {
-                          const cell = week.days[dIdx];
-                          const act = cell.data;
-                          let cellStyle = 'bg-white/[0.035] border-white/[0.03]';
-                          if (cell.isFuture) {
-                            cellStyle = 'bg-transparent border-transparent opacity-20';
-                          } else if (act) {
-                            const maxWin = Math.max(
-                              ...analytics.daily_activity.map((d) => d.total_pnl),
-                              0.01
-                            );
-                            if (act.total_pnl > maxWin * 0.4) {
-                              cellStyle = 'bg-[#c49bff] border-[#d8b4fe]/60 shadow-[0_0_10px_rgba(196,155,255,0.45)]';
-                            } else if (act.total_pnl > 0) {
-                              cellStyle = 'bg-[#8b5cf6]/80 border-[#a78bfa]/40';
-                            } else if (act.total_pnl < 0) {
-                              cellStyle = 'bg-rose-500/50 border-rose-400/35';
-                            } else {
-                              cellStyle = 'bg-purple-400/30 border-purple-300/20';
-                            }
-                          }
-
-                          return (
-                            <div
-                              key={`${wIdx}-${dIdx}`}
-                              onMouseEnter={() =>
-                                setHoveredDay(
-                                  act || { date: cell.dateStr, trades_count: 0, total_pnl: 0 }
-                                )
-                              }
-                              onMouseLeave={() => setHoveredDay(null)}
-                              className={`h-5 rounded-[5px] border transition-transform hover:scale-110 cursor-default ${cellStyle}`}
-                            />
-                          );
-                        })}
-                      </div>
+              {/* 7 Rows (Mon - Sun) */}
+              <div className="space-y-1.5">
+                {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((dayLabel, dIdx) => (
+                  <div key={dayLabel} className="flex items-center gap-1.5">
+                    <div className="w-7 text-[10px] text-purple-200/40 font-medium shrink-0">
+                      {dIdx % 2 === 0 ? dayLabel : ''}
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 grid grid-cols-12 gap-1.5">
+                      {calendarWeeks.map((week, wIdx) => {
+                        const cell = week.days[dIdx];
+                        const act = cell.data;
+                        let cellStyle = 'bg-white/[0.035] border-white/[0.03]';
+                        if (cell.isFuture) {
+                          cellStyle = 'bg-transparent border-transparent opacity-20';
+                        } else if (act) {
+                          const maxWin = Math.max(
+                            ...analytics.daily_activity.map((d) => d.total_pnl),
+                            0.01
+                          );
+                          if (act.total_pnl > maxWin * 0.4) {
+                            cellStyle = 'bg-[#c49bff] border-[#d8b4fe]/60 shadow-[0_0_10px_rgba(196,155,255,0.45)]';
+                          } else if (act.total_pnl > 0) {
+                            cellStyle = 'bg-[#8b5cf6]/80 border-[#a78bfa]/40';
+                          } else if (act.total_pnl < 0) {
+                            cellStyle = 'bg-rose-500/50 border-rose-400/35';
+                          } else {
+                            cellStyle = 'bg-purple-400/30 border-purple-300/20';
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={`${wIdx}-${dIdx}`}
+                            onMouseEnter={() =>
+                              setHoveredDay(
+                                act || { date: cell.dateStr, trades_count: 0, total_pnl: 0 }
+                              )
+                            }
+                            onMouseLeave={() => setHoveredDay(null)}
+                            className={`h-5 rounded-[5px] border transition-transform hover:scale-110 cursor-default ${cellStyle}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

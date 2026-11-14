@@ -329,7 +329,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                     maxLength={255}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Напр., Поповнення з карти або Bybit"
+                    placeholder="Напр., Поповнення з карти або OKX"
                     className="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-purple-200/35"
                   />
                 </div>

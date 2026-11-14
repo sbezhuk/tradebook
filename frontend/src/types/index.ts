@@ -1,7 +1,7 @@
 export type MarketType = 'CRYPTO' | 'FOREX' | 'STOCKS' | 'FUTURES' | 'COMMODITIES' | 'OTHER';
 export type DirectionType = 'LONG' | 'SHORT';
 export type StatusType = 'OPEN' | 'CLOSED' | 'CANCELLED';
-export type AccountPlatform = 'HYPERLIQUID' | 'BINANCE' | 'BYBIT' | 'OKX' | 'PROP' | 'CUSTOM';
+export type AccountPlatform = 'HYPERLIQUID' | 'OKX';
 export type AccountType = 'PERSONAL' | 'FUTURES' | 'SPOT' | 'PROP' | 'DEMO';
 
 export interface TradingAccount {

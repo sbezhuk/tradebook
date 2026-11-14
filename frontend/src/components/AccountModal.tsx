@@ -25,12 +25,8 @@ interface AccountModalProps {
 }
 
 const PLATFORM_OPTIONS = [
-  { value: 'HYPERLIQUID', label: 'Hyperliquid (DEX)' },
-  { value: 'BINANCE', label: 'Binance (CEX)' },
-  { value: 'BYBIT', label: 'Bybit (CEX)' },
-  { value: 'OKX', label: 'OKX (CEX)' },
-  { value: 'PROP', label: 'Prop Firm' },
-  { value: 'CUSTOM', label: 'Інша / Загальна' },
+  { value: 'HYPERLIQUID', label: 'Hyperliquid' },
+  { value: 'OKX', label: 'OKX' },
 ];
 
 const TYPE_OPTIONS = [
@@ -52,11 +48,11 @@ const COLOR_PRESETS = [
 
 const PLATFORM_LABELS: Record<string, string> = {
   HYPERLIQUID: 'Hyperliquid',
-  BINANCE: 'Binance',
-  BYBIT: 'Bybit',
   OKX: 'OKX',
+  BINANCE: 'OKX',
+  BYBIT: 'OKX',
   PROP: 'Prop Firm',
-  CUSTOM: 'Загальний',
+  CUSTOM: 'Hyperliquid',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -109,7 +105,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const startEdit = (acc: TradingAccount) => {
     setEditingAccount(acc);
     setName(acc.name);
-    setPlatform(acc.platform || 'CUSTOM');
+    const platformUpper = (acc.platform || '').toUpperCase();
+    const safePlatform =
+      platformUpper === 'OKX' || platformUpper === 'BINANCE' ? 'OKX' : 'HYPERLIQUID';
+    setPlatform(safePlatform);
     setAccountType(acc.account_type || 'PERSONAL');
     setColor(acc.color || '#c49bff');
     setIsDefault(acc.is_default);
@@ -251,7 +250,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Напр., Bybit Futures або Hyperliquid Main"
+                    placeholder="Напр., OKX Futures або Hyperliquid Main"
                     className="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-purple-200/35"
                   />
                 </div>
@@ -259,7 +258,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-medium text-purple-200/65 mb-1.5">
-                      Платформа
+                      Біржа
                     </label>
                     <GlassSelect
                       variant="field"

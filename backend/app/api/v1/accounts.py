@@ -109,10 +109,14 @@ def create_account(
             TradingAccount.user_id == current_user.id
         ).update({"is_default": False}, synchronize_session=False)
 
+    platform_clean = (account_in.platform or "HYPERLIQUID").strip().upper()
+    if platform_clean == "BINANCE":
+        platform_clean = "OKX"
+
     account = TradingAccount(
         user_id=current_user.id,
         name=name_clean,
-        platform=(account_in.platform or "CUSTOM").strip().upper(),
+        platform=platform_clean,
         account_type=(account_in.account_type or "PERSONAL").strip().upper(),
         currency=(account_in.currency or "USD").strip().upper(),
         color=(account_in.color or "#c49bff").strip(),
@@ -148,7 +152,10 @@ def update_account(
         account.name = name_clean
 
     if "platform" in update_data and update_data["platform"] is not None:
-        account.platform = update_data["platform"].strip().upper()
+        p_clean = update_data["platform"].strip().upper()
+        if p_clean == "BINANCE":
+            p_clean = "OKX"
+        account.platform = p_clean
     if "account_type" in update_data and update_data["account_type"] is not None:
         account.account_type = update_data["account_type"].strip().upper()
     if "currency" in update_data and update_data["currency"] is not None:

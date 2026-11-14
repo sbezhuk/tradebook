@@ -524,18 +524,18 @@ def test_multi_accounts_isolation_and_lifecycle():
     del_only = client.delete(f"/api/v1/accounts/{acc1['id']}", headers=headers)
     assert del_only.status_code == 400
 
-    # 2. Create a second account (Bybit Futures)
+    # 2. Create a second account (OKX Futures)
     c_res = client.post("/api/v1/accounts", headers=headers, json={
-        "name": "Bybit Futures",
-        "platform": "BYBIT",
+        "name": "OKX Futures",
+        "platform": "OKX",
         "account_type": "FUTURES",
         "currency": "USD",
         "color": "#60a5fa",
     })
     assert c_res.status_code == 201
     acc2 = c_res.json()
-    assert acc2["name"] == "Bybit Futures"
-    assert acc2["platform"] == "BYBIT"
+    assert acc2["name"] == "OKX Futures"
+    assert acc2["platform"] == "OKX"
 
     # 3. Add deposits and trades separately to acc1 and acc2
     d1 = client.post("/api/v1/deposits", headers=headers, json={

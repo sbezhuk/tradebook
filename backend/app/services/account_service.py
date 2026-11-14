@@ -22,7 +22,7 @@ def ensure_user_default_account(db: Session, user_id: int) -> TradingAccount:
         default_acc = TradingAccount(
             user_id=user_id,
             name="Основний акаунт",
-            platform="CUSTOM",
+            platform="HYPERLIQUID",
             account_type="PERSONAL",
             currency="USD",
             color="#c49bff",

@@ -21,7 +21,7 @@ import {
   Download,
 } from 'lucide-react';
 
-export type ImportPlatform = 'hyperliquid' | 'binance';
+export type ImportPlatform = 'hyperliquid' | 'okx';
 export type ImportMode = 'trades' | 'deposits' | 'funding';
 
 interface ImportViewProps {
@@ -261,22 +261,22 @@ export const ImportView: React.FC<ImportViewProps> = ({
             </p>
           </button>
 
-          {/* Binance (Locked / Disabled) */}
+          {/* OKX (Locked / Disabled) */}
           <button
             type="button"
             disabled
             aria-disabled="true"
-            title="Імпорт з Binance наразі в розробці"
+            title="Імпорт з OKX наразі в розробці"
             className="text-left p-4 rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.015] opacity-55 cursor-not-allowed select-none"
           >
             <div className="flex items-center justify-between gap-2 mb-2.5">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/20 text-amber-300 font-bold text-xs flex items-center justify-center shrink-0">
-                  BN
+                <div className="w-9 h-9 rounded-xl bg-sky-400/10 border border-sky-400/20 text-sky-300 font-bold text-xs flex items-center justify-center shrink-0">
+                  OKX
                 </div>
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <span>Binance</span>
+                    <span>OKX</span>
                     <Lock className="w-3.5 h-3.5 text-purple-200/50" />
                   </div>
                   <div className="text-[11px] text-purple-200/50">CEX • Spot &amp; Futures</div>
@@ -287,7 +287,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-purple-200/50 leading-relaxed">
-              Імпорт угод та транзакцій з Binance ще готується і буде доступний у наступному оновленні.
+              Імпорт угод та транзакцій з OKX ще готується і буде доступний у наступному оновленні.
             </p>
           </button>
         </div>

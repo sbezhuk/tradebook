@@ -11,7 +11,7 @@ class TradingAccount(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     name = Column(String(100), nullable=False)
-    platform = Column(String(50), default="CUSTOM", nullable=False)  # HYPERLIQUID, BINANCE, BYBIT, OKX, PROP, CUSTOM
+    platform = Column(String(50), default="HYPERLIQUID", nullable=False)  # HYPERLIQUID, OKX
     account_type = Column(String(30), default="PERSONAL", nullable=False)  # PERSONAL, FUTURES, SPOT, PROP, DEMO
     currency = Column(String(10), default="USD", nullable=False)
     color = Column(String(20), default="#c49bff", nullable=False)

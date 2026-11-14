@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class AccountBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Назва акаунту або портфелю")
-    platform: str = Field(default="CUSTOM", max_length=50, description="Біржа / платформа")
+    platform: str = Field(default="HYPERLIQUID", max_length=50, description="Біржа (HYPERLIQUID, OKX)")
     account_type: str = Field(default="PERSONAL", max_length=30, description="Тип рахунку")
     currency: str = Field(default="USD", max_length=10, description="Валюта обліку")
     color: str = Field(default="#c49bff", max_length=20, description="Колір індикатора")

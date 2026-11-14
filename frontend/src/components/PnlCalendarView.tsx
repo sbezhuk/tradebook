@@ -802,15 +802,20 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             </div>
           </div>
 
-          {/* Card 2: Trading Days & Day Win Rate */}
+          {/* Card 2: Win Rate (Trades) & Day Summary */}
           <div className="glass-panel rounded-2xl p-3.5 sm:p-5">
-            <div className="text-xs text-purple-200/55 font-medium">Денний Win Rate</div>
+            <div className="flex items-center justify-between text-xs text-purple-200/55 font-medium">
+              <span>Win Rate</span>
+              <span className="text-[10px] sm:text-[11px] font-mono text-purple-200/70">
+                {monthKpis.greenDays}/{monthKpis.daysWithTrades} прибутк. днів
+              </span>
+            </div>
             <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1 sm:mt-2 flex-wrap">
               <span className="text-xl xs:text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white">
-                {monthKpis.dayWinRate}%
+                {monthKpis.tradeWinRate}%
               </span>
               <span className="text-[10px] sm:text-xs text-purple-200/50">
-                ({monthKpis.greenDays}/{monthKpis.daysWithTrades} дн.)
+                ({monthKpis.winningTrades}W / {monthKpis.losingTrades}L)
               </span>
             </div>
             <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5">
@@ -819,8 +824,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                   className="bg-emerald-400 h-full transition-all duration-300"
                   style={{
                     width: `${
-                      monthKpis.daysWithTrades > 0
-                        ? (monthKpis.greenDays / monthKpis.daysWithTrades) * 100
+                      monthKpis.totalTrades > 0
+                        ? (monthKpis.winningTrades / monthKpis.totalTrades) * 100
                         : 0
                     }%`,
                   }}
@@ -829,15 +834,15 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                   className="bg-rose-400 h-full transition-all duration-300"
                   style={{
                     width: `${
-                      monthKpis.daysWithTrades > 0
-                        ? (monthKpis.redDays / monthKpis.daysWithTrades) * 100
+                      monthKpis.totalTrades > 0
+                        ? (monthKpis.losingTrades / monthKpis.totalTrades) * 100
                         : 0
                     }%`,
                   }}
                 />
               </div>
               <span className="text-[9px] sm:text-[10px] text-purple-200/40 font-mono shrink-0">
-                {monthKpis.greenDays}W / {monthKpis.redDays}L
+                {monthKpis.totalTrades} угод
               </span>
             </div>
           </div>
@@ -847,7 +852,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             <div className="flex items-center justify-between text-xs text-purple-200/55 font-medium">
               <span>Угоди</span>
               <span className="text-[10px] sm:text-[11px] font-mono text-purple-200/70">
-                WR: <strong className="text-white">{monthKpis.tradeWinRate}%</strong>
+                {monthKpis.daysWithTrades} торг. днів
               </span>
             </div>
             <div className="text-xl xs:text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white mt-1 sm:mt-2">
@@ -859,7 +864,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 PF: <strong className="text-[#c49bff] font-bold">{monthKpis.profitFactor}</strong>
               </span>
               <span>
-                {monthKpis.winningTrades}W · {monthKpis.losingTrades}L
+                Денний WR: <strong className="text-white">{monthKpis.dayWinRate}%</strong>
               </span>
             </div>
           </div>
@@ -1011,10 +1016,17 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                               onClick={() => {
                                 setSelectedDayDate(isSelected ? null : cell.dateStr);
                               }}
+                              title={
+                                hasTrades
+                                  ? `${cell.dateStr}: ${formatSignedMoney(pnl)} (${cell.stats!.winsCount}W / ${cell.stats!.lossesCount}L, WR: ${Math.round(cell.stats!.winRate)}%${
+                                      cell.stats?.bestTrade ? `, краща: +$${formatMoney(cell.stats.bestTrade)}` : ''
+                                    })`
+                                  : undefined
+                              }
                               className={`min-h-[78px] sm:min-h-[92px] lg:min-h-[105px] h-full p-1.5 xs:p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer flex flex-col justify-between relative group select-none ${dayCardStyle}`}
                             >
                               {/* Top Row: Day Number & Trades Pill */}
-                              <div className="h-5 sm:h-6 flex items-center justify-between gap-1 leading-none w-full">
+                              <div className="min-h-5 sm:min-h-6 flex items-center justify-between gap-1 leading-none w-full">
                                 <span
                                   className={`font-mono font-bold shrink-0 transition-transform ${
                                     cell.isToday
@@ -1028,12 +1040,14 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                 </span>
 
                                 {hasTrades && (
-                                  <div className="flex items-center gap-1 shrink-0">
+                                  <div className="flex items-center gap-1.5 shrink-0">
                                     {cell.trades.some((t) => t.chart_url) && (
-                                      <ImageIcon className="hidden md:inline w-2.5 h-2.5 text-[#c49bff]/75" />
+                                      <span title="Є скріншоти угод" className="flex items-center">
+                                        <ImageIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#c49bff]/75" />
+                                      </span>
                                     )}
                                     <span
-                                      className={`text-[9px] sm:text-[10px] font-mono px-1 sm:px-1.5 py-0.5 rounded font-semibold whitespace-nowrap leading-none ${
+                                      className={`inline-flex items-center text-[9px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-1 rounded-md font-semibold whitespace-nowrap leading-none ${
                                         isPositive
                                           ? 'bg-emerald-500/20 text-emerald-300'
                                           : isNegative
@@ -1048,9 +1062,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                 )}
                               </div>
 
-                              {/* Middle: PnL Display & Win Rate */}
+                              {/* Middle: Hero PnL */}
                               {hasTrades ? (
-                                <div className="my-auto py-0.5 sm:py-1 text-center min-w-0 w-full">
+                                <div className="my-auto py-1 text-center min-w-0 w-full">
                                   <div
                                     className={`font-mono font-bold tracking-tight leading-tight truncate w-full text-center text-xs xs:text-sm sm:text-base lg:text-lg ${
                                       isPositive
@@ -1059,26 +1073,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                         ? 'text-rose-400 font-extrabold drop-shadow-[0_2px_8px_rgba(251,113,133,0.3)]'
                                         : 'text-purple-200'
                                     }`}
-                                    title={formatSignedMoney(pnl)}
                                   >
                                     {formatSignedMoney(pnl)}
-                                  </div>
-
-                                  <div className="text-[9px] sm:text-[10px] font-mono text-purple-200/70 mt-0.5 flex items-center justify-center gap-1 whitespace-nowrap truncate w-full">
-                                    <span className="hidden md:inline">
-                                      {cell.stats!.winsCount}W/{cell.stats!.lossesCount}L
-                                    </span>
-                                    <span className="hidden md:inline text-purple-200/40">•</span>
-                                    <span
-                                      className={`font-semibold ${
-                                        cell.stats!.winRate >= 50
-                                          ? 'text-emerald-300'
-                                          : 'text-rose-300'
-                                      }`}
-                                    >
-                                      {Math.round(cell.stats!.winRate)}%
-                                      <span className="inline md:hidden"> WR</span>
-                                    </span>
                                   </div>
                                 </div>
                               ) : (
@@ -1089,75 +1085,96 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                 </div>
                               )}
 
-                              {/* Bottom Row / Micro Pill */}
-                              <div className="h-3.5 sm:h-4 flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-purple-200/40 w-full leading-none mt-auto">
-                                {hasTrades && cell.stats?.bestTrade ? (
-                                  <span
-                                    className="hidden lg:inline truncate max-w-full"
-                                    title={`Найкраща: +$${cell.stats.bestTrade}`}
-                                  >
-                                    max: +${formatMoney(cell.stats.bestTrade)}
+                              {/* Bottom Row: Symmetrical Performance Summary */}
+                              {hasTrades ? (
+                                <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-purple-200/70 w-full leading-none mt-auto pt-0.5">
+                                  <span className="truncate">
+                                    {cell.stats!.winsCount}W/{cell.stats!.lossesCount}L
                                   </span>
-                                ) : (
-                                  <span />
-                                )}
-                                {cell.trades.length > 0 &&
-                                  cell.trades.some((t) => t.chart_url) && (
-                                    <span className="md:hidden ml-auto">
-                                      <ImageIcon className="w-2.5 h-2.5 text-[#c49bff]/75" />
-                                    </span>
-                                  )}
-                              </div>
+                                  <span
+                                    className={`font-semibold shrink-0 ${
+                                      cell.stats!.winRate >= 50
+                                        ? 'text-emerald-300'
+                                        : 'text-rose-300'
+                                    }`}
+                                  >
+                                    {Math.round(cell.stats!.winRate)}%
+                                    <span className="hidden xs:inline"> WR</span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="h-3.5 sm:h-4 w-full" />
+                              )}
                             </div>
                           );
                         })}
 
                         {/* Weekly Summary Column Card (shown only on xl+) */}
-                        <div className="hidden xl:flex min-h-[78px] sm:min-h-[92px] lg:min-h-[105px] h-full p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[#c49bff]/[0.05] border border-[#c49bff]/20 flex-col justify-between select-none">
-                          <div className="h-5 sm:h-6 flex items-center justify-between gap-1.5 text-[11px] font-bold leading-none w-full">
-                            <span className="text-[#d8b4fe]/90 whitespace-nowrap shrink-0">
-                              Тижд. {week.weekIndex}
-                            </span>
-                            {week.summary.daysTraded > 0 && (
-                              <span className="text-[10px] font-mono text-purple-200/85 font-semibold whitespace-nowrap px-2 py-0.5 rounded-md bg-white/[0.07] border border-white/[0.1] shadow-xs shrink-0">
+                        <div
+                          title={
+                            week.summary.tradesCount > 0
+                              ? `Підсумок: ${formatSignedMoney(week.summary.totalPnl)} (${week.summary.daysTraded} торг. дні, ${week.summary.tradesCount} угод, ${week.summary.winsCount}W/${week.summary.lossesCount}L, WR: ${Math.round(week.summary.winRate)}%)`
+                              : undefined
+                          }
+                          className="hidden xl:flex min-h-[78px] sm:min-h-[92px] lg:min-h-[105px] h-full p-1.5 xs:p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[#c49bff]/[0.05] border border-[#c49bff]/20 flex-col justify-between select-none"
+                        >
+                          {/* Top Row: Days Traded (left) & Trades Count (right) */}
+                          <div className="min-h-5 sm:min-h-6 flex items-center justify-between gap-1 leading-none w-full">
+                            {week.summary.daysTraded > 0 ? (
+                              <span
+                                className="font-mono font-bold text-[11px] sm:text-xs text-[#d8b4fe]/90 pl-0.5"
+                                title={`${week.summary.daysTraded} активних торгових дні`}
+                              >
                                 {week.summary.daysTraded}д
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+
+                            {week.summary.tradesCount > 0 && (
+                              <span
+                                className="font-mono font-semibold text-[10px] sm:text-[11px] text-[#d8b4fe]/80 pr-0.5"
+                                title={`${week.summary.tradesCount} угод за тиждень`}
+                              >
+                                {week.summary.tradesCount}
+                                <span className="hidden sm:inline"> у.</span>
                               </span>
                             )}
                           </div>
 
-                          <div className="my-auto py-0.5 sm:py-1 text-center min-w-0 w-full">
+                          {/* Middle: Hero Weekly PnL */}
+                          <div className="my-auto py-1 text-center min-w-0 w-full">
                             <div
-                              className={`text-sm sm:text-base lg:text-lg font-mono font-bold tracking-tight truncate leading-tight ${
-                                week.summary.totalPnl > 0
-                                  ? 'text-emerald-400'
-                                  : week.summary.totalPnl < 0
-                                  ? 'text-rose-400'
-                                  : 'text-purple-200/60'
+                              className={`text-xs xs:text-sm sm:text-base lg:text-lg font-mono font-bold tracking-tight truncate leading-tight ${
+                                week.summary.tradesCount > 0
+                                  ? week.summary.totalPnl > 0
+                                    ? 'text-emerald-400 font-extrabold drop-shadow-[0_2px_8px_rgba(52,211,153,0.3)]'
+                                    : week.summary.totalPnl < 0
+                                    ? 'text-rose-400 font-extrabold drop-shadow-[0_2px_8px_rgba(251,113,133,0.3)]'
+                                    : 'text-purple-200'
+                                  : 'text-purple-200/30'
                               }`}
                             >
                               {week.summary.tradesCount > 0
                                 ? formatSignedMoney(week.summary.totalPnl)
                                 : '—'}
                             </div>
-
-                            {week.summary.tradesCount > 0 && (
-                              <div className="text-[10px] font-mono text-purple-200/70 mt-1 flex items-center justify-center gap-1.5 whitespace-nowrap truncate w-full">
-                                <span>{week.summary.tradesCount} угод</span>
-                                <span>•</span>
-                                <span className={week.summary.winRate >= 50 ? 'text-emerald-300 font-semibold' : 'text-rose-300 font-semibold'}>
-                                  {Math.round(week.summary.winRate)}% WR
-                                </span>
-                              </div>
-                            )}
                           </div>
 
-                          <div className="h-3.5 sm:h-4 flex items-center justify-center text-[9px] font-mono text-purple-200/45 whitespace-nowrap mt-auto">
-                            {week.summary.tradesCount > 0 ? (
-                              <span>{week.summary.winsCount}W · {week.summary.lossesCount}L</span>
-                            ) : (
-                              <span>—</span>
-                            )}
-                          </div>
+                          {/* Bottom Row: Symmetrical Performance Summary */}
+                          {week.summary.tradesCount > 0 ? (
+                            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-purple-200/70 w-full leading-none mt-auto pt-0.5">
+                              <span className="truncate">
+                                {week.summary.winsCount}W/{week.summary.lossesCount}L
+                              </span>
+                              <span className="font-medium shrink-0">
+                                {Math.round(week.summary.winRate)}%
+                                <span className="hidden xs:inline"> WR</span>
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="h-3.5 sm:h-4 w-full" />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1266,7 +1283,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                 )}
                               </div>
                               <span
-                                className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${
+                                className={`inline-flex items-center text-[10px] font-mono px-2 py-1 rounded-md font-semibold ${
                                   isPositive
                                     ? 'bg-emerald-500/20 text-emerald-300'
                                     : isNegative
