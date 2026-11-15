@@ -178,15 +178,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-hidden"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl glass-popover rounded-3xl overflow-hidden my-auto"
+        className="relative w-full max-w-4xl glass-popover rounded-3xl overflow-hidden my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
+        <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.07] bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-[#c49bff]/15 border border-[#c49bff]/30 flex items-center justify-center text-[#c49bff] shrink-0">
               <Briefcase className="w-4 h-4" />
@@ -211,7 +211,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           </button>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1">
           {error && (
             <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs">
               {error}
