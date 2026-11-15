@@ -8,14 +8,25 @@ echo "========================================="
 echo "       🚀 Запуск TradeBook MVP           "
 echo "========================================="
 
-# 1. Check Python virtual environment
+# 1. Check PostgreSQL service
+if command -v pg_isready >/dev/null 2>&1; then
+    if ! pg_isready -q; then
+        echo "🐘 Запуск PostgreSQL..."
+        if command -v brew >/dev/null 2>&1; then
+            brew services start postgresql@17 2>/dev/null || brew services start postgresql 2>/dev/null || true
+        fi
+        sleep 2
+    fi
+fi
+
+# 2. Check Python virtual environment
 if [ ! -d "backend/venv" ]; then
     echo "📦 Створення віртуального середовища Python..."
     python3 -m venv backend/venv
     backend/venv/bin/pip install -r backend/requirements.txt
 fi
 
-# 2. Seed database if not exists
+# 3. Seed database if not exists
 PYTHONPATH=backend backend/venv/bin/python3 backend/seed_demo.py
 
 # 3. Check frontend dependencies

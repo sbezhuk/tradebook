@@ -5,7 +5,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(case_sensitive=True)
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=True,
+    )
 
     PROJECT_NAME: str = "TradeBook API"
     VERSION: str = "1.0.0"
@@ -15,7 +20,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
-    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR}/tradebook.db")
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg2://localhost:5432/tradebook"
+    )
     
     UPLOAD_DIR: Path = BASE_DIR / "uploads"
     

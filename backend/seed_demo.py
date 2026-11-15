@@ -9,6 +9,13 @@ def seed():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
+    # If users already exist in the database, do not automatically create demo data
+    total_users = db.query(User).count()
+    if total_users > 0:
+        print(f"Database already contains {total_users} user(s). Skipping demo seed.")
+        db.close()
+        return
+
     # Check if demo user exists
     user = db.query(User).filter(User.username == "trader").first()
     if not user:
