@@ -100,6 +100,34 @@ const formatSignedMoney = (val: number): string => {
   return `${sign}$${formatMoney(val)}`;
 };
 
+/**
+ * Smart formatting for calendar cells so amounts never get clipped/truncated with ellipses on mobile screens:
+ * - On compact mobile cells (< sm): cleanly formatted (+/- sign, currency, sensible precision or k-format)
+ * - On desktop (sm+): full precision format
+ */
+const formatCellPnl = (val: number) => {
+  const sign = val > 0 ? '+' : val < 0 ? '-' : '';
+  const abs = Math.abs(val);
+
+  let mobileText: string;
+  if (abs >= 100000) {
+    mobileText = `${sign}$${(abs / 1000).toFixed(0)}k`;
+  } else if (abs >= 10000) {
+    mobileText = `${sign}$${(abs / 1000).toFixed(1)}k`;
+  } else if (abs >= 1000) {
+    mobileText = `${sign}$${(abs / 1000).toFixed(1)}k`;
+  } else if (abs >= 100) {
+    mobileText = `${sign}$${Math.round(abs)}`;
+  } else if (abs > 0) {
+    mobileText = abs % 1 === 0 ? `${sign}$${abs.toFixed(0)}` : `${sign}$${abs.toFixed(2)}`;
+  } else {
+    mobileText = '$0';
+  }
+
+  const fullText = formatSignedMoney(val);
+  return { mobileText, fullText };
+};
+
 export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
   analytics,
   trades,
@@ -557,18 +585,18 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
   const activeAccount = accounts.find((a) => a.id === activeAccountId) ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 sm:space-y-6">
       {/* 1. Header & Overall Capital Strip */}
       <div>
-        <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4">
+        <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 sm:gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white whitespace-nowrap">
+            <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+              <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white whitespace-nowrap">
                 Календар PnL
               </h1>
               {activeAccount && (
                 <span
-                  className="text-xs font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap"
+                  className="text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 rounded-full border whitespace-nowrap"
                   style={{
                     backgroundColor: `${activeAccount.color}18`,
                     borderColor: `${activeAccount.color}45`,
@@ -579,7 +607,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-sm text-purple-200/50 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-purple-200/50 mt-0.5 sm:mt-1 max-w-2xl">
               Щоденний огляд результатів торгівлі, динаміка прибутків та статистика за тижнями.
             </p>
           </div>
@@ -599,19 +627,19 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
         </div>
 
         {/* 2. Month Navigator Bar & Filter Bar */}
-        <div className="mt-5 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 glass-panel p-3.5 sm:p-4 rounded-2xl border border-white/[0.08]">
+        <div className="mt-3.5 sm:mt-5 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 sm:gap-3.5 glass-panel p-2.5 sm:p-4 rounded-2xl border border-white/[0.08]">
           {/* Left: Previous / Current / Next Month Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <button
               type="button"
               onClick={handlePrevMonth}
               title="Попередній місяць"
-              className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
-            <div className="px-3 sm:px-4 py-1.5 rounded-xl bg-[#c49bff]/10 border border-[#c49bff]/25 text-white font-bold text-sm sm:text-base lg:text-lg min-w-[140px] sm:min-w-[170px] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] whitespace-nowrap">
+            <div className="px-2.5 sm:px-4 py-1.5 rounded-xl bg-[#c49bff]/10 border border-[#c49bff]/25 text-white font-bold text-xs sm:text-base lg:text-lg min-w-[125px] sm:min-w-[170px] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] whitespace-nowrap">
               {monthTitle}
             </div>
 
@@ -619,28 +647,28 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               type="button"
               onClick={handleNextMonth}
               title="Наступний місяць"
-              className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             <button
               type="button"
               onClick={handleTodayMonth}
-              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-purple-200 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-purple-200 hover:text-white transition-all cursor-pointer whitespace-nowrap"
             >
               Сьогодні
             </button>
           </div>
 
           {/* Center / Right: View Toggle, Fit Mode, Weekend Toggle, Export, New Trade */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* View Mode Switcher: Grid vs List */}
             <div className="flex items-center p-0.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'grid'
                     ? 'bg-[#c49bff]/25 text-white border border-[#c49bff]/40 shadow-sm'
                     : 'text-purple-200/60 hover:text-white'
@@ -648,12 +676,12 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 title="Режим сітки календаря"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Сітка</span>
+                <span className="hidden sm:inline">Сітка</span>
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'list'
                     ? 'bg-[#c49bff]/25 text-white border border-[#c49bff]/40 shadow-sm'
                     : 'text-purple-200/60 hover:text-white'
@@ -661,7 +689,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 title="Режим списку днів за тижнями"
               >
                 <List className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Список</span>
+                <span className="hidden sm:inline">Список</span>
               </button>
             </div>
 
@@ -670,7 +698,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={() => setGridScrollMode((v) => !v)}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   gridScrollMode
                     ? 'bg-[#c49bff]/15 border-[#c49bff]/30 text-[#e9d5ff]'
                     : 'bg-white/[0.03] border-white/[0.06] text-purple-200/60 hover:text-purple-200'
@@ -684,12 +712,12 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 {gridScrollMode ? (
                   <>
                     <Minimize2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">В екран</span>
+                    <span>В екран</span>
                   </>
                 ) : (
                   <>
                     <Maximize2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Прокрутка</span>
+                    <span>Прокрутка</span>
                   </>
                 )}
               </button>
@@ -735,7 +763,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             <button
               type="button"
               onClick={() => setShowWeekends((v) => !v)}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 showWeekends
                   ? 'bg-white/[0.06] border-white/[0.12] text-white'
                   : 'bg-white/[0.02] border-white/[0.05] text-purple-200/50 hover:text-purple-200'
@@ -750,10 +778,10 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={onExportCsv}
-                className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-purple-200/75 hover:text-white transition-all cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-purple-200/75 hover:text-white transition-all cursor-pointer"
                 title="Експорт угод місяця в CSV"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
 
@@ -762,24 +790,24 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={onNewTrade}
-                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-semibold bg-[#c49bff] hover:bg-[#d8b4fe] text-[#110820] shadow-[0_0_20px_rgba(196,155,255,0.35)] transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-xl text-xs font-semibold bg-[#c49bff] hover:bg-[#d8b4fe] text-[#110820] shadow-[0_0_20px_rgba(196,155,255,0.35)] transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span className="hidden xs:inline">Нова угода</span>
+                <span className="hidden sm:inline">Нова угода</span>
               </button>
             )}
           </div>
         </div>
 
         {/* 3. Monthly Metrics Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mt-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mt-3 sm:mt-4">
           {/* Card 1: Month Net PnL */}
-          <div className="glass-panel rounded-2xl p-3.5 sm:p-5 relative overflow-hidden">
+          <div className="glass-panel rounded-2xl p-2.5 sm:p-5 relative overflow-hidden">
             <div className="flex items-center justify-between text-xs text-purple-200/55 font-medium">
               <span className="truncate">PnL за місяць</span>
               {monthKpis.daysWithTrades > 0 && (
                 <span
-                  className={`text-[10px] sm:text-[11px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${
+                  className={`text-[9.5px] sm:text-[11px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${
                     monthKpis.totalPnl >= 0
                       ? 'bg-emerald-500/15 text-emerald-400'
                       : 'bg-rose-500/15 text-rose-400'
@@ -790,35 +818,35 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               )}
             </div>
             <div
-              className={`text-xl xs:text-2xl sm:text-3xl font-bold font-mono tracking-tight mt-1 sm:mt-2 truncate ${
+              className={`text-lg sm:text-2xl lg:text-3xl font-bold font-mono tracking-tight mt-1 sm:mt-2 truncate ${
                 monthKpis.totalPnl >= 0 ? 'text-[#c49bff]' : 'text-rose-400'
               }`}
             >
               {formatSignedMoney(monthKpis.totalPnl)}
             </div>
-            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-purple-200/50 flex items-center justify-between font-mono flex-wrap gap-x-2">
+            <div className="mt-1 sm:mt-2 text-[9.5px] sm:text-[11px] text-purple-200/50 flex items-center justify-between font-mono flex-wrap gap-x-2">
               <span>+${formatMoney(monthKpis.grossProfit)}</span>
               <span>-${formatMoney(monthKpis.grossLoss)}</span>
             </div>
           </div>
 
           {/* Card 2: Win Rate (Trades) & Day Summary */}
-          <div className="glass-panel rounded-2xl p-3.5 sm:p-5">
+          <div className="glass-panel rounded-2xl p-2.5 sm:p-5">
             <div className="flex items-center justify-between text-xs text-purple-200/55 font-medium">
               <span>Win Rate</span>
-              <span className="text-[10px] sm:text-[11px] font-mono text-purple-200/70">
-                {monthKpis.greenDays}/{monthKpis.daysWithTrades} прибутк. днів
+              <span className="text-[9.5px] sm:text-[11px] font-mono text-purple-200/70 truncate">
+                {monthKpis.greenDays}/{monthKpis.daysWithTrades} прибутк.
               </span>
             </div>
-            <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1 sm:mt-2 flex-wrap">
-              <span className="text-xl xs:text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white">
+            <div className="flex items-baseline gap-1 sm:gap-2 mt-1 sm:mt-2 flex-wrap">
+              <span className="text-lg sm:text-2xl lg:text-3xl font-bold font-mono tracking-tight text-white">
                 {monthKpis.tradeWinRate}%
               </span>
               <span className="text-[10px] sm:text-xs text-purple-200/50">
                 ({monthKpis.winningTrades}W / {monthKpis.losingTrades}L)
               </span>
             </div>
-            <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5">
+            <div className="mt-1 sm:mt-2 flex items-center gap-1.5">
               <div className="flex-1 h-1.5 sm:h-2 rounded-full bg-white/[0.06] overflow-hidden flex">
                 <div
                   className="bg-emerald-400 h-full transition-all duration-300"
@@ -848,31 +876,31 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
           </div>
 
           {/* Card 3: Trades Count & Profit Factor */}
-          <div className="glass-panel rounded-2xl p-3.5 sm:p-5">
+          <div className="glass-panel rounded-2xl p-2.5 sm:p-5">
             <div className="flex items-center justify-between text-xs text-purple-200/55 font-medium">
               <span>Угоди</span>
-              <span className="text-[10px] sm:text-[11px] font-mono text-purple-200/70">
+              <span className="text-[9.5px] sm:text-[11px] font-mono text-purple-200/70 truncate">
                 {monthKpis.daysWithTrades} торг. днів
               </span>
             </div>
-            <div className="text-xl xs:text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white mt-1 sm:mt-2">
+            <div className="text-lg sm:text-2xl lg:text-3xl font-bold font-mono tracking-tight text-white mt-1 sm:mt-2">
               {monthKpis.totalTrades}{' '}
               <span className="text-xs font-normal text-purple-200/50">угод</span>
             </div>
-            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-purple-200/50 flex items-center justify-between font-mono flex-wrap gap-x-2">
+            <div className="mt-1 sm:mt-2 text-[9.5px] sm:text-[11px] text-purple-200/50 flex items-center justify-between font-mono flex-wrap gap-x-2">
               <span>
                 PF: <strong className="text-[#c49bff] font-bold">{monthKpis.profitFactor}</strong>
               </span>
               <span>
-                Денний WR: <strong className="text-white">{monthKpis.dayWinRate}%</strong>
+                WR: <strong className="text-white">{monthKpis.dayWinRate}%</strong>
               </span>
             </div>
           </div>
 
           {/* Card 4: Best Day & Worst Day */}
-          <div className="glass-panel rounded-2xl p-3.5 sm:p-5">
+          <div className="glass-panel rounded-2xl p-2.5 sm:p-5">
             <div className="text-xs text-purple-200/55 font-medium">Екстремуми дня</div>
-            <div className="mt-1 sm:mt-2 space-y-1 text-[11px] sm:text-xs font-mono">
+            <div className="mt-1 sm:mt-2 space-y-1 text-[10px] sm:text-xs font-mono">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400/80 flex items-center gap-1">
                   <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Кращий:
@@ -889,7 +917,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                   {monthKpis.worstDay ? `-$${formatMoney(Math.abs(monthKpis.worstDay.pnl))}` : '—'}
                 </span>
               </div>
-              <div className="pt-0.5 border-t border-white/[0.06] flex items-center justify-between text-[10px] sm:text-[11px] text-purple-200/50">
+              <div className="pt-0.5 border-t border-white/[0.06] flex items-center justify-between text-[9.5px] sm:text-[11px] text-purple-200/50">
                 <span>Сер. PnL:</span>
                 <span
                   className={`font-bold ${
@@ -906,12 +934,12 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
       {/* 4. Full Calendar Grid / List View */}
       {viewMode === 'grid' ? (
-        <div className="glass-panel rounded-2xl sm:rounded-3xl p-2.5 xs:p-3.5 sm:p-6 border border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
-          <div className={gridScrollMode ? 'overflow-x-auto pb-2' : 'w-full'}>
-            <div className={gridScrollMode ? 'min-w-[760px]' : 'w-full'}>
+        <div className="glass-panel rounded-2xl sm:rounded-3xl p-1.5 sm:p-6 border border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
+          <div className={gridScrollMode ? 'overflow-x-auto pb-2 -mx-1 px-1 touch-pan-x' : 'w-full'}>
+            <div className={gridScrollMode ? 'min-w-[700px]' : 'w-full'}>
               {/* Weekday Column Headers */}
               <div
-                className={`grid gap-1 xs:gap-1.5 sm:gap-2 lg:gap-2.5 mb-2 sm:mb-2.5 ${
+                className={`grid gap-1 sm:gap-2 lg:gap-2.5 mb-1.5 sm:mb-2.5 ${
                   showWeekends ? 'grid-cols-7 xl:grid-cols-8' : 'grid-cols-5 xl:grid-cols-6'
                 }`}
               >
@@ -920,7 +948,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                   return (
                     <div
                       key={wName}
-                      className={`text-center py-1.5 sm:py-2 text-[10px] xs:text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-lg sm:rounded-xl bg-white/[0.02] border border-white/[0.04] ${
+                      className={`text-center py-1 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg sm:rounded-xl bg-white/[0.02] border border-white/[0.04] ${
                         isWeekend ? 'text-purple-200/40' : 'text-purple-200/75'
                       }`}
                     >
@@ -935,22 +963,22 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               </div>
 
               {/* Calendar Weeks Rows */}
-              <div className="space-y-2 sm:space-y-2.5">
+              <div className="space-y-1.5 sm:space-y-2.5">
                 {calendarWeeks.map((week) => {
                   return (
-                    <div key={week.weekIndex} className="space-y-1.5">
+                    <div key={week.weekIndex} className="space-y-1 sm:space-y-1.5">
                       {/* Responsive Weekly Summary Banner (shown on mobile / tablet / small laptop < xl) */}
-                      <div className="xl:hidden flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#c49bff]/[0.06] border border-[#c49bff]/20 text-[11px] font-mono select-none">
-                        <div className="flex items-center gap-2">
+                      <div className="xl:hidden flex items-center justify-between px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-[#c49bff]/[0.06] border border-[#c49bff]/20 text-[10px] sm:text-[11px] font-mono select-none">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
                           <span className="font-bold text-[#d8b4fe] whitespace-nowrap">Тиждень {week.weekIndex}</span>
                           {week.summary.daysTraded > 0 && (
-                            <span className="text-[10px] text-purple-200/85 font-semibold whitespace-nowrap px-2 py-0.5 rounded-md bg-white/[0.07] border border-white/[0.1]">
+                            <span className="text-[9px] sm:text-[10px] text-purple-200/85 font-semibold whitespace-nowrap px-1.5 py-0.5 rounded bg-white/[0.07] border border-white/[0.1]">
                               {week.summary.daysTraded}д
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
                           <span
                             className={`font-bold whitespace-nowrap ${
                               week.summary.totalPnl > 0
@@ -965,8 +993,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                               : '—'}
                           </span>
                           {week.summary.tradesCount > 0 && (
-                            <span className="text-[10px] text-purple-200/60 hidden xs:inline whitespace-nowrap">
-                              {week.summary.tradesCount} угод • {Math.round(week.summary.winRate)}% WR
+                            <span className="text-[9px] sm:text-[10px] text-purple-200/60 whitespace-nowrap">
+                              {week.summary.tradesCount}у • {Math.round(week.summary.winRate)}%
                             </span>
                           )}
                         </div>
@@ -974,7 +1002,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                       {/* Days Grid in Week */}
                       <div
-                        className={`grid gap-1 xs:gap-1.5 sm:gap-2 lg:gap-2.5 ${
+                        className={`grid gap-1 sm:gap-2 lg:gap-2.5 ${
                           showWeekends ? 'grid-cols-7 xl:grid-cols-8' : 'grid-cols-5 xl:grid-cols-6'
                         }`}
                       >
@@ -984,6 +1012,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                           const pnl = cell.stats?.pnl ?? 0;
                           const isPositive = pnl > 0;
                           const isNegative = pnl < 0;
+                          const pnlFormatted = formatCellPnl(pnl);
 
                           // Visual styling of day card
                           let dayCardStyle =
@@ -1007,7 +1036,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                           if (isSelected) {
                             dayCardStyle +=
-                              ' ring-2 ring-[#c49bff] shadow-[0_0_25px_rgba(196,155,255,0.35)] !border-[#c49bff]';
+                              ' ring-1.5 ring-[#c49bff] shadow-[0_0_20px_rgba(196,155,255,0.4)] !border-[#c49bff]';
                           }
 
                           return (
@@ -1023,40 +1052,40 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                     })`
                                   : undefined
                               }
-                              className={`min-h-[78px] sm:min-h-[92px] lg:min-h-[105px] h-full p-1.5 xs:p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer flex flex-col justify-between relative group select-none ${dayCardStyle}`}
+                              className={`min-h-[66px] sm:min-h-[92px] lg:min-h-[105px] h-full p-1 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer flex flex-col justify-between relative group select-none ${dayCardStyle}`}
                             >
                               {/* Top Row: Day Number & Trades Pill */}
-                              <div className="min-h-5 sm:min-h-6 flex items-center justify-between gap-1 leading-none w-full">
+                              <div className="min-h-4 sm:min-h-6 flex items-center justify-between gap-0.5 leading-none w-full">
                                 <span
                                   className={`font-mono font-bold shrink-0 transition-transform ${
                                     cell.isToday
-                                      ? 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs rounded-full bg-[#c49bff] text-[#110820] flex items-center justify-center font-extrabold shadow-[0_0_10px_rgba(196,155,255,0.5)]'
+                                      ? 'w-4 h-4 sm:w-6 sm:h-6 text-[9.5px] sm:text-xs rounded-full bg-[#c49bff] text-[#110820] flex items-center justify-center font-extrabold shadow-[0_0_8px_rgba(196,155,255,0.5)]'
                                       : cell.isCurrentMonth
-                                      ? 'text-[11px] sm:text-xs text-white/90 pl-0.5'
-                                      : 'text-[10px] sm:text-xs text-purple-200/30 pl-0.5'
+                                      ? 'text-[10px] sm:text-xs text-white/90 pl-0.5'
+                                      : 'text-[9.5px] sm:text-xs text-purple-200/30 pl-0.5'
                                   }`}
                                 >
                                   {cell.dayNumber}
                                 </span>
 
                                 {hasTrades && (
-                                  <div className="flex items-center gap-1.5 shrink-0">
+                                  <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0">
                                     {cell.trades.some((t) => t.chart_url) && (
-                                      <span title="Є скріншоти угод" className="flex items-center">
+                                      <span title="Є скріншоти угод" className="hidden sm:flex items-center">
                                         <ImageIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#c49bff]/75" />
                                       </span>
                                     )}
                                     <span
-                                      className={`inline-flex items-center text-[9px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-1 rounded-md font-semibold whitespace-nowrap leading-none ${
+                                      className={`inline-flex items-center justify-center min-w-[14px] px-1 py-0.5 rounded text-[8.5px] sm:text-[10px] font-mono font-bold leading-none ${
                                         isPositive
-                                          ? 'bg-emerald-500/20 text-emerald-300'
+                                          ? 'bg-emerald-500/25 text-emerald-300'
                                           : isNegative
-                                          ? 'bg-rose-500/20 text-rose-300'
+                                          ? 'bg-rose-500/25 text-rose-300'
                                           : 'bg-white/10 text-purple-200'
                                       }`}
                                     >
                                       {cell.stats!.tradesCount}
-                                      <span className="hidden sm:inline"> у.</span>
+                                      <span className="hidden sm:inline">&nbsp;у.</span>
                                     </span>
                                   </div>
                                 )}
@@ -1064,9 +1093,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                               {/* Middle: Hero PnL */}
                               {hasTrades ? (
-                                <div className="my-auto py-1 text-center min-w-0 w-full">
+                                <div className="my-auto py-0.5 text-center min-w-0 w-full overflow-hidden">
                                   <div
-                                    className={`font-mono font-bold tracking-tight leading-tight truncate w-full text-center text-xs xs:text-sm sm:text-base lg:text-lg ${
+                                    className={`font-mono font-bold tracking-tighter sm:tracking-tight leading-tight text-center text-[10px] sm:text-base lg:text-lg ${
                                       isPositive
                                         ? 'text-emerald-400 font-extrabold drop-shadow-[0_2px_8px_rgba(52,211,153,0.3)]'
                                         : isNegative
@@ -1074,7 +1103,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                         : 'text-purple-200'
                                     }`}
                                   >
-                                    {formatSignedMoney(pnl)}
+                                    <span className="sm:hidden">{pnlFormatted.mobileText}</span>
+                                    <span className="hidden sm:inline">{pnlFormatted.fullText}</span>
                                   </div>
                                 </div>
                               ) : (
@@ -1087,23 +1117,23 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                               {/* Bottom Row: Symmetrical Performance Summary */}
                               {hasTrades ? (
-                                <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-purple-200/70 w-full leading-none mt-auto pt-0.5">
-                                  <span className="truncate">
+                                <div className="flex items-center justify-center sm:justify-between text-[8.5px] sm:text-[10px] font-mono leading-none mt-auto pt-0.5 w-full">
+                                  <span className="hidden sm:inline text-purple-200/70 truncate">
                                     {cell.stats!.winsCount}W/{cell.stats!.lossesCount}L
                                   </span>
                                   <span
-                                    className={`font-semibold shrink-0 ${
+                                    className={`font-bold sm:font-semibold shrink-0 ${
                                       cell.stats!.winRate >= 50
                                         ? 'text-emerald-300'
                                         : 'text-rose-300'
                                     }`}
                                   >
                                     {Math.round(cell.stats!.winRate)}%
-                                    <span className="hidden xs:inline"> WR</span>
+                                    <span className="hidden sm:inline">&nbsp;WR</span>
                                   </span>
                                 </div>
                               ) : (
-                                <div className="h-3.5 sm:h-4 w-full" />
+                                <div className="h-2.5 sm:h-4 w-full" />
                               )}
                             </div>
                           );

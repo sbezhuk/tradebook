@@ -471,7 +471,7 @@ export const AppContent: React.FC = () => {
           onSelectTab={setCurrentTab}
         />
 
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-8">
+        <main className="flex-1 max-w-6xl w-full mx-auto px-2.5 sm:px-6 lg:px-10 py-3 sm:py-8">
           {currentTab === 'overview' && (
             <OverviewView
               trades={trades}
