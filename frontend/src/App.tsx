@@ -120,6 +120,7 @@ export const AppContent: React.FC = () => {
   const [closeTradeMode, setCloseTradeMode] = useState(false);
   const [importMode, setImportMode] = useState<ImportMode>('trades');
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [depositModalMode, setDepositModalMode] = useState<'deposit' | 'withdraw'>('deposit');
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [isFundingModalOpen, setIsFundingModalOpen] = useState(false);
   const [fundingPayments, setFundingPayments] = useState<FundingPayment[]>([]);
@@ -303,6 +304,11 @@ export const AppContent: React.FC = () => {
     await Promise.all([loadDeposits(), loadAnalytics(), loadAccounts()]);
   };
 
+  const handleOpenDeposits = (mode: 'deposit' | 'withdraw' = 'deposit') => {
+    setDepositModalMode(mode);
+    setIsDepositModalOpen(true);
+  };
+
   const handleAddFunding = async (data: FundingFormData) => {
     await api.createFunding(data);
     await Promise.all([loadFunding(), loadAnalytics(), loadAccounts()]);
@@ -441,7 +447,7 @@ export const AppContent: React.FC = () => {
         totalDeposits={analytics?.total_deposits}
         overallFundingPnl={analytics?.overall_funding_pnl}
         overallDepositGrowthPct={analytics?.overall_deposit_growth_pct}
-        onOpenDeposits={() => setIsDepositModalOpen(true)}
+        onOpenDeposits={handleOpenDeposits}
         onOpenFunding={() => setIsFundingModalOpen(true)}
         accounts={accounts}
         activeAccountId={activeAccountId}
@@ -459,7 +465,7 @@ export const AppContent: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={handleGlobalSearch}
           onOpenNewTrade={handleOpenNew}
-          onOpenDeposits={() => setIsDepositModalOpen(true)}
+          onOpenDeposits={handleOpenDeposits}
           onOpenFunding={() => setIsFundingModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           trades={trades}
@@ -474,7 +480,7 @@ export const AppContent: React.FC = () => {
               analytics={analytics}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
-              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenDeposits={handleOpenDeposits}
               onOpenFunding={() => setIsFundingModalOpen(true)}
               onSelectTrade={handleOpenDetail}
               onGoToTrades={() => setCurrentTab('trades')}
@@ -515,7 +521,7 @@ export const AppContent: React.FC = () => {
               onSelectMonth={handleSelectMonth}
               onSelectTrade={handleOpenDetail}
               onNewTrade={handleOpenNew}
-              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenDeposits={handleOpenDeposits}
               onOpenFunding={() => setIsFundingModalOpen(true)}
               onExportCsv={() => exportTradesToCsv(trades)}
               accounts={accounts}
@@ -530,7 +536,7 @@ export const AppContent: React.FC = () => {
               loading={analyticsLoading}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
-              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenDeposits={handleOpenDeposits}
               onOpenFunding={() => setIsFundingModalOpen(true)}
               onGoToCalendar={() => setCurrentTab('calendar')}
               pageTitle="Аналітика"
@@ -546,7 +552,7 @@ export const AppContent: React.FC = () => {
               loading={analyticsLoading}
               selectedMonth={selectedMonth ?? ''}
               onSelectMonth={handleSelectMonth}
-              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenDeposits={handleOpenDeposits}
               onOpenFunding={() => setIsFundingModalOpen(true)}
               onGoToCalendar={() => setCurrentTab('calendar')}
               pageTitle="Сетапи та активність"
@@ -587,7 +593,7 @@ export const AppContent: React.FC = () => {
               }}
               onGoToTrades={() => setCurrentTab('trades')}
               onGoToInsights={() => setCurrentTab('insights')}
-              onOpenDeposits={() => setIsDepositModalOpen(true)}
+              onOpenDeposits={handleOpenDeposits}
               onOpenFunding={() => setIsFundingModalOpen(true)}
               onExportCsv={() => exportTradesToCsv(trades)}
             />
@@ -636,6 +642,7 @@ export const AppContent: React.FC = () => {
           overallGrowthPct={analytics?.overall_deposit_growth_pct ?? null}
           accounts={accounts}
           activeAccountId={activeAccountId}
+          initialMode={depositModalMode}
           onAddDeposit={handleAddDeposit}
           onDeleteDeposit={handleDeleteDeposit}
           onOpenImport={() => handleOpenImportPage('deposits')}

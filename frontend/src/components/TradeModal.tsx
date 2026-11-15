@@ -467,7 +467,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                         key={sym}
                         type="button"
                         onClick={() => setSymbol(sym)}
-                        className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-[#c49bff]/20 text-purple-200/65 hover:text-[#c49bff] border border-white/[0.06] transition-colors"
+                        className="inline-flex items-center justify-center h-5 text-[10px] px-2 rounded-full bg-white/[0.04] hover:bg-[#c49bff]/20 text-purple-200/65 hover:text-[#c49bff] border border-white/[0.06] transition-colors leading-none"
                       >
                         {sym}
                       </button>
@@ -694,7 +694,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                         key={qt}
                         type="button"
                         onClick={() => toggleQuickTag(qt)}
-                        className={`text-[10px] px-2.5 py-0.5 rounded-full border transition-all ${
+                        className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full border transition-all text-[10px] font-medium leading-none ${
                           active
                             ? 'bg-[#c49bff] text-[#110820] border-[#c49bff] font-semibold'
                             : 'bg-white/[0.03] text-purple-200/60 border-white/[0.07] hover:text-white'

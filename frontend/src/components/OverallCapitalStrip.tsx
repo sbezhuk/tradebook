@@ -10,7 +10,7 @@ interface OverallCapitalStripProps {
   totalDeposits: number;
   currentBalance: number;
   overallGrowthPct: number | null;
-  onOpenDeposits?: () => void;
+  onOpenDeposits?: (mode?: 'deposit' | 'withdraw') => void;
   onOpenFunding?: () => void;
 }
 
@@ -111,7 +111,7 @@ export const OverallCapitalStrip: React.FC<OverallCapitalStripProps> = ({
         {onOpenDeposits && (
           <button
             type="button"
-            onClick={onOpenDeposits}
+            onClick={() => onOpenDeposits()}
             className="px-3 py-1.5 rounded-xl bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/30 text-[#c49bff] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />

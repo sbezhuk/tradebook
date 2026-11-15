@@ -1555,7 +1555,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                               .map((tg) => (
                                 <span
                                   key={tg}
-                                  className="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.04] text-purple-200/70 border border-white/[0.05]"
+                                  className="inline-flex items-center justify-center h-5 text-[10px] leading-none px-2 rounded-md bg-white/[0.04] text-purple-200/70 border border-white/[0.05]"
                                 >
                                   #{tg.trim()}
                                 </span>

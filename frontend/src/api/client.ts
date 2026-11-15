@@ -192,9 +192,26 @@ class ApiClient {
   }
 
   async createDeposit(data: DepositFormData): Promise<Deposit> {
-    return this.request<Deposit>('/deposits', {
+    const isWithdraw = data.type === 'withdraw' || data.amount < 0;
+    const payload = {
+      ...data,
+      amount: Math.abs(data.amount),
+      type: isWithdraw ? 'withdraw' : 'deposit',
+    };
+    const endpoint = isWithdraw ? '/deposits/withdraw' : '/deposits';
+    return this.request<Deposit>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async withdrawDeposit(data: DepositFormData): Promise<Deposit> {
+    return this.request<Deposit>('/deposits/withdraw', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        amount: Math.abs(data.amount),
+      }),
     });
   }
 

@@ -26,6 +26,7 @@ interface DepositModalProps {
   overallGrowthPct: number | null;
   accounts?: TradingAccount[];
   activeAccountId?: number | null;
+  initialMode?: 'deposit' | 'withdraw';
   onAddDeposit: (data: DepositFormData) => Promise<void>;
   onDeleteDeposit: (id: number) => Promise<void>;
   onOpenImport?: () => void;
@@ -63,6 +64,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   overallGrowthPct,
   accounts = [],
   activeAccountId = null,
+  initialMode = 'deposit',
   onAddDeposit,
   onDeleteDeposit,
   onOpenImport,
@@ -70,6 +72,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const defaultTargetId =
     activeAccountId ?? accounts.find((a) => a.is_default)?.id ?? accounts[0]?.id ?? null;
 
+  const [mode, setMode] = useState<'deposit' | 'withdraw'>(initialMode);
   const [targetAccountId, setTargetAccountId] = useState<number | null>(defaultTargetId);
   const [amount, setAmount] = useState('');
   const [depositDate, setDepositDate] = useState(getLocalNowInput);
@@ -87,8 +90,17 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   }, [accounts]);
 
   const activeAccount = activeAccountId ? accountMap.get(activeAccountId) ?? null : null;
+  const targetAccount = targetAccountId ? accountMap.get(targetAccountId) ?? null : null;
+  const targetBalance = targetAccount ? targetAccount.current_balance : currentBalance;
 
-  const hasWithdrawals = useMemo(() => deposits.some((d) => d.amount < 0), [deposits]);
+  const totalDeposited = useMemo(
+    () => deposits.filter((d) => d.amount > 0).reduce((sum, d) => sum + d.amount, 0),
+    [deposits]
+  );
+  const totalWithdrawn = useMemo(
+    () => Math.abs(deposits.filter((d) => d.amount < 0).reduce((sum, d) => sum + d.amount, 0)),
+    [deposits]
+  );
 
   const filteredDeposits = useMemo(() => {
     if (historyFilter === 'in') return deposits.filter((d) => d.amount >= 0);
@@ -102,7 +114,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (!Number.isFinite(numAmount) || numAmount <= 0) {
-      setError('Введіть суму депозиту більше 0');
+      setError(
+        mode === 'withdraw'
+          ? 'Введіть суму виведення більше 0'
+          : 'Введіть суму депозиту більше 0'
+      );
       return;
     }
 
@@ -111,15 +127,19 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     try {
       await onAddDeposit({
         account_id: targetAccountId,
-        amount: numAmount,
+        amount: mode === 'withdraw' ? -numAmount : numAmount,
         deposit_date: depositDate ? new Date(depositDate).toISOString() : new Date().toISOString(),
-        note: note.trim() || null,
+        note: note.trim() || (mode === 'withdraw' ? 'Виведення коштів' : null),
+        type: mode,
       });
       setAmount('');
       setNote('');
       setDepositDate(getLocalNowInput());
     } catch (err: any) {
-      setError(err.message || 'Не вдалося додати депозит');
+      setError(
+        err.message ||
+          (mode === 'withdraw' ? 'Не вдалося вивести кошти' : 'Не вдалося додати депозит')
+      );
     } finally {
       setSaving(false);
     }
@@ -132,13 +152,20 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       await onDeleteDeposit(id);
       setConfirmDeleteId(null);
     } catch (err: any) {
-      setError(err.message || 'Не вдалося видалити депозит');
+      setError(err.message || 'Не вдалося видалити операцію');
     } finally {
       setDeletingId(null);
     }
   };
 
   const isGrowthPositive = (overallGrowthPct ?? 0) >= 0;
+  const numAmountVal = parseFloat(amount);
+  const isWithdrawExceeding =
+    mode === 'withdraw' &&
+    Number.isFinite(numAmountVal) &&
+    numAmountVal > 0 &&
+    targetBalance > 0 &&
+    numAmountVal > targetBalance;
 
   return (
     <div
@@ -160,7 +187,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 Управління депозитом{activeAccount ? ` • ${activeAccount.name}` : ''}
               </h2>
               <p className="text-xs text-purple-200/55 truncate">
-                Поповнення капіталу та контроль приросту за періодами
+                Поповнення, вивід коштів із портфеля та контроль капіталу
               </p>
             </div>
           </div>
@@ -195,10 +222,17 @@ export const DepositModal: React.FC<DepositModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="glass-card-subtle rounded-2xl px-4 py-3.5 flex items-center justify-between">
               <div>
-                <div className="text-[11px] text-purple-200/55">Загальний депозит</div>
+                <div className="text-[11px] text-purple-200/55">Чистий депозит</div>
                 <div className="text-xl font-bold font-mono text-white mt-0.5 tabular-nums">
                   ${totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
+                {totalWithdrawn > 0 && (
+                  <div className="text-[10px] font-mono text-purple-200/50 mt-1 flex items-center gap-1.5">
+                    <span className="text-[#c49bff]">+{totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    <span>•</span>
+                    <span className="text-rose-400">-{totalWithdrawn.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                  </div>
+                )}
               </div>
               <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-purple-200/60">
                 {deposits.length} зап.
@@ -250,18 +284,54 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
           {/* Split Body: Form Left + History Right */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            {/* Left: Add Deposit Form */}
+            {/* Left: Deposit / Withdraw Form */}
             <form
               onSubmit={handleSubmit}
               className="lg:col-span-5 glass-card-subtle rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
             >
               <div className="space-y-3.5">
-                <div className="text-xs font-semibold text-white">Нове поповнення</div>
+                {/* Mode Selector Tabs */}
+                <div className="p-1 rounded-xl bg-white/[0.04] border border-white/[0.07] grid grid-cols-2 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('deposit');
+                      setError(null);
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      mode === 'deposit'
+                        ? 'bg-[#c49bff]/20 text-[#f5edff] border border-[#c49bff]/40 shadow-sm'
+                        : 'text-purple-200/60 hover:text-white'
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-3.5 h-3.5 text-[#c49bff]" />
+                    <span>Поповнення</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('withdraw');
+                      setError(null);
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      mode === 'withdraw'
+                        ? 'bg-rose-500/20 text-rose-200 border border-rose-500/40 shadow-sm'
+                        : 'text-purple-200/60 hover:text-white'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Виведення</span>
+                  </button>
+                </div>
+
+                <div className="text-xs font-semibold text-white">
+                  {mode === 'deposit' ? 'Внесення коштів' : 'Виведення депозиту із портфеля'}
+                </div>
 
                 {accounts.length > 1 && (
                   <div>
                     <label className="block text-[11px] font-medium text-purple-200/65 mb-1.5">
-                      Торговий акаунт
+                      {mode === 'deposit' ? 'Торговий акаунт для поповнення' : 'Портфель / акаунт для виведення'}
                     </label>
                     <GlassSelect
                       variant="field"
@@ -269,16 +339,22 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                       onChange={(val) => setTargetAccountId(val ? Number(val) : null)}
                       options={accounts.map((acc) => ({
                         value: String(acc.id),
-                        label: `${acc.name} (${acc.platform})`,
+                        label: `${acc.name} (${acc.platform}) — баланс $${acc.current_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                       }))}
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-medium text-purple-200/65 mb-1.5">
-                    Сума депозиту ($) *
-                  </label>
+                  <div className="flex items-center justify-between text-[11px] mb-1.5">
+                    <label className="font-medium text-purple-200/65">
+                      {mode === 'deposit' ? 'Сума поповнення ($) *' : 'Сума виведення ($) *'}
+                    </label>
+                    <span className="text-purple-200/50 font-mono text-[11px]">
+                      Баланс: <span className="text-white font-semibold">${targetBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </span>
+                  </div>
+
                   <input
                     type="number"
                     step="0.01"
@@ -286,20 +362,84 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                     required
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Напр., 1000"
-                    className="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-purple-200/35"
+                    placeholder={mode === 'deposit' ? 'Напр., 1000' : 'Напр., 500'}
+                    className={`glass-input w-full rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-purple-200/35 ${
+                      isWithdrawExceeding ? 'border-amber-400/50 focus:border-amber-400' : ''
+                    }`}
                   />
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    {PRESET_AMOUNTS.map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setAmount(String(preset))}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-[#c49bff]/15 border border-white/[0.08] hover:border-[#c49bff]/35 text-purple-200 hover:text-white transition-colors cursor-pointer"
-                      >
-                        +${preset}
-                      </button>
-                    ))}
+
+                  {isWithdrawExceeding && (
+                    <p className="text-[11px] text-amber-300 mt-1">
+                      ⚠️ Сума виведення перевищує баланс вибраного портфелю (${targetBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </p>
+                  )}
+
+                  {/* Presets */}
+                  <div className="mt-2">
+                    {mode === 'deposit' ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {PRESET_AMOUNTS.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setAmount(String(preset))}
+                            className="px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-[#c49bff]/15 border border-white/[0.08] hover:border-[#c49bff]/35 text-purple-200 hover:text-white transition-colors cursor-pointer"
+                          >
+                            +${preset}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {/* Fixed amounts row: $100, $500, $1000 */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {[100, 500, 1000].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => setAmount(String(preset))}
+                              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-purple-200 hover:text-white transition-colors cursor-pointer"
+                            >
+                              ${preset}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Balance percentage row: 25%, 50%, 75%, Весь баланс */}
+                        {targetBalance > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setAmount(String(Math.max(1, Math.floor(targetBalance * 0.25))))}
+                              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-rose-500/20 border border-white/[0.08] hover:border-rose-500/40 text-purple-200 hover:text-white transition-colors cursor-pointer"
+                            >
+                              25%
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAmount(String(Math.max(1, Math.floor(targetBalance * 0.5))))}
+                              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-rose-500/20 border border-white/[0.08] hover:border-rose-500/40 text-purple-200 hover:text-white transition-colors cursor-pointer"
+                            >
+                              50%
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAmount(String(Math.max(1, Math.floor(targetBalance * 0.75))))}
+                              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-white/[0.04] hover:bg-rose-500/20 border border-white/[0.08] hover:border-rose-500/40 text-purple-200 hover:text-white transition-colors cursor-pointer"
+                            >
+                              75%
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAmount(String(targetBalance))}
+                              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 hover:text-white transition-colors cursor-pointer"
+                            >
+                              Весь баланс
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -309,7 +449,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                     className="block text-[11px] font-medium text-purple-200/65 mb-1.5 flex items-center gap-1.5 cursor-pointer"
                   >
                     <Calendar className="w-3 h-3 text-[#c49bff]" />
-                    <span>Дата поповнення</span>
+                    <span>{mode === 'deposit' ? 'Дата поповнення' : 'Дата виведення'}</span>
                   </label>
                   <GlassDateTimePicker
                     id="deposit-date-picker"
@@ -329,7 +469,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                     maxLength={255}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Напр., Поповнення з карти або OKX"
+                    placeholder={
+                      mode === 'deposit'
+                        ? 'Напр., Поповнення з карти або OKX'
+                        : 'Напр., Вивід на карту, біржу, витрати'
+                    }
                     className="glass-input w-full rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-purple-200/35"
                   />
                 </div>
@@ -338,14 +482,27 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               <button
                 type="submit"
                 disabled={saving}
-                className="accent-pill w-full py-2.5 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className={`w-full py-2.5 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer transition-all ${
+                  mode === 'withdraw'
+                    ? 'bg-rose-500/25 hover:bg-rose-500/35 border border-rose-500/40 text-rose-100 shadow-lg shadow-rose-950/30'
+                    : 'accent-pill'
+                }`}
               >
-                <Plus className="w-4 h-4" />
-                <span>{saving ? 'Збереження...' : 'Внести депозит'}</span>
+                {mode === 'withdraw' ? (
+                  <>
+                    <ArrowUpRight className="w-4 h-4 text-rose-300" />
+                    <span>{saving ? 'Збереження...' : 'Вивести кошти з портфеля'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>{saving ? 'Збереження...' : 'Внести депозит'}</span>
+                  </>
+                )}
               </button>
             </form>
 
-            {/* Right: Clean Deposit History Panel */}
+            {/* Right: Clean Deposit & Withdrawal History Panel */}
             <div className="lg:col-span-7 glass-card-subtle rounded-2xl flex flex-col overflow-hidden min-h-[300px] lg:h-[380px]">
               <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.015]">
                 <div className="flex items-center gap-2">
@@ -355,7 +512,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                   </span>
                 </div>
 
-                {hasWithdrawals && (
+                {deposits.length > 0 && (
                   <div className="inline-flex p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.07] text-[11px]">
                     {(
                       [
@@ -387,10 +544,16 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div className="text-xs font-medium text-purple-100/80">
-                    {deposits.length === 0 ? 'Ще немає операцій депозиту' : 'За вибраним фільтром записів немає'}
+                    {historyFilter === 'out'
+                      ? 'Ще немає операцій виведення'
+                      : historyFilter === 'in'
+                      ? 'Ще немає операцій поповнення'
+                      : 'Ще немає операцій депозиту'}
                   </div>
                   <p className="text-[11px] text-purple-200/45 mt-1 max-w-xs">
-                    Додайте перше поповнення ліворуч або імпортуйте CSV-історію з платформи.
+                    {mode === 'withdraw'
+                      ? 'Оформіть перше виведення коштів ліворуч або імпортуйте історію.'
+                      : 'Додайте перше поповнення ліворуч або імпортуйте CSV-історію.'}
                   </p>
                 </div>
               ) : (

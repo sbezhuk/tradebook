@@ -367,6 +367,86 @@ def test_deposits_and_growth_percentages():
     assert after_months["2026-11"]["deposit_growth_pct"] == 10.0
 
 
+def test_deposit_withdrawal_flow():
+    import uuid
+    suffix = uuid.uuid4().hex[:8]
+    reg = client.post("/api/v1/auth/register", json={
+        "username": f"wdraw_{suffix}",
+        "email": f"wdraw_{suffix}@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+
+    # 1. Deposit 1000
+    dep_res = client.post("/api/v1/deposits", headers=headers, json={
+        "amount": 1000.0,
+        "deposit_date": "2026-11-01T10:00:00",
+        "note": "Initial deposit",
+    })
+    assert dep_res.status_code == 201
+    assert dep_res.json()["amount"] == 1000.0
+    assert dep_res.json()["type"] == "deposit"
+
+    # 2. Withdraw 300 using dedicated /withdraw endpoint
+    w_res1 = client.post("/api/v1/deposits/withdraw", headers=headers, json={
+        "amount": 300.0,
+        "deposit_date": "2026-11-05T12:00:00",
+        "note": "Partial profit withdrawal",
+    })
+    assert w_res1.status_code == 201
+    w1_data = w_res1.json()
+    assert w1_data["amount"] == -300.0
+    assert w1_data["type"] == "withdraw"
+    assert w1_data["note"] == "Partial profit withdrawal"
+
+    # 3. Withdraw 100 using /deposits with type='withdraw'
+    w_res2 = client.post("/api/v1/deposits", headers=headers, json={
+        "amount": 100.0,
+        "deposit_date": "2026-11-10T15:00:00",
+        "type": "withdraw",
+    })
+    assert w_res2.status_code == 201
+    w2_data = w_res2.json()
+    assert w2_data["amount"] == -100.0
+    assert w2_data["type"] == "withdraw"
+    assert w2_data["note"] == "Виведення коштів"
+
+    # 4. Check list deposits response
+    list_res = client.get("/api/v1/deposits", headers=headers)
+    assert list_res.status_code == 200
+    list_data = list_res.json()
+    assert list_data["count"] == 3
+    assert list_data["total_amount"] == 600.0  # 1000 - 300 - 100
+    assert list_data["total_deposited"] == 1000.0
+    assert list_data["total_withdrawn"] == 400.0
+
+    # 5. Check account balance and analytics
+    acc_res = client.get("/api/v1/accounts", headers=headers)
+    assert acc_res.status_code == 200
+    acc_data = acc_res.json()
+    assert len(acc_data["items"]) >= 1
+    assert acc_data["items"][0]["total_deposits"] == 600.0
+    assert acc_data["items"][0]["current_balance"] == 600.0
+
+    # 6. Invalid withdrawal amount <= 0 should fail with 422
+    bad_w = client.post("/api/v1/deposits/withdraw", headers=headers, json={"amount": -50.0})
+    assert bad_w.status_code == 422
+
+    bad_w_zero = client.post("/api/v1/deposits/withdraw", headers=headers, json={"amount": 0})
+    assert bad_w_zero.status_code == 422
+
+    # 7. Delete one withdrawal and verify balance restored
+    del_res = client.delete(f"/api/v1/deposits/{w1_data['id']}", headers=headers)
+    assert del_res.status_code == 204
+
+    after_list = client.get("/api/v1/deposits", headers=headers).json()
+    assert after_list["count"] == 2
+    assert after_list["total_amount"] == 900.0
+    assert after_list["total_deposited"] == 1000.0
+    assert after_list["total_withdrawn"] == 100.0
+
+
 def test_trades_pagination():
     import uuid
     suffix = uuid.uuid4().hex[:8]

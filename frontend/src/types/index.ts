@@ -224,6 +224,7 @@ export interface Deposit {
   deposit_date: string;
   note?: string | null;
   created_at: string;
+  type?: 'deposit' | 'withdraw';
 }
 
 export interface DepositFormData {
@@ -231,12 +232,15 @@ export interface DepositFormData {
   amount: number;
   deposit_date: string;
   note?: string | null;
+  type?: 'deposit' | 'withdraw';
 }
 
 export interface DepositListResponse {
   items: Deposit[];
   total_amount: number;
   count: number;
+  total_deposited?: number;
+  total_withdrawn?: number;
 }
 
 export interface LinkedTradeBrief {

@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.deposit import Deposit
 from app.schemas.deposit import (
     DepositCreate,
+    WithdrawCreate,
     DepositResponse,
     DepositListResponse,
     HyperliquidDepositImportResponse,
@@ -42,9 +43,13 @@ def list_deposits(
 
     items = query.order_by(Deposit.deposit_date.desc(), Deposit.id.desc()).all()
     total_amount = round(sum(d.amount for d in items), 2)
+    total_deposited = round(sum(d.amount for d in items if d.amount > 0), 2)
+    total_withdrawn = round(abs(sum(d.amount for d in items if d.amount < 0)), 2)
     return DepositListResponse(
         items=items,
         total_amount=total_amount,
+        total_deposited=total_deposited,
+        total_withdrawn=total_withdrawn,
         count=len(items),
     )
 
@@ -57,17 +62,43 @@ def create_deposit(
 ):
     target_account = resolve_user_account(db, current_user.id, deposit_in.account_id)
     note_clean = deposit_in.note.strip() if deposit_in.note else None
+
+    raw_amount = float(deposit_in.amount)
+    is_withdrawal = (deposit_in.type or "").strip().lower() in ("withdraw", "withdrawal")
+    final_amount = -abs(raw_amount) if is_withdrawal else abs(raw_amount)
+
     deposit = Deposit(
         user_id=current_user.id,
         account_id=target_account.id,
-        amount=round(float(deposit_in.amount), 2),
+        amount=round(final_amount, 2),
         deposit_date=_normalize_utc_naive(deposit_in.deposit_date),
-        note=note_clean or None,
+        note=note_clean or ("Виведення коштів" if is_withdrawal else None),
     )
     db.add(deposit)
     db.commit()
     db.refresh(deposit)
     return deposit
+
+
+@router.post("/withdraw", response_model=DepositResponse, status_code=status.HTTP_201_CREATED)
+def withdraw_deposit(
+    withdraw_in: WithdrawCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    target_account = resolve_user_account(db, current_user.id, withdraw_in.account_id)
+    note_clean = withdraw_in.note.strip() if withdraw_in.note else None
+    withdrawal = Deposit(
+        user_id=current_user.id,
+        account_id=target_account.id,
+        amount=-round(abs(float(withdraw_in.amount)), 2),
+        deposit_date=_normalize_utc_naive(withdraw_in.deposit_date),
+        note=note_clean or "Виведення коштів",
+    )
+    db.add(withdrawal)
+    db.commit()
+    db.refresh(withdrawal)
+    return withdrawal
 
 
 @router.post("/import/hyperliquid", response_model=HyperliquidDepositImportResponse)

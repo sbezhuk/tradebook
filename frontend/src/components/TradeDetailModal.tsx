@@ -105,11 +105,11 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             <div>
               <div className="flex items-center space-x-2.5">
                 <h2 className="text-xl font-bold text-white tracking-tight">{trade.symbol}</h2>
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-purple-200/75 font-mono">
+                <span className="inline-flex items-center justify-center h-5 px-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-purple-200/75 text-[10px] font-mono leading-none">
                   {trade.market}
                 </span>
                 <span
-                  className={`text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full ${
+                  className={`inline-flex items-center justify-center h-5 px-2.5 rounded-full text-[10px] uppercase font-semibold leading-none ${
                     isOpenTrade
                       ? 'bg-amber-400/15 text-amber-300 border border-amber-400/25'
                       : 'bg-white/[0.05] text-purple-200/65 border border-white/[0.08]'
@@ -282,7 +282,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                 {trade.tags.split(',').map((t, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 rounded-full bg-[#c49bff]/15 border border-[#c49bff]/25 text-[#d8b4fe] text-xs font-semibold"
+                    className="inline-flex items-center justify-center h-6 px-3 rounded-full bg-[#c49bff]/15 border border-[#c49bff]/25 text-[#d8b4fe] text-xs font-semibold leading-none"
                   >
                     #{t.trim()}
                   </span>

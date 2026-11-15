@@ -288,7 +288,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
                       <td className="py-3.5 px-2.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                          className={`inline-flex items-center space-x-1 px-2.5 h-5 rounded-full text-[10px] font-semibold leading-none ${
                             isLong
                               ? 'bg-[#c49bff]/15 text-[#c49bff]'
                               : 'bg-rose-500/15 text-rose-400'
@@ -301,7 +301,7 @@ export const TradeList: React.FC<TradeListProps> = ({
 
                       <td className="py-3.5 px-2.5 whitespace-nowrap">
                         <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
+                          className={`inline-flex items-center justify-center h-5 px-2.5 rounded-full text-[10px] font-medium leading-none ${
                             isOpen
                               ? 'bg-amber-400/15 text-amber-300'
                               : 'bg-white/[0.05] text-purple-200/65'
@@ -349,7 +349,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                       <td className="py-3.5 px-2.5 text-center whitespace-nowrap">
                         {trade.r_multiple !== null && trade.r_multiple !== undefined ? (
                           <span
-                            className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold ${
+                            className={`inline-flex items-center justify-center h-5 px-2 rounded-full font-mono text-[10px] font-semibold leading-none ${
                               trade.r_multiple > 0
                                 ? 'bg-[#c49bff]/15 text-[#c49bff]'
                                 : trade.r_multiple < 0
@@ -370,7 +370,7 @@ export const TradeList: React.FC<TradeListProps> = ({
                             trade.tags.split(',').slice(0, 2).map((t, idx) => (
                               <span
                                 key={idx}
-                                className="px-2 py-0.5 rounded-full bg-white/[0.05] text-purple-200/75 text-[10px] truncate"
+                                className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-white/[0.05] text-purple-200/75 text-[10px] truncate leading-none"
                               >
                                 #{t.trim()}
                               </span>
