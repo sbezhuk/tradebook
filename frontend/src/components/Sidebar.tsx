@@ -134,12 +134,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return (
       <aside
-        className={`h-full glass-sidebar flex flex-col justify-between select-none transition-all duration-200 ease-out ${
-          isCollapsed ? 'w-[76px] px-3 py-5 items-center' : 'w-64 p-5'
-        }`}
+        className={`h-full max-h-[100dvh] overflow-y-auto overscroll-contain glass-sidebar flex flex-col justify-between select-none transition-all duration-200 ease-out ${
+          isCollapsed ? 'w-[76px] px-3 py-5 items-center' : 'w-72 sm:w-64 p-4 sm:p-5'
+        } ${isMobileDrawer ? 'pb-10' : ''}`}
       >
         {/* Top section */}
-        <div className={isCollapsed ? 'w-full flex flex-col items-center' : ''}>
+        <div className={`shrink-0 ${isCollapsed ? 'w-full flex flex-col items-center' : ''}`}>
           {/* Brand Header */}
           <div
             className={
@@ -450,7 +450,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-3 pt-4">
+          <div className="shrink-0 space-y-3 pt-4 mt-auto">
             {/* Mini Glass Metric Box — Always shows overall all-time PnL & Deposit Growth separately from monthly period */}
             <div className="glass-card-subtle rounded-2xl p-3.5 space-y-2.5">
               <div>
@@ -582,7 +582,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onCloseMobile}
           />
-          <div className="relative z-10 h-full">{renderSidebarContent(true)}</div>
+          <div className="relative z-10 h-full max-h-[100dvh] flex flex-col overflow-hidden">
+            {renderSidebarContent(true)}
+          </div>
         </div>
       )}
     </>

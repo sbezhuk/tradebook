@@ -313,10 +313,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-xl glass-popover rounded-3xl overflow-hidden my-4 sm:my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-hidden">
+      <div className="relative w-full max-w-xl glass-popover rounded-3xl overflow-hidden my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.07] bg-white/[0.02]">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div>
             <h2 className="text-base font-bold text-white tracking-tight">
               {isEditing ? `Редагувати ${editTrade.symbol}` : 'Нова угода'}
@@ -334,7 +334,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         </div>
 
         {/* Clickable Stepper Bar */}
-        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-2 flex items-center gap-2">
+        <div className="shrink-0 px-4 sm:px-6 pt-3 sm:pt-4 pb-2 flex items-center gap-2">
           {stepsInfo.map((s) => {
             const isActive = step === s.num;
             const isDone = step > s.num;
@@ -369,12 +369,13 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         </div>
 
         {error && (
-          <div className="mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
+          <div className="shrink-0 mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSaveSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <form onSubmit={handleSaveSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* ==================== STEP 1: CORE POSITION & PRICES ==================== */}
           {step === 1 && (
             <div className="space-y-4">
@@ -804,9 +805,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               </div>
             </div>
           )}
+        </div>
 
-          {/* ==================== WIZARD FOOTER ==================== */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3 pt-3.5 sm:pt-4 border-t border-white/[0.07]">
+        {/* ==================== WIZARD FOOTER ==================== */}
+        <div className="shrink-0 flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/[0.07] bg-[#0c0717]/95 backdrop-blur-md">
             <div>
               {step === 1 ? (
                 <button
