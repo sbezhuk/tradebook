@@ -697,19 +697,20 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
           </div>
 
           {/* BOTTOM FULL-WIDTH CARD — Daily Activity Heatmap (Matches "Spending by day") */}
-          <div className="glass-panel rounded-2xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+          <div className="glass-panel rounded-2xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-semibold text-white">Торгівля по днях</h2>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <h2 className="text-sm font-semibold text-white whitespace-nowrap">Торгівля по днях</h2>
                   {onGoToCalendar && (
                     <button
                       type="button"
                       onClick={onGoToCalendar}
-                      className="text-xs text-[#c49bff] hover:text-[#d8b4fe] flex items-center gap-1 transition-colors cursor-pointer"
+                      className="text-xs text-[#c49bff] hover:text-[#d8b4fe] inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                     >
-                      <CalendarDays className="w-3.5 h-3.5" />
-                      <span>Відкрити повний календар PnL →</span>
+                      <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Відкрити повний календар PnL →</span>
+                      <span className="sm:hidden">Повний календар PnL →</span>
                     </button>
                   )}
                 </div>
@@ -740,68 +741,70 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
               </div>
             </div>
 
-            <div className="w-full">
-              {/* Column Date Headers */}
-              <div className="flex items-center mb-2 gap-1.5">
-                <div className="w-7 shrink-0" />
-                <div className="flex-1 grid grid-cols-12 gap-1.5">
-                  {calendarWeeks.map((week, i) => (
-                    <div
-                      key={i}
-                      className="text-[10px] text-purple-200/40 font-medium truncate"
-                    >
-                      {i % 2 === 0 ? week.label : ''}
+            <div className="w-full overflow-x-auto pb-1">
+              <div className="min-w-[420px] sm:min-w-0">
+                {/* Column Date Headers */}
+                <div className="flex items-center mb-2 gap-1.5">
+                  <div className="w-7 shrink-0" />
+                  <div className="flex-1 grid grid-cols-12 gap-1.5">
+                    {calendarWeeks.map((week, i) => (
+                      <div
+                        key={i}
+                        className="text-[10px] text-purple-200/40 font-medium truncate"
+                      >
+                        {i % 2 === 0 ? week.label : ''}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 7 Rows (Mon - Sun) */}
+                <div className="space-y-1.5">
+                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((dayLabel, dIdx) => (
+                    <div key={dayLabel} className="flex items-center gap-1.5">
+                      <div className="w-7 text-[10px] text-purple-200/40 font-medium shrink-0">
+                        {dIdx % 2 === 0 ? dayLabel : ''}
+                      </div>
+                      <div className="flex-1 grid grid-cols-12 gap-1.5">
+                        {calendarWeeks.map((week, wIdx) => {
+                          const cell = week.days[dIdx];
+                          const act = cell.data;
+                          let cellStyle = 'bg-white/[0.035] border-white/[0.03]';
+                          if (cell.isFuture) {
+                            cellStyle = 'bg-transparent border-transparent opacity-20';
+                          } else if (act) {
+                            const maxWin = Math.max(
+                              ...analytics.daily_activity.map((d) => d.total_pnl),
+                              0.01
+                            );
+                            if (act.total_pnl > maxWin * 0.4) {
+                              cellStyle = 'bg-[#c49bff] border-[#d8b4fe]/60 shadow-[0_0_10px_rgba(196,155,255,0.45)]';
+                            } else if (act.total_pnl > 0) {
+                              cellStyle = 'bg-[#8b5cf6]/80 border-[#a78bfa]/40';
+                            } else if (act.total_pnl < 0) {
+                              cellStyle = 'bg-rose-500/50 border-rose-400/35';
+                            } else {
+                              cellStyle = 'bg-purple-400/30 border-purple-300/20';
+                            }
+                          }
+
+                          return (
+                            <div
+                              key={`${wIdx}-${dIdx}`}
+                              onMouseEnter={() =>
+                                setHoveredDay(
+                                  act || { date: cell.dateStr, trades_count: 0, total_pnl: 0 }
+                                )
+                              }
+                              onMouseLeave={() => setHoveredDay(null)}
+                              className={`h-5 rounded-[5px] border transition-transform hover:scale-110 cursor-default ${cellStyle}`}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* 7 Rows (Mon - Sun) */}
-              <div className="space-y-1.5">
-                {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((dayLabel, dIdx) => (
-                  <div key={dayLabel} className="flex items-center gap-1.5">
-                    <div className="w-7 text-[10px] text-purple-200/40 font-medium shrink-0">
-                      {dIdx % 2 === 0 ? dayLabel : ''}
-                    </div>
-                    <div className="flex-1 grid grid-cols-12 gap-1.5">
-                      {calendarWeeks.map((week, wIdx) => {
-                        const cell = week.days[dIdx];
-                        const act = cell.data;
-                        let cellStyle = 'bg-white/[0.035] border-white/[0.03]';
-                        if (cell.isFuture) {
-                          cellStyle = 'bg-transparent border-transparent opacity-20';
-                        } else if (act) {
-                          const maxWin = Math.max(
-                            ...analytics.daily_activity.map((d) => d.total_pnl),
-                            0.01
-                          );
-                          if (act.total_pnl > maxWin * 0.4) {
-                            cellStyle = 'bg-[#c49bff] border-[#d8b4fe]/60 shadow-[0_0_10px_rgba(196,155,255,0.45)]';
-                          } else if (act.total_pnl > 0) {
-                            cellStyle = 'bg-[#8b5cf6]/80 border-[#a78bfa]/40';
-                          } else if (act.total_pnl < 0) {
-                            cellStyle = 'bg-rose-500/50 border-rose-400/35';
-                          } else {
-                            cellStyle = 'bg-purple-400/30 border-purple-300/20';
-                          }
-                        }
-
-                        return (
-                          <div
-                            key={`${wIdx}-${dIdx}`}
-                            onMouseEnter={() =>
-                              setHoveredDay(
-                                act || { date: cell.dateStr, trades_count: 0, total_pnl: 0 }
-                              )
-                            }
-                            onMouseLeave={() => setHoveredDay(null)}
-                            className={`h-5 rounded-[5px] border transition-transform hover:scale-110 cursor-default ${cellStyle}`}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
