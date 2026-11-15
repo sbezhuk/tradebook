@@ -88,28 +88,28 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-3xl glass-popover rounded-3xl overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-hidden">
+      <div className="relative w-full max-w-3xl glass-popover rounded-3xl overflow-hidden my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
-          <div className="flex items-center space-x-3.5">
+        <div className="shrink-0 flex items-center justify-between gap-2 sm:gap-4 px-3.5 sm:px-6 py-3 sm:py-4 border-b border-white/[0.07] bg-white/[0.02]">
+          <div className="min-w-0 flex items-center gap-2.5 sm:gap-3.5">
             <span
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+              className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border ${
                 isLong
                   ? 'bg-[#c49bff]/15 text-[#c49bff] border-[#c49bff]/25'
                   : 'bg-rose-500/15 text-rose-400 border-rose-500/25'
               }`}
             >
-              {isLong ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+              {isLong ? <ArrowUpRight className="w-4.5 h-4.5 sm:w-5 sm:h-5" /> : <ArrowDownRight className="w-4.5 h-4.5 sm:w-5 sm:h-5" />}
             </span>
-            <div>
-              <div className="flex items-center space-x-2.5">
-                <h2 className="text-xl font-bold text-white tracking-tight">{trade.symbol}</h2>
-                <span className="inline-flex items-center justify-center h-5 px-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-purple-200/75 text-[10px] font-mono leading-none">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">{trade.symbol}</h2>
+                <span className="inline-flex items-center justify-center h-5 px-2 sm:px-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-purple-200/75 text-[10px] font-mono leading-none">
                   {trade.market}
                 </span>
                 <span
-                  className={`inline-flex items-center justify-center h-5 px-2.5 rounded-full text-[10px] uppercase font-semibold leading-none ${
+                  className={`inline-flex items-center justify-center h-5 px-2 sm:px-2.5 rounded-full text-[10px] uppercase font-semibold leading-none ${
                     isOpenTrade
                       ? 'bg-amber-400/15 text-amber-300 border border-amber-400/25'
                       : 'bg-white/[0.05] text-purple-200/65 border border-white/[0.08]'
@@ -118,7 +118,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                   {trade.status}
                 </span>
               </div>
-              <p className="text-xs text-purple-200/50 mt-0.5 font-medium flex items-center gap-1.5 flex-wrap">
+              <p className="text-[11px] sm:text-xs text-purple-200/50 mt-0.5 font-medium flex items-center gap-1.5 flex-wrap">
                 <span>
                   {trade.direction} позиція • {getDuration()}
                 </span>
@@ -138,21 +138,22 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-1.5">
+          <div className="shrink-0 flex items-center gap-0.5 sm:gap-1.5">
             {isOpenTrade && (
               <button
                 type="button"
                 onClick={() => onEdit(trade, true)}
-                className="accent-pill inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer mr-1"
+                className="accent-pill inline-flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold cursor-pointer mr-0.5 sm:mr-1 shrink-0"
                 title="Вказати ціну виходу та закрити угоду"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Закрити угоду</span>
+                <span className="hidden sm:inline">Закрити угоду</span>
+                <span className="sm:hidden">Закрити</span>
               </button>
             )}
             <button
               onClick={() => onEdit(trade)}
-              className="p-2 text-purple-200/55 hover:text-[#c49bff] hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-200/55 hover:text-[#c49bff] hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
               title="Редагувати"
             >
               <Edit3 className="w-4 h-4" />
@@ -164,21 +165,21 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                   onClose();
                 }
               }}
-              className="p-2 text-purple-200/55 hover:text-rose-400 hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-200/55 hover:text-rose-400 hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
               title="Видалити"
             >
               <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-purple-200/55 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-200/55 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5">
           {/* Main Financial Result Banner */}
           <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex flex-wrap items-center justify-between gap-4">
             <div>

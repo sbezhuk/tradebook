@@ -367,35 +367,35 @@ export const FundingModal: React.FC<FundingModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-hidden"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-5xl glass-popover rounded-3xl overflow-hidden my-auto max-h-[92vh] flex flex-col shadow-2xl"
+        className="relative w-full max-w-5xl glass-popover rounded-3xl overflow-hidden my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[92vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-white/[0.07] bg-white/[0.02] shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#c49bff]/15 border border-[#c49bff]/30 flex items-center justify-center text-[#c49bff] shrink-0">
+        <div className="flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.07] bg-white/[0.02] shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#c49bff]/15 border border-[#c49bff]/30 flex items-center justify-center text-[#c49bff] shrink-0">
               <Percent className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-white tracking-tight truncate flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate flex items-center gap-2">
                 <span>Управління фандінгом</span>
                 {activeAccount && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-purple-200 font-normal">
+                  <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-purple-200 font-normal truncate">
                     {activeAccount.name}
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-purple-200/55 truncate">
+              <p className="text-[11px] sm:text-xs text-purple-200/55 truncate">
                 Список усіх записів, ручне додавання, редагування, видалення та привʼязка до угод
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {onOpenImport && (
               <button
                 type="button"
@@ -403,17 +403,18 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                   onClose();
                   onOpenImport();
                 }}
-                className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
+                className="h-8 inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 rounded-full bg-[#c49bff]/15 hover:bg-[#c49bff]/25 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
                 <UploadCloud className="w-3.5 h-3.5 text-[#c49bff]" />
-                <span>Імпорт CSV</span>
+                <span className="hidden sm:inline">Імпорт CSV</span>
+                <span className="sm:hidden">Імпорт</span>
               </button>
             )}
             <button
               type="button"
               onClick={onClose}
               aria-label="Закрити"
-              className="p-2 text-purple-200/50 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-200/50 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -421,7 +422,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto overscroll-contain flex-1">
           {/* Summary Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="glass-card-subtle rounded-2xl px-4 py-3 flex items-center justify-between">
@@ -1046,7 +1047,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                                 {fp.coin}
                               </span>
                               <span
-                                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                                className={`inline-flex items-center justify-center px-1.5 h-4.5 rounded-md text-[10px] font-bold font-mono leading-none ${
                                   fp.direction === 'LONG'
                                     ? 'bg-[#c49bff]/15 text-[#e2ccff]'
                                     : 'bg-rose-500/15 text-rose-300'
@@ -1303,7 +1304,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                           <span className="font-mono font-bold text-white text-xs">#{tr.id}</span>
                           <span className="font-bold text-xs text-purple-100">{tr.symbol}</span>
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                            className={`inline-flex items-center justify-center px-1.5 h-4 rounded text-[9px] font-bold font-mono leading-none ${
                               tr.direction === 'LONG'
                                 ? 'bg-[#c49bff]/20 text-[#e2ccff]'
                                 : 'bg-rose-500/20 text-rose-300'

@@ -11,6 +11,7 @@ interface GlassSelectProps {
   onChange: (value: string) => void;
   options: GlassSelectOption[];
   variant?: 'pill' | 'field';
+  size?: 'sm' | 'md';
   highlight?: boolean;
   className?: string;
   menuAlign?: 'left' | 'right';
@@ -22,6 +23,7 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
   onChange,
   options,
   variant = 'pill',
+  size = 'md',
   highlight = false,
   className = '',
   menuAlign = 'left',
@@ -53,9 +55,13 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
 
   const triggerBase =
     variant === 'pill'
-      ? `glass-input h-9 px-3.5 rounded-full inline-flex items-center justify-between gap-2 text-xs font-medium whitespace-nowrap cursor-pointer select-none ${
-          highlight ? 'border-[#c49bff]/45 text-[#e2ccff]' : 'text-purple-100'
-        }`
+      ? size === 'sm'
+        ? `glass-input h-7.5 px-2.5 rounded-lg inline-flex items-center justify-between gap-1.5 text-[11px] font-medium whitespace-nowrap cursor-pointer select-none ${
+            highlight ? 'border-[#c49bff]/45 text-[#e2ccff]' : 'text-purple-100'
+          }`
+        : `glass-input h-8 px-3 rounded-xl inline-flex items-center justify-between gap-2 text-xs font-medium whitespace-nowrap cursor-pointer select-none ${
+            highlight ? 'border-[#c49bff]/45 text-[#e2ccff]' : 'text-purple-100'
+          }`
       : `glass-input w-full px-3 py-2 rounded-xl flex items-center justify-between gap-2 text-xs font-medium cursor-pointer select-none text-white`;
 
   return (
@@ -67,7 +73,7 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
       >
         <span className="truncate">{selectedOption?.label ?? ''}</span>
         <ChevronDown
-          className={`w-3.5 h-3.5 shrink-0 opacity-65 transition-transform duration-200 ${
+          className={`${size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} shrink-0 opacity-65 transition-transform duration-200 ${
             open ? 'rotate-180 opacity-100 text-[#c49bff]' : ''
           }`}
         />

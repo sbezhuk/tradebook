@@ -106,6 +106,7 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
             value={String(pageSize)}
             onChange={(val) => onPageSizeChange(Number(val))}
             menuDirection="up"
+            size={compact ? 'sm' : 'md'}
             options={pageSizeOptions.map((size) => ({
               value: String(size),
               label: `${size} / стор.`,

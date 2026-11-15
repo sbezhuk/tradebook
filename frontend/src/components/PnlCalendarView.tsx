@@ -1520,9 +1520,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                       className="p-3.5 sm:p-4 hover:bg-white/[0.04] transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 group"
                     >
                       {/* Left: Direction, Symbol, Time, Status */}
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
                         <span
-                          className={`text-xs font-bold font-mono px-2 py-0.5 rounded-lg border shrink-0 ${
+                          className={`inline-flex items-center justify-center h-5 px-2 rounded-md text-[11px] font-bold font-mono leading-none border shrink-0 ${
                             isLong
                               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                               : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
