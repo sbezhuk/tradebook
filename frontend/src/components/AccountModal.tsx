@@ -486,11 +486,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
                       {/* Inline clear trades confirmation */}
                       {confirmClearId === acc.id && (
-                        <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm">
+                        <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/35 flex flex-col gap-2.5 shadow-sm">
                           <div className="text-[11px] font-semibold text-amber-900 dark:text-amber-200 leading-relaxed">
                             Видалити всі угоди ({acc.trades_count}) акаунту «{acc.name}»? Цю дію не можна скасувати.
                           </div>
-                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
                             <button
                               type="button"
                               disabled={clearingId === acc.id}
@@ -513,20 +513,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
                       {/* Inline delete confirmation */}
                       {isConfirming && (
-                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm">
+                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/35 flex flex-col gap-2.5 shadow-sm">
                           <div className="text-[11px] font-semibold text-rose-900 dark:text-rose-200 leading-relaxed">
                             {hasData
                               ? 'Що зробити з угодами та депозитами цього акаунту?'
                               : 'Видалити цей порожній акаунт?'}
                           </div>
-                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
                             {hasData ? (
                               <>
                                 <button
                                   type="button"
                                   disabled={deletingId === acc.id}
                                   onClick={() => handleDelete(acc.id, false)}
-                                  className="px-2.5 py-1 rounded-lg bg-white/[0.1] hover:bg-white/[0.18] text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50"
+                                  className="px-2.5 py-1 rounded-lg bg-white/[0.1] hover:bg-white/[0.18] text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-colors"
                                 >
                                   Перенести в основний
                                 </button>
@@ -534,7 +534,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                                   type="button"
                                   disabled={deletingId === acc.id}
                                   onClick={() => handleDelete(acc.id, true)}
-                                  className="px-2.5 py-1 rounded-lg bg-rose-500/85 hover:bg-rose-500 text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50"
+                                  className="px-2.5 py-1 rounded-lg bg-rose-500/85 hover:bg-rose-500 text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-colors"
                                 >
                                   Видалити з даними
                                 </button>
@@ -544,7 +544,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                                 type="button"
                                 disabled={deletingId === acc.id}
                                 onClick={() => handleDelete(acc.id, false)}
-                                className="px-2.5 py-1 rounded-lg bg-rose-500/85 hover:bg-rose-500 text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50"
+                                className="px-2.5 py-1 rounded-lg bg-rose-500/85 hover:bg-rose-500 text-white text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-colors"
                               >
                                 Підтвердити
                               </button>
@@ -552,7 +552,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(null)}
-                              className="px-2 py-1 rounded-lg bg-white/[0.05] text-purple-200/75 hover:text-white text-[11px] cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-black/[0.06] hover:bg-black/[0.1] dark:bg-white/[0.08] dark:hover:bg-white/[0.14] text-purple-950 dark:text-purple-100 text-[11px] font-medium cursor-pointer transition-colors"
                             >
                               Скасувати
                             </button>
