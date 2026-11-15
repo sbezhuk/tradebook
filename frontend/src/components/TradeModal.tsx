@@ -313,10 +313,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-xl glass-popover rounded-3xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#07040e]/80 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-xl glass-popover rounded-3xl overflow-hidden my-4 sm:my-6">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07] bg-white/[0.02]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.07] bg-white/[0.02]">
           <div>
             <h2 className="text-base font-bold text-white tracking-tight">
               {isEditing ? `Редагувати ${editTrade.symbol}` : 'Нова угода'}
@@ -334,7 +334,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         </div>
 
         {/* Clickable Stepper Bar */}
-        <div className="px-6 pt-4 pb-2 flex items-center gap-2">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-2 flex items-center gap-2">
           {stepsInfo.map((s) => {
             const isActive = step === s.num;
             const isDone = step > s.num;
@@ -374,7 +374,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSaveSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSaveSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* ==================== STEP 1: CORE POSITION & PRICES ==================== */}
           {step === 1 && (
             <div className="space-y-4">
@@ -806,13 +806,13 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           )}
 
           {/* ==================== WIZARD FOOTER ==================== */}
-          <div className="flex items-center justify-between pt-4 border-t border-white/[0.07]">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 pt-3.5 sm:pt-4 border-t border-white/[0.07]">
             <div>
               {step === 1 ? (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/75 text-xs font-medium transition-colors"
+                  className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/75 hover:text-white text-xs font-medium transition-colors whitespace-nowrap flex items-center justify-center cursor-pointer"
                 >
                   Скасувати
                 </button>
@@ -823,7 +823,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                     setError(null);
                     setStep((prev) => (prev === 3 ? 2 : 1));
                   }}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/80 text-xs font-medium transition-colors"
+                  className="h-9 sm:h-10 inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-purple-200/80 hover:text-white text-xs font-medium transition-colors whitespace-nowrap cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Назад</span>
@@ -831,21 +831,29 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               )}
             </div>
 
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               {step < 3 && (
                 <>
                   <button
                     type="button"
                     disabled={saving}
                     onClick={() => handleSaveSubmit()}
-                    className="px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-100 text-xs font-medium transition-colors disabled:opacity-50"
+                    className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-100 hover:text-white text-xs font-medium transition-colors disabled:opacity-50 whitespace-nowrap flex items-center justify-center cursor-pointer"
+                    title="Зберегти угоду без заповнення наступних кроків"
                   >
-                    {saving ? 'Збереження...' : 'Зберегти зараз'}
+                    {saving ? (
+                      'Збереження...'
+                    ) : (
+                      <>
+                        <span>Зберегти</span>
+                        <span className="hidden sm:inline">&nbsp;зараз</span>
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="accent-pill inline-flex items-center space-x-1.5 px-5 py-2 rounded-full text-xs font-bold"
+                    className="accent-pill h-9 sm:h-10 inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer"
                   >
                     <span>Далі</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -857,7 +865,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="accent-pill px-5 py-2 rounded-full text-xs font-bold disabled:opacity-50"
+                  className="accent-pill h-9 sm:h-10 px-5 sm:px-6 rounded-full text-xs font-bold disabled:opacity-50 whitespace-nowrap flex items-center justify-center cursor-pointer"
                 >
                   {saving ? 'Збереження...' : isEditing ? 'Оновити угоду' : 'Зберегти угоду'}
                 </button>
