@@ -468,8 +468,6 @@ export const AppContent: React.FC = () => {
           onOpenDeposits={handleOpenDeposits}
           onOpenFunding={() => setIsFundingModalOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          trades={trades}
-          onSelectTrade={handleOpenDetail}
           onSelectTab={setCurrentTab}
         />
 

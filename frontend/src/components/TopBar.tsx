@@ -2,18 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import type { ThemeMode } from '../context/ThemeContext';
-import type { Trade } from '../types';
 import type { NavTab } from './Sidebar';
 import {
   Search,
   Plus,
-  Bell,
   Menu,
   Code2,
   ExternalLink,
   LogOut,
-  ShieldAlert,
-  Clock,
   Check,
   Copy,
   Sun,
@@ -31,8 +27,6 @@ interface TopBarProps {
   onOpenDeposits: () => void;
   onOpenFunding?: () => void;
   onOpenMobileMenu: () => void;
-  trades: Trade[];
-  onSelectTrade: (trade: Trade) => void;
   onSelectTab: (tab: NavTab) => void;
 }
 
@@ -43,8 +37,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenDeposits,
   onOpenFunding,
   onOpenMobileMenu,
-  trades,
-  onSelectTrade,
   onSelectTab,
 }) => {
   const { user, logout } = useAuth();
@@ -52,12 +44,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const [openMenu, setOpenMenu] = useState<'api' | 'notifications' | 'theme' | 'profile' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'api' | 'theme' | 'profile' | null>(null);
   const [copiedApi, setCopiedApi] = useState(false);
-
-  const openTrades = trades.filter((t) => t.status === 'OPEN');
-  const ruleAlerts = trades.filter((t) => t.status === 'CLOSED' && !t.followed_rules).slice(0, 3);
-  const hasNotifications = openTrades.length > 0 || ruleAlerts.length > 0;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -215,24 +203,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           )}
         </button>
 
-        {/* 4. Notifications & Open Trades (Bell) */}
-        <button
-          type="button"
-          onClick={() => setOpenMenu((prev) => (prev === 'notifications' ? null : 'notifications'))}
-          title="Сповіщення та відкриті позиції"
-          className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
-            openMenu === 'notifications'
-              ? 'bg-[#c49bff]/20 border-[#c49bff]/50 text-[#c49bff]'
-              : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/[0.08] text-purple-200/70 hover:text-white'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          {hasNotifications && (
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#c49bff] shadow-[0_0_8px_#c49bff]" />
-          )}
-        </button>
-
-        {/* 5. User Avatar Menu */}
+        {/* 4. User Avatar Menu */}
         <button
           type="button"
           onClick={() => setOpenMenu((prev) => (prev === 'profile' ? null : 'profile'))}
@@ -299,70 +270,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         )}
 
-        {/* ==================== POPOVER: NOTIFICATIONS ==================== */}
-        {openMenu === 'notifications' && (
-          <div className="absolute right-0 top-13 w-72 sm:w-80 max-w-[calc(100vw-2rem)] glass-popover rounded-2xl p-3 z-50">
-            <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/[0.06]">
-              <span className="text-xs font-semibold text-white">Сповіщення та статус</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c49bff]/15 text-[#c49bff]">
-                {openTrades.length} відкритих
-              </span>
-            </div>
-
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {openTrades.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => {
-                    setOpenMenu(null);
-                    onSelectTrade(t);
-                  }}
-                  className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] cursor-pointer transition-colors flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold text-white">
-                        {t.symbol} ({t.direction})
-                      </div>
-                      <div className="text-[10px] text-purple-200/50">
-                        Відкрита позиція • вхід {t.entry_price}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-amber-300 font-medium">Активна</span>
-                </div>
-              ))}
-
-              {ruleAlerts.map((t) => (
-                <div
-                  key={`alert-${t.id}`}
-                  onClick={() => {
-                    setOpenMenu(null);
-                    onSelectTrade(t);
-                  }}
-                  className="p-2.5 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/15 cursor-pointer transition-colors flex items-center space-x-2.5"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                  <div>
-                    <div className="text-xs font-medium text-rose-200">
-                      Порушення правил: {t.symbol}
-                    </div>
-                    <div className="text-[10px] text-rose-300/60">
-                      PnL: ${t.pnl.toFixed(2)} • Перегляньте нотатки
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {!hasNotifications && (
-                <div className="py-6 text-center text-xs text-purple-200/45">
-                  Немає відкритих позицій або попереджень
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* ==================== POPOVER: THEME ==================== */}
         {openMenu === 'theme' && (
