@@ -21,7 +21,6 @@ interface InsightsBentoProps {
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   onOpenDeposits?: () => void;
-  onOpenFunding?: () => void;
   pageTitle?: string;
   pageSubtitle?: string;
   defaultSubTab?: 'bento' | 'months' | 'equity' | 'setups';
@@ -129,7 +128,6 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
   selectedMonth = '',
   onSelectMonth,
   onOpenDeposits,
-  onOpenFunding,
   pageTitle = 'Аналітика',
   pageSubtitle = 'Скільки ви заробляєте, утримуєте та де ваша перевага на ринку.',
   defaultSubTab = 'bento',
@@ -275,15 +273,12 @@ export const InsightsBento: React.FC<InsightsBentoProps> = ({
 
           <OverallCapitalStrip
             overallPnl={overall_total_pnl}
-            overallTradePnl={analytics.overall_trade_pnl}
-            overallFundingPnl={analytics.overall_funding_pnl}
             overallTrades={overall_total_trades}
             monthsCount={available_months.length}
             totalDeposits={total_deposits}
             currentBalance={current_balance}
             overallGrowthPct={overall_deposit_growth_pct}
             onOpenDeposits={onOpenDeposits}
-            onOpenFunding={onOpenFunding}
           />
         </div>
 

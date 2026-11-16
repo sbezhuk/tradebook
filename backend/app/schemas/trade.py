@@ -75,11 +75,5 @@ class HyperliquidImportResponse(BaseModel):
     trades: List[TradeResponse]
 
 
-class HyperliquidFundingImportResponse(BaseModel):
-    imported_count: int
-    skipped_duplicates: int
-    total_funding: float
-    account_total_funding: float
-
 class DeleteAllTradesResponse(BaseModel):
     deleted_count: int

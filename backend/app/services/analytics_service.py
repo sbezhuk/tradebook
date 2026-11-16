@@ -3,7 +3,6 @@ from datetime import datetime
 from collections import defaultdict
 from app.models.trade import Trade
 from app.models.deposit import Deposit
-from app.models.funding_payment import FundingPayment
 from app.schemas.analytics import (
     AnalyticsResponse,
     SummaryStats,
@@ -153,19 +152,17 @@ def compute_analytics(
     trades: List[Trade],
     month: Optional[str] = None,
     deposits: Optional[List[Deposit]] = None,
-    funding_payments: Optional[List[FundingPayment]] = None,
 ) -> AnalyticsResponse:
     deposits_list = deposits or []
-    funding_list = funding_payments or []
     monthly_deposits = _group_deposits_by_month(deposits_list)
     total_deposits = round(sum(float(d.amount) for d in deposits_list), 2)
 
     overall_closed = [t for t in trades if t.status == "CLOSED"]
     raw_trade_pnl = sum(float(t.pnl or 0.0) for t in overall_closed)
-    raw_funding_pnl = sum(float(fp.payment or 0.0) for fp in funding_list)
+    raw_funding_pnl = sum(float(t.funding or 0.0) for t in overall_closed)
     overall_trade_pnl = round(raw_trade_pnl, 2)
     overall_funding_pnl = round(raw_funding_pnl, 2)
-    overall_total_pnl = round(raw_trade_pnl + raw_funding_pnl, 2)
+    overall_total_pnl = overall_trade_pnl
     overall_total_trades = len(overall_closed)
     current_balance = round(total_deposits + overall_total_pnl, 2)
     overall_deposit_growth_pct = (
@@ -377,7 +374,7 @@ def compute_analytics(
         pf = _compute_profit_factor(gp, gl)
         best = round(max((tr.pnl for tr in tr_list), default=0.0), 2)
         worst = round(min((tr.pnl for tr in tr_list), default=0.0), 2)
-        fees = round(sum(((tr.fees or 0.0) + (tr.funding or 0.0)) for tr in tr_list), 2)
+        fees = round(sum(float(tr.fees or 0.0) for tr in tr_list), 2)
         vol = round(sum(((tr.quantity or 0.0) * (tr.entry_price or 0.0)) for tr in tr_list), 2)
 
         daily_activity.append(

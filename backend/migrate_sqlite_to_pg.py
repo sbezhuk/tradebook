@@ -15,7 +15,6 @@ TABLES_IN_ORDER = [
     "trading_accounts",
     "trades",
     "deposits",
-    "funding_payments",
 ]
 
 BOOLEAN_COLUMNS = {

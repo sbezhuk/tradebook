@@ -3,7 +3,6 @@ import { api } from '../api/client';
 import type {
   HyperliquidImportResponse,
   HyperliquidDepositImportResponse,
-  HyperliquidFundingImportResponse,
   TradingAccount,
 } from '../types';
 import { GlassSelect } from './GlassSelect';
@@ -15,14 +14,13 @@ import {
   Lock,
   ArrowLeftRight,
   Wallet,
-  Percent,
   ChevronRight,
   RotateCcw,
   Download,
 } from 'lucide-react';
 
 export type ImportPlatform = 'hyperliquid' | 'okx';
-export type ImportMode = 'trades' | 'deposits' | 'funding';
+export type ImportMode = 'trades' | 'deposits';
 
 interface ImportViewProps {
   mode: ImportMode;
@@ -33,7 +31,6 @@ interface ImportViewProps {
   onGoToTrades: () => void;
   onGoToInsights: () => void;
   onOpenDeposits: () => void;
-  onOpenFunding?: () => void;
   onExportCsv?: () => void;
 }
 
@@ -78,19 +75,6 @@ const HYPERLIQUID_MODE_CONFIG: Record<
     addedLabel: 'Додано записів',
     summaryLabel: 'Сума депозиту',
   },
-  funding: {
-    tabLabel: 'Фандінг',
-    title: 'Імпорт фандінгу з Hyperliquid',
-    subtitle: 'Автоматичне співставлення платежів фандінгу з угодами',
-    csvExample: 'funding_history.csv',
-    menuPath: 'Portfolio → Funding History → Export to CSV',
-    instructionsBody:
-      'Система автоматично збереже всі виплати та списання фандінгу для вибраного акаунту й врахує їх у загальному PnL та балансі без викривлення цін окремих угод.',
-    uploadingText: 'Збереження історії фандінгу...',
-    successSubtitle: 'Загальний PnL та баланс акаунту автоматично оновлені.',
-    addedLabel: 'Додано платежів',
-    summaryLabel: 'Сума фандінгу',
-  },
 };
 
 export const ImportView: React.FC<ImportViewProps> = ({
@@ -102,7 +86,6 @@ export const ImportView: React.FC<ImportViewProps> = ({
   onGoToTrades,
   onGoToInsights,
   onOpenDeposits,
-  onOpenFunding,
   onExportCsv,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,22 +103,18 @@ export const ImportView: React.FC<ImportViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [tradeResult, setTradeResult] = useState<HyperliquidImportResponse | null>(null);
   const [depositResult, setDepositResult] = useState<HyperliquidDepositImportResponse | null>(null);
-  const [fundingResult, setFundingResult] = useState<HyperliquidFundingImportResponse | null>(null);
 
   const cfg = HYPERLIQUID_MODE_CONFIG[mode];
-  const result = mode === 'trades' ? tradeResult : mode === 'deposits' ? depositResult : fundingResult;
+  const result = mode === 'trades' ? tradeResult : depositResult;
   const summaryValue =
     mode === 'trades'
       ? tradeResult?.total_pnl ?? 0
-      : mode === 'deposits'
-      ? depositResult?.total_amount ?? 0
-      : fundingResult?.total_funding ?? 0;
+      : depositResult?.total_amount ?? 0;
 
   const resetUploadState = () => {
     setError(null);
     setTradeResult(null);
     setDepositResult(null);
-    setFundingResult(null);
   };
 
   const handleSelectPlatform = (platform: ImportPlatform) => {
@@ -160,7 +139,6 @@ export const ImportView: React.FC<ImportViewProps> = ({
     setError(null);
     setTradeResult(null);
     setDepositResult(null);
-    setFundingResult(null);
 
     try {
       const resolvedTargetId =
@@ -172,12 +150,9 @@ export const ImportView: React.FC<ImportViewProps> = ({
       if (mode === 'trades') {
         const res = await api.importHyperliquidCsv(file, resolvedTargetId);
         setTradeResult(res);
-      } else if (mode === 'deposits') {
+      } else {
         const res = await api.importHyperliquidDepositsCsv(file, resolvedTargetId);
         setDepositResult(res);
-      } else {
-        const res = await api.importHyperliquidFundingCsv(file, resolvedTargetId);
-        setFundingResult(res);
       }
       await onImportSuccess(mode);
     } catch (err: any) {
@@ -257,7 +232,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-purple-200/60 leading-relaxed">
-              Імпорт історії угод (<span className="font-mono text-purple-100/90">trade_history.csv</span>), депозитів (<span className="font-mono text-purple-100/90">deposits_and_withdrawals.csv</span>) та фандінгу (<span className="font-mono text-purple-100/90">funding_history.csv</span>).
+              Імпорт історії угод (<span className="font-mono text-purple-100/90">trade_history.csv</span>) та депозитів (<span className="font-mono text-purple-100/90">deposits_and_withdrawals.csv</span>).
             </p>
           </button>
 
@@ -333,18 +308,6 @@ export const ImportView: React.FC<ImportViewProps> = ({
                 <Wallet className="w-3.5 h-3.5" />
                 <span>{HYPERLIQUID_MODE_CONFIG.deposits.tabLabel}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => handleSwitchMode('funding')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  mode === 'funding'
-                    ? 'accent-pill'
-                    : 'text-purple-200/65 hover:text-white'
-                }`}
-              >
-                <Percent className="w-3.5 h-3.5" />
-                <span>{HYPERLIQUID_MODE_CONFIG.funding.tabLabel}</span>
-              </button>
             </div>
           </div>
 
@@ -387,30 +350,6 @@ export const ImportView: React.FC<ImportViewProps> = ({
               {cfg.instructionsBody}
             </p>
           </div>
-
-          {/* Quick Manual Entry Banner */}
-          {mode === 'funding' && onOpenFunding && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#c49bff]/10 border border-[#c49bff]/25">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#c49bff]/20 flex items-center justify-center text-[#c49bff] shrink-0">
-                  <Percent className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-white">Бажаєте внести фандінг вручну?</div>
-                  <div className="text-[11px] text-purple-200/60">
-                    Ви можете внести окрему виплату або списання фандінгу вручну без CSV-файлу.
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={onOpenFunding}
-                className="px-3.5 py-1.5 rounded-xl bg-[#c49bff]/20 hover:bg-[#c49bff]/30 border border-[#c49bff]/35 text-[#e2ccff] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto shrink-0"
-              >
-                Внести фандінг вручну
-              </button>
-            </div>
-          )}
 
           {mode === 'deposits' && (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
@@ -526,22 +465,6 @@ export const ImportView: React.FC<ImportViewProps> = ({
                 </div>
               </div>
 
-              {mode === 'funding' && fundingResult && (
-                <div className="text-xs text-purple-200/65 flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
-                  <span>
-                    Загальний фандінг акаунту:{' '}
-                    <strong
-                      className={`font-mono font-semibold ${
-                        fundingResult.account_total_funding >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                      }`}
-                    >
-                      {fundingResult.account_total_funding >= 0 ? '+' : '-'}$
-                      {Math.abs(fundingResult.account_total_funding).toFixed(2)}
-                    </strong>
-                  </span>
-                </div>
-              )}
-
               <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                 <button
                   type="button"
@@ -553,7 +476,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                 </button>
 
                 <div className="flex flex-wrap items-center gap-2.5">
-                  {mode === 'trades' || mode === 'funding' ? (
+                  {mode === 'trades' ? (
                     <>
                       <button
                         type="button"

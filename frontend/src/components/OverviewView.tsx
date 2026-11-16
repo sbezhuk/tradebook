@@ -11,7 +11,6 @@ interface OverviewViewProps {
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
   onOpenDeposits?: () => void;
-  onOpenFunding?: () => void;
   onSelectTrade: (trade: Trade) => void;
   onGoToTrades: () => void;
   onGoToInsights: () => void;
@@ -24,7 +23,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   selectedMonth = '',
   onSelectMonth,
   onOpenDeposits,
-  onOpenFunding,
   onSelectTrade,
   onGoToTrades,
   onGoToInsights,
@@ -57,14 +55,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         <OverallCapitalStrip
           overallPnl={overallPnl}
-          overallTradePnl={analytics?.overall_trade_pnl}
-          overallFundingPnl={analytics?.overall_funding_pnl}
           overallTrades={overallTrades}
           totalDeposits={totalDeposits}
           currentBalance={currentBalance}
           overallGrowthPct={overallGrowthPct}
           onOpenDeposits={onOpenDeposits}
-          onOpenFunding={onOpenFunding}
         />
       </div>
 

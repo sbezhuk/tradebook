@@ -39,7 +39,6 @@ interface PnlCalendarViewProps {
   onSelectTrade: (trade: Trade) => void;
   onNewTrade?: () => void;
   onOpenDeposits?: () => void;
-  onOpenFunding?: () => void;
   onExportCsv?: () => void;
   accounts?: TradingAccount[];
   activeAccountId?: number | null;
@@ -137,7 +136,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
   onSelectTrade,
   onNewTrade,
   onOpenDeposits,
-  onOpenFunding,
   onExportCsv,
   accounts = [],
   activeAccountId = null,
@@ -303,7 +301,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
       const pf = gl > 0 ? gp / gl : gp > 0 ? gp : 0;
       const best = Math.max(...closed.map((t) => t.pnl || 0), 0);
       const worst = Math.min(...closed.map((t) => t.pnl || 0), 0);
-      const fees = closed.reduce((acc, t) => acc + ((t.fees || 0) + (t.funding || 0)), 0);
+      const fees = closed.reduce((acc, t) => acc + (t.fees || 0), 0);
       const volume = closed.reduce(
         (acc, t) => acc + (t.quantity || 0) * (t.entry_price || 0),
         0
@@ -620,15 +618,12 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
           <OverallCapitalStrip
             overallPnl={analytics?.overall_total_pnl ?? 0}
-            overallTradePnl={analytics?.overall_trade_pnl}
-            overallFundingPnl={analytics?.overall_funding_pnl}
             overallTrades={analytics?.overall_total_trades ?? trades.length}
             monthsCount={analytics?.available_months.length}
             totalDeposits={analytics?.total_deposits ?? 0}
             currentBalance={analytics?.current_balance ?? 0}
             overallGrowthPct={analytics?.overall_deposit_growth_pct ?? null}
             onOpenDeposits={onOpenDeposits}
-            onOpenFunding={onOpenFunding}
           />
         </div>
 

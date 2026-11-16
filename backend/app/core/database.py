@@ -50,12 +50,10 @@ def ensure_schema_migrations():
                 conn.execute(text("ALTER TABLE trades ADD COLUMN funding FLOAT DEFAULT 0.0"))
 
         if "funding_payments" in existing_tables:
-            fp_cols = {col["name"] for col in inspector.get_columns("funding_payments")}
-            if "note" not in fp_cols:
-                conn.execute(text("ALTER TABLE funding_payments ADD COLUMN note VARCHAR(255)"))
-            if "trade_id" not in fp_cols:
-                conn.execute(text("ALTER TABLE funding_payments ADD COLUMN trade_id INTEGER REFERENCES trades(id)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_funding_payments_trade_id ON funding_payments (trade_id)"))
+            try:
+                conn.execute(text("DROP TABLE IF EXISTS funding_payments CASCADE"))
+            except Exception:
+                conn.execute(text("DROP TABLE IF EXISTS funding_payments"))
 
 
 def get_db():

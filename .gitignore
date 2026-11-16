@@ -11,6 +11,7 @@ ENV/
 *.db
 tradebook.db
 backend/tradebook.db
+backend/sync_prod.*
 uploads/*
 !uploads/.gitkeep
 backend/uploads/*

@@ -209,13 +209,6 @@ export interface HyperliquidDepositImportResponse {
   deposits: Deposit[];
 }
 
-export interface HyperliquidFundingImportResponse {
-  imported_count: number;
-  skipped_duplicates: number;
-  total_funding: number;
-  account_total_funding: number;
-}
-
 export interface Deposit {
   id: number;
   user_id: number;
@@ -241,63 +234,4 @@ export interface DepositListResponse {
   count: number;
   total_deposited?: number;
   total_withdrawn?: number;
-}
-
-export interface LinkedTradeBrief {
-  id: number;
-  symbol: string;
-  direction: string;
-  entry_price: number;
-  exit_price?: number | null;
-  entry_date: string;
-  pnl: number;
-  status: string;
-}
-
-export interface FundingPayment {
-  id: number;
-  user_id: number;
-  account_id?: number | null;
-  trade_id?: number | null;
-  coin: string;
-  direction: 'LONG' | 'SHORT' | string;
-  size: number;
-  payment: number;
-  rate: number;
-  note?: string | null;
-  funding_time: string;
-  created_at?: string;
-  trade?: LinkedTradeBrief | null;
-}
-
-export interface FundingFormData {
-  account_id?: number | null;
-  coin: string;
-  direction: 'LONG' | 'SHORT';
-  payment: number;
-  size?: number;
-  rate?: number;
-  funding_time?: string;
-  note?: string | null;
-  trade_id?: number | null;
-}
-
-export interface FundingUpdateData {
-  account_id?: number | null;
-  coin?: string;
-  direction?: 'LONG' | 'SHORT';
-  payment?: number;
-  size?: number;
-  rate?: number;
-  funding_time?: string;
-  note?: string | null;
-  trade_id?: number | null;
-}
-
-export interface FundingListResponse {
-  items: FundingPayment[];
-  total_funding: number;
-  total_received: number;
-  total_paid: number;
-  count: number;
 }

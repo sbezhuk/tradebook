@@ -16,7 +16,6 @@ import {
   Moon,
   Monitor,
   Wallet,
-  Percent,
   X,
 } from 'lucide-react';
 
@@ -25,7 +24,6 @@ interface TopBarProps {
   onSearchChange: (q: string) => void;
   onOpenNewTrade: () => void;
   onOpenDeposits: () => void;
-  onOpenFunding?: () => void;
   onOpenMobileMenu: () => void;
   onSelectTab: (tab: NavTab) => void;
 }
@@ -35,7 +33,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSearchChange,
   onOpenNewTrade,
   onOpenDeposits,
-  onOpenFunding,
   onOpenMobileMenu,
   onSelectTab,
 }) => {
@@ -153,21 +150,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Wallet className="w-4 h-4" />
         </button>
-
-        {/* 1.6 Funding (Percent) */}
-        {onOpenFunding && (
-          <button
-            type="button"
-            onClick={() => {
-              setOpenMenu(null);
-              onOpenFunding();
-            }}
-            title="Фандінг (нарахування, списання та історія)"
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <Percent className="w-4 h-4" />
-          </button>
-        )}
 
         {/* 2. REST API Menu (</>) — hidden below lg since also accessible in Sidebar */}
         <button

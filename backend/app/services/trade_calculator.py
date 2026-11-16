@@ -6,6 +6,7 @@ def calculate_trade_metrics(
     exit_price: Optional[float],
     quantity: float,
     fees: float = 0.0,
+    funding: float = 0.0,
     stop_loss: Optional[float] = None,
     manual_pnl: Optional[float] = None
 ) -> Tuple[float, float, Optional[float]]:
@@ -18,7 +19,7 @@ def calculate_trade_metrics(
     direction_upper = direction.upper()
 
     if manual_pnl is not None and manual_pnl != 0.0 and exit_price == entry_price:
-        pnl = manual_pnl - fees
+        pnl = manual_pnl - (fees or 0.0) + (funding or 0.0)
         cost_basis = entry_price * quantity
         pnl_pct = (pnl / cost_basis * 100.0) if cost_basis > 0 else 0.0
     else:
@@ -28,7 +29,7 @@ def calculate_trade_metrics(
         else:  # SHORT
             gross_pnl = (entry_price - exit_price) * quantity
             pnl_pct = ((entry_price - exit_price) / entry_price) * 100.0 if entry_price > 0 else 0.0
-        pnl = gross_pnl - (fees or 0.0)
+        pnl = gross_pnl - (fees or 0.0) + (funding or 0.0)
 
     # Calculate R-Multiple if stop loss was defined
     r_multiple: Optional[float] = None
