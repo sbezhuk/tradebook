@@ -196,7 +196,7 @@ html[data-theme="light"] option:is([class*="bg-[#120827]"]) {
   color: #1b0f2e;
 }
 
-html[data-theme="light"] :is([class^="text-white"], [class*=" text-white"]):not(.accent-pill):not(.accent-pill *):not([class*="bg-rose-500"]):not([class*="bg-emerald-500"]):not([class*="text-white/"]) {
+html[data-theme="light"] :is([class^="text-white"], [class*=" text-white"]):not(.accent-pill):not(.accent-pill *):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *):not([class*="bg-rose-600"]):not([class*="bg-rose-600"] *):not([class*="bg-emerald-500"]):not([class*="bg-emerald-500"] *):not([class*="bg-emerald-600"]):not([class*="bg-emerald-600"] *):not([class*="bg-purple-600"]):not([class*="bg-purple-600"] *):not([class*="text-white/"]) {
   color: #1b0f2e;
 }
 
@@ -250,14 +250,14 @@ html[data-theme="light"] :is([class^="bg-purple-900/"], [class*=" bg-purple-900/
   background-color: rgba(124, 58, 237, 0.06);
 }
 
-html[data-theme="light"] :is([class*="text-emerald-400"], [class*="text-emerald-300"]) {
+html[data-theme="light"] :is([class^="text-emerald-400"], [class*=" text-emerald-400"], [class^="text-emerald-300"], [class*=" text-emerald-300"]):not([class*="bg-emerald-500"]):not([class*="bg-emerald-500"] *):not([class*="bg-emerald-600"]):not([class*="bg-emerald-600"] *) {
   color: #059669;
 }
 
-html[data-theme="light"] :is([class*="text-rose-400"], [class*="text-rose-300"], [class*="text-rose-200"]):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *) {
+html[data-theme="light"] :is([class^="text-rose-400"], [class*=" text-rose-400"], [class^="text-rose-300"], [class*=" text-rose-300"], [class^="text-rose-200"], [class*=" text-rose-200"]):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *):not([class*="bg-rose-600"]):not([class*="bg-rose-600"] *) {
   color: #be123c;
 }
 
-html[data-theme="light"] :is([class*="text-amber-400"], [class*="text-amber-300"], [class*="text-amber-200"], [class*="text-amber-100"], [class*="text-yellow-400"], [class*="text-yellow-300"], [class*="text-yellow-200"]) {
+html[data-theme="light"] :is([class^="text-amber-400"], [class*=" text-amber-400"], [class^="text-amber-300"], [class*=" text-amber-300"], [class^="text-amber-200"], [class*=" text-amber-200"], [class^="text-amber-100"], [class*=" text-amber-100"], [class^="text-yellow-400"], [class*=" text-yellow-400"], [class^="text-yellow-300"], [class*=" text-yellow-300"], [class^="text-yellow-200"], [class*=" text-yellow-200"]) {
   color: #b45309;
 }

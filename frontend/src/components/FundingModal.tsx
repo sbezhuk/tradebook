@@ -560,7 +560,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                       onClick={() => setCoin(c)}
                       className={`py-1.5 px-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer text-center ${
                         coin === c
-                          ? 'bg-purple-600 text-white shadow-sm dark:bg-[#c49bff]/25 dark:text-[#e2ccff] dark:border dark:border-[#c49bff]/40'
+                          ? 'bg-purple-600 !text-white shadow-sm dark:bg-[#c49bff]/25 dark:!text-[#e2ccff] dark:border dark:border-[#c49bff]/40'
                           : 'bg-purple-500/10 hover:bg-purple-500/15 text-purple-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-purple-200/70 border border-purple-500/10 dark:border-transparent'
                       }`}
                     >
@@ -583,7 +583,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                       onClick={() => setDirection('LONG')}
                       className={`py-2 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-center ${
                         direction === 'LONG'
-                          ? 'bg-purple-600 text-white shadow-sm dark:bg-[#c49bff]/25 dark:text-white dark:border dark:border-[#c49bff]/40'
+                          ? 'bg-purple-600 !text-white shadow-sm dark:bg-[#c49bff]/25 dark:!text-white dark:border dark:border-[#c49bff]/40'
                           : 'text-purple-800/70 dark:text-purple-200/60 hover:text-purple-950 dark:hover:text-white'
                       }`}
                     >
@@ -594,7 +594,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                       onClick={() => setDirection('SHORT')}
                       className={`py-2 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-center ${
                         direction === 'SHORT'
-                          ? 'bg-rose-500 text-white shadow-sm dark:bg-rose-500/25 dark:text-rose-300 dark:border dark:border-rose-500/40'
+                          ? 'bg-rose-500 !text-white shadow-sm dark:bg-rose-500/25 dark:!text-rose-300 dark:border dark:border-rose-500/40'
                           : 'text-purple-800/70 dark:text-purple-200/60 hover:text-purple-950 dark:hover:text-white'
                       }`}
                     >
@@ -614,7 +614,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                       onClick={() => setPaymentType('received')}
                       className={`py-2 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap ${
                         paymentType === 'received'
-                          ? 'bg-emerald-600 text-white shadow-sm dark:bg-emerald-500/25 dark:text-emerald-300 dark:border dark:border-emerald-500/40'
+                          ? 'bg-emerald-600 !text-white shadow-sm dark:bg-emerald-500/25 dark:!text-emerald-300 dark:border dark:border-emerald-500/40'
                           : 'text-purple-800/70 dark:text-purple-200/60 hover:text-purple-950 dark:hover:text-white'
                       }`}
                     >
@@ -626,7 +626,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                       onClick={() => setPaymentType('paid')}
                       className={`py-2 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap ${
                         paymentType === 'paid'
-                          ? 'bg-rose-500 text-white shadow-sm dark:bg-rose-500/25 dark:text-rose-300 dark:border dark:border-rose-500/40'
+                          ? 'bg-rose-500 !text-white shadow-sm dark:bg-rose-500/25 dark:!text-rose-300 dark:border dark:border-rose-500/40'
                           : 'text-purple-800/70 dark:text-purple-200/60 hover:text-purple-950 dark:hover:text-white'
                       }`}
                     >
