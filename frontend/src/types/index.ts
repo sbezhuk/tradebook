@@ -202,6 +202,53 @@ export interface HyperliquidImportResponse {
   trades: Trade[];
 }
 
+export interface TradePreviewItem {
+  temp_id: string;
+  symbol: string;
+  market: MarketType;
+  direction: DirectionType;
+  status: StatusType;
+  entry_date: string;
+  exit_date?: string | null;
+  entry_price: number;
+  exit_price?: number | null;
+  quantity: number;
+  fees: number;
+  funding?: number;
+  pnl: number;
+  pnl_percentage: number;
+  tags?: string;
+  setup_notes?: string | null;
+  post_trade_notes?: string | null;
+  discipline_rating?: number;
+  followed_rules?: boolean;
+  is_duplicate: boolean;
+  duplicate_reason?: string | null;
+}
+
+export interface HyperliquidTradesPreviewResponse {
+  total_parsed: number;
+  duplicate_count: number;
+  items: TradePreviewItem[];
+}
+
+export interface DepositPreviewItem {
+  temp_id: string;
+  amount: number;
+  deposit_date: string;
+  action: string;
+  note?: string | null;
+  type: 'deposit' | 'withdraw';
+  is_duplicate: boolean;
+  duplicate_reason?: string | null;
+}
+
+export interface HyperliquidDepositsPreviewResponse {
+  total_parsed: number;
+  duplicate_count: number;
+  items: DepositPreviewItem[];
+}
+
 export interface HyperliquidDepositImportResponse {
   imported_count: number;
   skipped_duplicates: number;

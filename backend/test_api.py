@@ -79,6 +79,113 @@ def test_hyperliquid_import():
     assert del_res.status_code == 204
 
 
+def test_hyperliquid_preview_and_commit():
+    res = client.post("/api/v1/auth/login", json={
+        "username_or_email": "trader",
+        "password": "password123"
+    })
+    token = res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    sample_csv = (
+        "time,coin,dir,px,sz,ntl,fee,closedPnl\n"
+        "01/16/2026 - 10:00:00,SOL,Open Long,150.0,2.0,300.0,0.1,-0.1\n"
+        "01/16/2026 - 11:00:00,SOL,Close Long,160.0,2.0,320.0,0.1,19.8\n"
+        "01/16/2026 - 12:00:00,AVAX,Open Short,30.0,10.0,300.0,0.1,-0.1\n"
+        "01/16/2026 - 13:00:00,AVAX,Close Short,28.0,10.0,280.0,0.1,19.8\n"
+    )
+    files = {"file": ("trade_history.csv", sample_csv, "text/csv")}
+    preview_res = client.post("/api/v1/trades/import/hyperliquid/preview", headers=headers, files=files)
+    assert preview_res.status_code == 200
+    pdata = preview_res.json()
+    assert pdata["total_parsed"] == 2
+    assert pdata["duplicate_count"] == 0
+    assert len(pdata["items"]) == 2
+    assert pdata["items"][0]["symbol"] == "SOL"
+    assert pdata["items"][1]["symbol"] == "AVAX"
+
+    # User adjusts SOL trade (e.g. changes tags, notes) and chooses only SOL to import
+    selected_items = [
+        {
+            "symbol": pdata["items"][0]["symbol"],
+            "market": pdata["items"][0]["market"],
+            "direction": pdata["items"][0]["direction"],
+            "status": pdata["items"][0]["status"],
+            "entry_date": pdata["items"][0]["entry_date"],
+            "exit_date": pdata["items"][0]["exit_date"],
+            "entry_price": pdata["items"][0]["entry_price"],
+            "exit_price": pdata["items"][0]["exit_price"],
+            "quantity": pdata["items"][0]["quantity"],
+            "fees": pdata["items"][0]["fees"],
+            "pnl": pdata["items"][0]["pnl"],
+            "pnl_percentage": pdata["items"][0]["pnl_percentage"],
+            "tags": "CustomTag,Swing",
+            "setup_notes": "Edited before import",
+        }
+    ]
+    commit_res = client.post("/api/v1/trades/import/commit", headers=headers, json={"trades": selected_items})
+    assert commit_res.status_code == 200
+    cdata = commit_res.json()
+    assert cdata["imported_count"] == 1
+    assert cdata["trades"][0]["symbol"] == "SOL"
+    assert cdata["trades"][0]["tags"] == "CustomTag,Swing"
+    assert cdata["trades"][0]["setup_notes"] == "Edited before import"
+
+    # Now if preview is called again, SOL should be detected as duplicate!
+    preview_res2 = client.post("/api/v1/trades/import/hyperliquid/preview", headers=headers, files=files)
+    assert preview_res2.status_code == 200
+    pdata2 = preview_res2.json()
+    assert pdata2["duplicate_count"] == 1
+    assert pdata2["items"][0]["is_duplicate"] is True
+    assert pdata2["items"][1]["is_duplicate"] is False
+
+    # Cleanup
+    tid = cdata["trades"][0]["id"]
+    client.delete(f"/api/v1/trades/{tid}", headers=headers)
+
+
+def test_hyperliquid_deposit_preview_and_commit():
+    res = client.post("/api/v1/auth/login", json={
+        "username_or_email": "trader",
+        "password": "password123"
+    })
+    token = res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    sample_csv = (
+        "time,action,accountValueChange,fee,source,destination\n"
+        "01/17/2026 - 10:00:00,deposit,500 USDC,0,,Hyperliquid\n"
+        "01/17/2026 - 15:00:00,withdraw,-200 USDC,1 USDC,Hyperliquid,Arbitrum\n"
+    )
+    files = {"file": ("deposits_and_withdrawals.csv", sample_csv, "text/csv")}
+    preview_res = client.post("/api/v1/deposits/import/hyperliquid/preview", headers=headers, files=files)
+    assert preview_res.status_code == 200
+    pdata = preview_res.json()
+    assert pdata["total_parsed"] == 2
+    assert pdata["duplicate_count"] == 0
+    assert len(pdata["items"]) == 2
+
+    # Commit only the deposit with customized note
+    selected_items = [
+        {
+            "amount": pdata["items"][0]["amount"],
+            "deposit_date": pdata["items"][0]["deposit_date"],
+            "note": "Customized deposit note",
+            "type": "deposit",
+        }
+    ]
+    commit_res = client.post("/api/v1/deposits/import/commit", headers=headers, json={"deposits": selected_items})
+    assert commit_res.status_code == 200
+    cdata = commit_res.json()
+    assert cdata["imported_count"] == 1
+    assert cdata["deposits"][0]["amount"] == 500.0
+    assert cdata["deposits"][0]["note"] == "Customized deposit note"
+
+    # Cleanup
+    did = cdata["deposits"][0]["id"]
+    client.delete(f"/api/v1/deposits/{did}", headers=headers)
+
+
 def test_monthly_reporting_periods():
     res = client.post("/api/v1/auth/login", json={
         "username_or_email": "trader",

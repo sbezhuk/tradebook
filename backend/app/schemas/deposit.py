@@ -70,3 +70,31 @@ class HyperliquidDepositImportResponse(BaseModel):
     skipped_duplicates: int
     total_amount: float
     deposits: List[DepositResponse]
+
+
+class DepositPreviewItem(BaseModel):
+    temp_id: str
+    amount: float
+    deposit_date: UtcDateTime
+    action: str
+    note: Optional[str] = None
+    type: str  # "deposit" or "withdraw"
+    is_duplicate: bool = False
+    duplicate_reason: Optional[str] = None
+
+
+class HyperliquidDepositsPreviewResponse(BaseModel):
+    total_parsed: int
+    duplicate_count: int
+    items: List[DepositPreviewItem]
+
+
+class DepositCommitItem(BaseModel):
+    amount: float
+    deposit_date: UtcDateTime
+    note: Optional[str] = None
+    type: Optional[str] = "deposit"
+
+
+class DepositBatchCommitRequest(BaseModel):
+    deposits: List[DepositCommitItem]

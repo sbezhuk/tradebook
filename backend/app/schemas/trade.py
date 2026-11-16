@@ -75,5 +75,59 @@ class HyperliquidImportResponse(BaseModel):
     trades: List[TradeResponse]
 
 
+class TradePreviewItem(BaseModel):
+    temp_id: str
+    symbol: str
+    market: str = "CRYPTO"
+    direction: str
+    status: str
+    entry_date: UtcDateTime
+    exit_date: OptionalUtcDateTime = None
+    entry_price: float
+    exit_price: Optional[float] = None
+    quantity: float
+    fees: float = 0.0
+    funding: float = 0.0
+    pnl: float = 0.0
+    pnl_percentage: float = 0.0
+    tags: Optional[str] = ""
+    setup_notes: Optional[str] = None
+    is_duplicate: bool = False
+    duplicate_reason: Optional[str] = None
+
+
+class HyperliquidTradesPreviewResponse(BaseModel):
+    total_parsed: int
+    duplicate_count: int
+    items: List[TradePreviewItem]
+
+
+class TradeCommitItem(BaseModel):
+    symbol: str
+    market: str = "CRYPTO"
+    direction: str
+    status: str = "CLOSED"
+    entry_date: UtcDateTime
+    exit_date: OptionalUtcDateTime = None
+    entry_price: float
+    exit_price: Optional[float] = None
+    quantity: float
+    fees: float = 0.0
+    funding: float = 0.0
+    pnl: Optional[float] = None
+    pnl_percentage: Optional[float] = None
+    stop_loss: Optional[float] = None
+    take_profit: Optional[float] = None
+    tags: Optional[str] = ""
+    setup_notes: Optional[str] = None
+    post_trade_notes: Optional[str] = None
+    discipline_rating: int = 5
+    followed_rules: bool = True
+
+
+class TradeBatchCommitRequest(BaseModel):
+    trades: List[TradeCommitItem]
+
+
 class DeleteAllTradesResponse(BaseModel):
     deleted_count: int

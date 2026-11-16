@@ -12,6 +12,10 @@ from app.schemas.trade import (
     TradeResponse,
     TradeListResponse,
     HyperliquidImportResponse,
+    TradePreviewItem,
+    HyperliquidTradesPreviewResponse,
+    TradeCommitItem,
+    TradeBatchCommitRequest,
     DeleteAllTradesResponse,
 )
 from app.api.deps import get_current_user
@@ -192,6 +196,237 @@ def get_user_tags(
                 if clean:
                     all_tags.add(clean)
     return sorted(list(all_tags))
+
+@router.post("/import/hyperliquid/preview", response_model=HyperliquidTradesPreviewResponse)
+async def preview_hyperliquid_trades(
+    file: UploadFile = File(...),
+    account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_account = resolve_user_account(db, current_user.id, account_id)
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Будь ласка, завантажте CSV файл експорту з Hyperliquid")
+
+    raw_bytes = await file.read()
+    try:
+        csv_text = raw_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Файл повинен бути в кодуванні UTF-8")
+
+    try:
+        parsed_trades = parse_hyperliquid_csv(csv_text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Помилка парсингу CSV: {str(e)}")
+
+    existing = (
+        db.query(Trade)
+        .filter(Trade.user_id == current_user.id, Trade.account_id == target_account.id)
+        .all()
+    )
+    existing_keys = set()
+    for ex in existing:
+        ex_dt = ex.entry_date.replace(tzinfo=None) if ex.entry_date else None
+        existing_keys.add((
+            ex.symbol.upper(),
+            ex.direction.upper(),
+            ex_dt.strftime("%Y-%m-%d %H:%M:%S") if ex_dt else "",
+            round(ex.entry_price, 6),
+            round(ex.quantity, 6),
+        ))
+
+    items: List[TradePreviewItem] = []
+    duplicate_count = 0
+    seen_in_batch = set()
+
+    for idx, pt in enumerate(parsed_trades):
+        entry_naive = pt.entry_date.replace(tzinfo=None)
+        exit_naive = pt.exit_date.replace(tzinfo=None) if pt.exit_date else None
+        dedup_key = (
+            pt.symbol.upper(),
+            pt.direction.upper(),
+            entry_naive.strftime("%Y-%m-%d %H:%M:%S"),
+            round(pt.entry_price, 6),
+            round(pt.quantity, 6),
+        )
+        is_dup = False
+        dup_reason = None
+        if dedup_key in existing_keys:
+            is_dup = True
+            dup_reason = "Ця угода вже збережена в базі для даного акаунту"
+            duplicate_count += 1
+        elif dedup_key in seen_in_batch:
+            is_dup = True
+            dup_reason = "Повторюється всередині завантаженого файлу"
+            duplicate_count += 1
+        else:
+            seen_in_batch.add(dedup_key)
+
+        items.append(
+            TradePreviewItem(
+                temp_id=f"preview-trade-{idx}",
+                symbol=pt.symbol.upper(),
+                market=pt.market,
+                direction=pt.direction,
+                status=pt.status,
+                entry_date=entry_naive,
+                exit_date=exit_naive,
+                entry_price=pt.entry_price,
+                exit_price=pt.exit_price,
+                quantity=pt.quantity,
+                fees=pt.fees,
+                funding=0.0,
+                pnl=pt.pnl,
+                pnl_percentage=pt.pnl_percentage,
+                tags=pt.tags,
+                setup_notes=pt.setup_notes,
+                is_duplicate=is_dup,
+                duplicate_reason=dup_reason,
+            )
+        )
+
+    return HyperliquidTradesPreviewResponse(
+        total_parsed=len(items),
+        duplicate_count=duplicate_count,
+        items=items,
+    )
+
+
+@router.post("/import/commit", response_model=HyperliquidImportResponse)
+def commit_trades_import(
+    payload: TradeBatchCommitRequest,
+    account_id: Optional[int] = Query(None, description="ID торгового акаунту для збереження"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    target_account = resolve_user_account(db, current_user.id, account_id)
+    if not payload.trades:
+        return HyperliquidImportResponse(
+            imported_count=0,
+            skipped_duplicates=0,
+            open_count=0,
+            total_pnl=0.0,
+            trades=[]
+        )
+
+    existing = (
+        db.query(Trade)
+        .filter(Trade.user_id == current_user.id, Trade.account_id == target_account.id)
+        .all()
+    )
+    existing_keys = set()
+    for ex in existing:
+        ex_dt = ex.entry_date.replace(tzinfo=None) if ex.entry_date else None
+        existing_keys.add((
+            ex.symbol.upper(),
+            ex.direction.upper(),
+            ex_dt.strftime("%Y-%m-%d %H:%M:%S") if ex_dt else "",
+            round(ex.entry_price, 6),
+            round(ex.quantity, 6),
+        ))
+
+    created_trades: List[Trade] = []
+    skipped = 0
+    open_count = 0
+    total_pnl = 0.0
+
+    for pt in payload.trades:
+        entry_naive = pt.entry_date.replace(tzinfo=None) if pt.entry_date else datetime.utcnow()
+        exit_naive = pt.exit_date.replace(tzinfo=None) if pt.exit_date else None
+        target_status = pt.status.upper() if pt.status else "CLOSED"
+
+        dedup_key = (
+            pt.symbol.upper(),
+            pt.direction.upper(),
+            entry_naive.strftime("%Y-%m-%d %H:%M:%S"),
+            round(pt.entry_price, 6),
+            round(pt.quantity, 6),
+        )
+        if dedup_key in existing_keys:
+            skipped += 1
+            continue
+        existing_keys.add(dedup_key)
+
+        pnl_val = pt.pnl
+        pnl_pct_val = pt.pnl_percentage
+        r_multiple = None
+
+        if target_status == "OPEN":
+            exit_price = None
+            exit_naive = None
+            pnl_val = 0.0
+            pnl_pct_val = 0.0
+        else:
+            exit_price = pt.exit_price
+            if pnl_val is None:
+                pnl_calc, pct_calc, r_mult = calculate_trade_metrics(
+                    direction=pt.direction,
+                    entry_price=pt.entry_price,
+                    exit_price=exit_price,
+                    quantity=pt.quantity,
+                    fees=pt.fees,
+                    funding=pt.funding or 0.0,
+                    stop_loss=pt.stop_loss,
+                    manual_pnl=None
+                )
+                pnl_val = pnl_calc
+                pnl_pct_val = pct_calc
+                r_multiple = r_mult
+            elif pnl_pct_val is None:
+                if pt.entry_price > 0 and exit_price is not None:
+                    if pt.direction.upper() == "LONG":
+                        pnl_pct_val = round(((exit_price - pt.entry_price) / pt.entry_price) * 100.0, 2)
+                    else:
+                        pnl_pct_val = round(((pt.entry_price - exit_price) / pt.entry_price) * 100.0, 2)
+                else:
+                    pnl_pct_val = 0.0
+
+        trade = Trade(
+            user_id=current_user.id,
+            account_id=target_account.id,
+            symbol=pt.symbol.upper(),
+            market=pt.market.upper() if pt.market else "CRYPTO",
+            direction=pt.direction.upper(),
+            status=target_status,
+            entry_date=entry_naive,
+            exit_date=exit_naive,
+            entry_price=pt.entry_price,
+            exit_price=exit_price,
+            quantity=pt.quantity,
+            stop_loss=pt.stop_loss,
+            take_profit=pt.take_profit,
+            fees=pt.fees,
+            funding=pt.funding or 0.0,
+            pnl=round(pnl_val, 4) if pnl_val is not None else 0.0,
+            pnl_percentage=round(pnl_pct_val, 2) if pnl_pct_val is not None else 0.0,
+            r_multiple=r_multiple,
+            tags=pt.tags or "",
+            setup_notes=pt.setup_notes,
+            post_trade_notes=pt.post_trade_notes,
+            discipline_rating=pt.discipline_rating if pt.discipline_rating is not None else 5,
+            followed_rules=pt.followed_rules if pt.followed_rules is not None else True,
+        )
+        db.add(trade)
+        created_trades.append(trade)
+        if target_status == "OPEN":
+            open_count += 1
+        else:
+            total_pnl += trade.pnl
+
+    db.commit()
+    for tr in created_trades:
+        db.refresh(tr)
+
+    return HyperliquidImportResponse(
+        imported_count=len(created_trades),
+        skipped_duplicates=skipped,
+        open_count=open_count,
+        total_pnl=round(total_pnl, 4),
+        trades=[TradeResponse.model_validate(t) for t in created_trades]
+    )
+
 
 @router.post("/import/hyperliquid", response_model=HyperliquidImportResponse)
 async def import_hyperliquid_trades(

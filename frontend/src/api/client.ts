@@ -6,6 +6,9 @@ import type {
   AnalyticsData,
   HyperliquidImportResponse,
   HyperliquidDepositImportResponse,
+  TradePreviewItem,
+  HyperliquidTradesPreviewResponse,
+  HyperliquidDepositsPreviewResponse,
   Deposit,
   DepositFormData,
   DepositListResponse,
@@ -246,6 +249,29 @@ class ApiClient {
   }
 
   // Import Hyperliquid CSV
+  async previewHyperliquidCsv(
+    file: File,
+    accountId?: number | null
+  ): Promise<HyperliquidTradesPreviewResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.uploadFile<HyperliquidTradesPreviewResponse>(
+      `/trades/import/hyperliquid/preview${qs}`,
+      file,
+      'Не вдалося зчитати файл угод Hyperliquid'
+    );
+  }
+
+  async commitTradesImport(
+    trades: Partial<TradePreviewItem>[],
+    accountId?: number | null
+  ): Promise<HyperliquidImportResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<HyperliquidImportResponse>(`/trades/import/commit${qs}`, {
+      method: 'POST',
+      body: JSON.stringify({ trades }),
+    });
+  }
+
   async importHyperliquidCsv(file: File, accountId?: number | null): Promise<HyperliquidImportResponse> {
     const qs = accountId ? `?account_id=${accountId}` : '';
     return this.uploadFile<HyperliquidImportResponse>(
@@ -253,6 +279,29 @@ class ApiClient {
       file,
       'Не вдалося імпортувати файл Hyperliquid'
     );
+  }
+
+  async previewHyperliquidDepositsCsv(
+    file: File,
+    accountId?: number | null
+  ): Promise<HyperliquidDepositsPreviewResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.uploadFile<HyperliquidDepositsPreviewResponse>(
+      `/deposits/import/hyperliquid/preview${qs}`,
+      file,
+      'Не вдалося зчитати файл депозитів Hyperliquid'
+    );
+  }
+
+  async commitDepositsImport(
+    deposits: { amount: number; deposit_date: string; note?: string | null; type?: string }[],
+    accountId?: number | null
+  ): Promise<HyperliquidDepositImportResponse> {
+    const qs = accountId ? `?account_id=${accountId}` : '';
+    return this.request<HyperliquidDepositImportResponse>(`/deposits/import/commit${qs}`, {
+      method: 'POST',
+      body: JSON.stringify({ deposits }),
+    });
   }
 
   async importHyperliquidDepositsCsv(
