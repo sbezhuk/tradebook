@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import type { Trade, MonthlySummaryItem, TradingAccount } from '../types';
 import { GlassSelect } from './GlassSelect';
 import { PaginationBar } from './PaginationBar';
+import { formatDisplayDateTime } from '../utils/date';
 import {
   Filter,
   ArrowUpRight,
@@ -91,12 +92,7 @@ export const TradeList: React.FC<TradeListProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${dd}.${mm}, ${hh}:${min}`;
+    return formatDisplayDateTime(dateStr);
   };
 
   return (

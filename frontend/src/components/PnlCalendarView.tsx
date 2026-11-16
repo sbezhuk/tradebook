@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { AnalyticsData, Trade, TradingAccount } from '../types';
 import { OverallCapitalStrip } from './OverallCapitalStrip';
+import { parseUtcDate, formatDisplayDateTime } from '../utils/date';
 import {
   ChevronLeft,
   ChevronRight,
@@ -224,13 +225,18 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
     onSelectMonth(key);
   };
 
-  // Group trades by date (using exit_date or entry_date)
+  // Group trades by date (using exit_date or entry_date in local timezone)
   const tradesByDay = useMemo(() => {
     const map = new Map<string, Trade[]>();
     trades.forEach((t) => {
       const dtStr = t.exit_date || t.entry_date;
       if (!dtStr) return;
-      const dateKey = dtStr.slice(0, 10);
+      const d = parseUtcDate(dtStr);
+      if (!d) return;
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateKey = `${y}-${m}-${day}`;
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
@@ -1502,15 +1508,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                   const isLong = trade.direction === 'LONG';
                   const isPos = trade.pnl > 0;
                   const timeStr = trade.exit_date
-                    ? new Date(trade.exit_date).toLocaleTimeString('uk-UA', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                    ? formatDisplayDateTime(trade.exit_date)
                     : trade.entry_date
-                    ? new Date(trade.entry_date).toLocaleTimeString('uk-UA', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                    ? formatDisplayDateTime(trade.entry_date)
                     : '';
 
                   return (

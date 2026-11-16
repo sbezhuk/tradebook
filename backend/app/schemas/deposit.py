@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict, computed_field
+from app.schemas.common import UtcDateTime
 
 
 class DepositBase(BaseModel):
@@ -46,9 +47,9 @@ class DepositResponse(BaseModel):
     user_id: int
     account_id: Optional[int] = None
     amount: float
-    deposit_date: datetime
+    deposit_date: UtcDateTime
     note: Optional[str] = None
-    created_at: datetime
+    created_at: UtcDateTime
 
     @computed_field
     @property

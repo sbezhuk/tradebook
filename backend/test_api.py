@@ -1000,3 +1000,63 @@ def test_funding_update_and_manual_linking_to_trades():
         client.delete("/api/v1/funding", headers=headers)
 
 
+def test_trade_datetime_utc_serialization_and_stability():
+    """Verify that trade entry_date and exit_date serialize with UTC 'Z' indicator and don't drift on updates."""
+    login_res = client.post("/api/v1/auth/login", json={
+        "username_or_email": "trader",
+        "password": "password123"
+    })
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_res = client.post("/api/v1/trades", headers=headers, json={
+        "symbol": "TIMECHECK/USDT",
+        "market": "CRYPTO",
+        "direction": "LONG",
+        "status": "CLOSED",
+        "entry_price": 2000.0,
+        "exit_price": 2100.0,
+        "quantity": 1.0,
+        "fees": 1.0,
+        "entry_date": "2026-11-16T10:37:00Z",
+        "exit_date": "2026-11-16T12:00:00Z",
+    })
+    assert create_res.status_code == 201
+    trade_data = create_res.json()
+    tid = trade_data["id"]
+
+    try:
+        assert trade_data["entry_date"].endswith("Z")
+        assert "10:37:00" in trade_data["entry_date"]
+        assert trade_data["exit_date"].endswith("Z")
+        assert "12:00:00" in trade_data["exit_date"]
+
+        # Fetch trade by ID
+        get_res = client.get(f"/api/v1/trades/{tid}", headers=headers)
+        assert get_res.status_code == 200
+        get_data = get_res.json()
+        assert get_data["entry_date"] == trade_data["entry_date"]
+        assert get_data["exit_date"] == trade_data["exit_date"]
+
+        # Update price without touching entry_date - date should remain exact
+        update_res = client.put(f"/api/v1/trades/{tid}", headers=headers, json={
+            "entry_price": 2050.0,
+        })
+        assert update_res.status_code == 200
+        up_data = update_res.json()
+        assert up_data["entry_date"] == trade_data["entry_date"]
+        assert up_data["exit_date"] == trade_data["exit_date"]
+
+        # Update entry_date explicitly
+        update_date_res = client.put(f"/api/v1/trades/{tid}", headers=headers, json={
+            "entry_date": "2026-11-16T14:45:00Z",
+        })
+        assert update_date_res.status_code == 200
+        up_date_data = update_date_res.json()
+        assert up_date_data["entry_date"].endswith("Z")
+        assert "14:45:00" in up_date_data["entry_date"]
+    finally:
+        client.delete(f"/api/v1/trades/{tid}", headers=headers)
+
+
+

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
+from app.schemas.common import UtcDateTime, OptionalUtcDateTime
 
 
 class LinkedTradeBrief(BaseModel):
@@ -9,7 +10,7 @@ class LinkedTradeBrief(BaseModel):
     direction: str
     entry_price: float
     exit_price: Optional[float] = None
-    entry_date: datetime
+    entry_date: UtcDateTime
     pnl: float
     status: str
 
@@ -51,8 +52,8 @@ class FundingResponse(FundingBase):
     id: int
     user_id: int
     account_id: Optional[int]
-    funding_time: datetime
-    created_at: Optional[datetime] = None
+    funding_time: UtcDateTime
+    created_at: OptionalUtcDateTime = None
     trade: Optional[LinkedTradeBrief] = None
 
     model_config = ConfigDict(from_attributes=True)

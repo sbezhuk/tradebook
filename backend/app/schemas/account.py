@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
+from app.schemas.common import UtcDateTime
 
 
 class AccountBase(BaseModel):
@@ -30,7 +31,7 @@ class AccountResponse(AccountBase):
     id: int
     user_id: int
     is_default: bool
-    created_at: datetime
+    created_at: UtcDateTime
     trades_count: int = 0
     open_trades: int = 0
     total_pnl: float = 0.0

@@ -10,6 +10,12 @@ import { GlassDateTimePicker } from './GlassDateTimePicker';
 import { GlassSelect } from './GlassSelect';
 import { PaginationBar } from './PaginationBar';
 import {
+  toLocalInputValue,
+  fromLocalInputToUtcIso,
+  formatDisplayDateTime,
+  parseUtcDate,
+} from '../utils/date';
+import {
   Percent,
   Plus,
   Trash2,
@@ -52,34 +58,14 @@ interface FundingModalProps {
 
 const COMMON_COINS = ['BTC', 'ETH', 'SOL'];
 
-const getLocalNowInput = () => {
-  const d = new Date();
-  const tzOffset = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-};
+const getLocalNowInput = () => toLocalInputValue(new Date());
 
 const formatIsoToInput = (iso: string) => {
-  try {
-    const d = new Date(iso);
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-  } catch {
-    return getLocalNowInput();
-  }
+  return toLocalInputValue(iso) || getLocalNowInput();
 };
 
 const formatDisplayDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString('uk-UA', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
+  return formatDisplayDateTime(iso);
 };
 
 export const FundingModal: React.FC<FundingModalProps> = ({
@@ -223,7 +209,9 @@ export const FundingModal: React.FC<FundingModalProps> = ({
         const aMatch = a.symbol.toUpperCase().includes(targetCoin) ? 1 : 0;
         const bMatch = b.symbol.toUpperCase().includes(targetCoin) ? 1 : 0;
         if (aMatch !== bMatch) return bMatch - aMatch;
-        return new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime();
+        const aTime = parseUtcDate(a.entry_date)?.getTime() ?? 0;
+        const bTime = parseUtcDate(b.entry_date)?.getTime() ?? 0;
+        return bTime - aTime;
       });
   }, [linkerTargetFunding, trades, targetAccountId, linkerSearch]);
 
@@ -290,7 +278,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
           payment: signedPayment,
           size: numSize > 0 ? numSize : 0,
           rate: numRate,
-          funding_time: fundingTime ? new Date(fundingTime).toISOString() : new Date().toISOString(),
+          funding_time: fromLocalInputToUtcIso(fundingTime),
           note: note.trim() || null,
           trade_id: selectedTradeId,
         });
@@ -302,7 +290,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
           payment: signedPayment,
           size: numSize > 0 ? numSize : 0,
           rate: numRate,
-          funding_time: fundingTime ? new Date(fundingTime).toISOString() : new Date().toISOString(),
+          funding_time: fromLocalInputToUtcIso(fundingTime),
           note: note.trim() || null,
           trade_id: selectedTradeId,
         });
@@ -1319,7 +1307,7 @@ export const FundingModal: React.FC<FundingModalProps> = ({
                           )}
                         </div>
                         <div className="text-[10px] text-purple-200/50 font-mono mt-0.5">
-                          {new Date(tr.entry_date).toLocaleDateString('uk-UA')} • {tr.status}
+                          {formatDisplayDateTime(tr.entry_date, false)} • {tr.status}
                           {tr.exit_price ? ` • Вхід: ${tr.entry_price} → Вихід: ${tr.exit_price}` : ''}
                         </div>
                       </div>

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import type { Trade, SummaryStats } from '../types';
 import { ShieldCheck, ShieldAlert, Star, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { PaginationBar } from './PaginationBar';
+import { formatDisplayDateTime } from '../utils/date';
 
 const PSYCHOLOGY_PAGE_SIZE_KEY = 'tradebook_psychology_page_size';
 const ALLOWED_PSYCHOLOGY_PAGE_SIZES = [5, 10, 20, 50];
@@ -175,7 +176,7 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                         {t.followed_rules ? 'За планом' : 'Порушення'}
                       </span>
                       <span className="text-[11px] text-purple-200/45 font-mono hidden sm:inline shrink-0">
-                        {new Date(t.entry_date).toLocaleDateString('uk-UA')}
+                        {formatDisplayDateTime(t.entry_date, false)}
                       </span>
                     </div>
 

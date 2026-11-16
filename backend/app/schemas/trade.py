@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
+from app.schemas.common import UtcDateTime, OptionalUtcDateTime
 
 class TradeBase(BaseModel):
     symbol: str = Field(..., description="Символ або пара")
@@ -8,8 +9,8 @@ class TradeBase(BaseModel):
     direction: str = Field(..., description="LONG або SHORT")
     status: str = Field(default="OPEN", description="OPEN, CLOSED, CANCELLED")
     account_id: Optional[int] = Field(default=None, description="ID торгового акаунту")
-    entry_date: datetime
-    exit_date: Optional[datetime] = None
+    entry_date: UtcDateTime
+    exit_date: OptionalUtcDateTime = None
     entry_price: float = Field(..., gt=0)
     exit_price: Optional[float] = None
     quantity: float = Field(..., gt=0)
@@ -59,8 +60,8 @@ class TradeResponse(TradeBase):
     pnl: float
     pnl_percentage: float
     r_multiple: Optional[float] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
 
 class TradeListResponse(BaseModel):
     items: List[TradeResponse]

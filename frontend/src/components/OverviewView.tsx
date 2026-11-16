@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Trade, AnalyticsData } from '../types';
 import { OverallCapitalStrip } from './OverallCapitalStrip';
+import { formatDisplayDateTime } from '../utils/date';
 import { ArrowUpRight, ArrowDownRight, ChevronRight, CalendarDays } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -304,7 +305,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <div>
                       <div className="text-xs font-semibold text-white">{t.symbol}</div>
                       <div className="text-[11px] text-purple-200/45">
-                        {t.market} • {new Date(t.entry_date).toLocaleDateString('uk-UA')}
+                        {t.market} • {formatDisplayDateTime(t.entry_date, false)}
                       </div>
                     </div>
                   </div>

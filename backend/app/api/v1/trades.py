@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc, func
@@ -480,7 +480,7 @@ def update_trade(
         if trade.exit_price is None and (trade.pnl is None or trade.pnl == 0.0):
             raise HTTPException(status_code=400, detail="Для закритої угоди необхідно вказати ціну виходу")
         if trade.exit_date is None:
-            trade.exit_date = datetime.utcnow()
+            trade.exit_date = datetime.now(timezone.utc)
         pnl, pnl_pct, r_multiple = calculate_trade_metrics(
             direction=trade.direction,
             entry_price=trade.entry_price,

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { Deposit, DepositFormData, TradingAccount } from '../types';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
 import { GlassSelect } from './GlassSelect';
+import { toLocalInputValue, fromLocalInputToUtcIso, formatDisplayDateTime } from '../utils/date';
 import {
   Wallet,
   Plus,
@@ -34,24 +35,10 @@ interface DepositModalProps {
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000];
 
-const getLocalNowInput = () => {
-  const d = new Date();
-  const tzOffset = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-};
+const getLocalNowInput = () => toLocalInputValue(new Date());
 
 const formatDisplayDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString('uk-UA', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
+  return formatDisplayDateTime(iso);
 };
 
 export const DepositModal: React.FC<DepositModalProps> = ({
@@ -128,7 +115,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       await onAddDeposit({
         account_id: targetAccountId,
         amount: mode === 'withdraw' ? -numAmount : numAmount,
-        deposit_date: depositDate ? new Date(depositDate).toISOString() : new Date().toISOString(),
+        deposit_date: fromLocalInputToUtcIso(depositDate),
         note: note.trim() || (mode === 'withdraw' ? 'Виведення коштів' : null),
         type: mode,
       });

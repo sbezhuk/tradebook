@@ -7,8 +7,13 @@ database_url = settings.DATABASE_URL
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
 
-# For SQLite, check_same_thread=False is required for multiple threads
-connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+# For SQLite, check_same_thread=False is required for multiple threads.
+# For PostgreSQL, ensure server connection session runs in UTC so naive timestamps are consistently UTC.
+connect_args = (
+    {"check_same_thread": False}
+    if database_url.startswith("sqlite")
+    else {"options": "-c timezone=utc"}
+)
 
 engine = create_engine(
     database_url,

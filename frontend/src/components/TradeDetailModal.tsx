@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Trade, TradingAccount, FundingPayment } from '../types';
+import { parseUtcDate } from '../utils/date';
 import { 
   X, 
   ArrowUpRight, 
@@ -58,7 +59,8 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
   const isLoss = trade.pnl < 0;
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('uk-UA', {
+    const d = parseUtcDate(dateStr) ?? new Date(dateStr);
+    return d.toLocaleString('uk-UA', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -69,8 +71,8 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
 
   const getDuration = () => {
     if (!trade.exit_date) return 'В процесі';
-    const start = new Date(trade.entry_date).getTime();
-    const end = new Date(trade.exit_date).getTime();
+    const start = (parseUtcDate(trade.entry_date) ?? new Date(trade.entry_date)).getTime();
+    const end = (parseUtcDate(trade.exit_date) ?? new Date(trade.exit_date)).getTime();
     const diffMs = end - start;
     if (diffMs <= 0) return '0 хв';
     const hours = Math.floor(diffMs / (1000 * 60 * 60));

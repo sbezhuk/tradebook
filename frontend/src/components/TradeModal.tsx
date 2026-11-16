@@ -3,6 +3,7 @@ import type { Trade, TradeFormData, MarketType, DirectionType, StatusType, Tradi
 import { api } from '../api/client';
 import { GlassSelect } from './GlassSelect';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
+import { toLocalInputValue, fromLocalInputToUtcIso } from '../utils/date';
 import {
   X,
   Upload,
@@ -83,16 +84,6 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatForInput = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      const tzOffset = d.getTimezoneOffset() * 60000;
-      return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-    } catch {
-      return '';
-    }
-  };
-
   useEffect(() => {
     setStep(1);
     setError(null);
@@ -104,12 +95,12 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setMarket(editTrade.market);
       setDirection(editTrade.direction);
       setStatus(nextStatus);
-      setEntryDate(formatForInput(editTrade.entry_date));
+      setEntryDate(toLocalInputValue(editTrade.entry_date));
       setExitDate(
         editTrade.exit_date
-          ? formatForInput(editTrade.exit_date)
+          ? toLocalInputValue(editTrade.exit_date)
           : nextStatus === 'CLOSED'
-          ? formatForInput(new Date().toISOString())
+          ? toLocalInputValue(new Date())
           : ''
       );
       setEntryPrice(String(editTrade.entry_price));
@@ -139,7 +130,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
       setMarket('CRYPTO');
       setDirection('LONG');
       setStatus('OPEN');
-      const nowStr = formatForInput(new Date().toISOString());
+      const nowStr = toLocalInputValue(new Date());
       setEntryDate(nowStr);
       setExitDate('');
       setEntryPrice('');
@@ -161,7 +152,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const handleStatusChange = (nextStatus: StatusType) => {
     setStatus(nextStatus);
     if (nextStatus === 'CLOSED' && !exitDate) {
-      setExitDate(formatForInput(new Date().toISOString()));
+      setExitDate(toLocalInputValue(new Date()));
     }
     setError(null);
   };
@@ -277,10 +268,10 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         market,
         direction,
         status,
-        entry_date: entryDate ? new Date(entryDate).toISOString() : new Date().toISOString(),
+        entry_date: fromLocalInputToUtcIso(entryDate),
         exit_date:
           status === 'CLOSED'
-            ? (exitDate ? new Date(exitDate).toISOString() : new Date().toISOString())
+            ? fromLocalInputToUtcIso(exitDate)
             : null,
         entry_price: numEntry,
         exit_price: status === 'CLOSED' && numExit > 0 ? numExit : null,
@@ -808,7 +799,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         </div>
 
         {/* ==================== WIZARD FOOTER ==================== */}
-        <div className="shrink-0 flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/[0.07] bg-[#0c0717]/95 backdrop-blur-md">
+        <div className="shrink-0 flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/[0.07] bg-white/[0.02] backdrop-blur-md">
             <div>
               {step === 1 ? (
                 <button
