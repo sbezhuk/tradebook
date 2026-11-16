@@ -62,7 +62,7 @@ export const GlassSelect: React.FC<GlassSelectProps> = ({
         : `glass-input h-8 px-3 rounded-xl inline-flex items-center justify-between gap-2 text-xs font-medium whitespace-nowrap cursor-pointer select-none ${
             highlight ? 'border-[#c49bff]/45 text-[#e2ccff]' : 'text-purple-100'
           }`
-      : `glass-input w-full px-3 py-2 rounded-xl flex items-center justify-between gap-2 text-xs font-medium cursor-pointer select-none text-white`;
+      : `glass-input w-full h-10 px-3 rounded-xl flex items-center justify-between gap-2 text-xs font-medium cursor-pointer select-none text-white`;
 
   return (
     <div ref={containerRef} className={`relative ${variant === 'field' ? 'w-full' : 'inline-block'} ${className}`}>

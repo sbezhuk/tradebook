@@ -266,7 +266,7 @@ export const GlassDateTimePicker: React.FC<GlassDateTimePickerProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((prev) => !prev)}
-        className={`glass-input w-full rounded-xl px-3 py-2.5 text-xs flex items-center justify-between gap-2 text-left transition-all select-none ${
+        className={`glass-input w-full h-10 rounded-xl px-3 text-xs flex items-center justify-between gap-2 text-left transition-all select-none ${
           disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
         } ${open ? 'border-[#c49bff]/60 ring-2 ring-[#c49bff]/20' : ''}`}
       >

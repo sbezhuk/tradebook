@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { TradePreviewItem, DepositPreviewItem, DirectionType, StatusType, MarketType } from '../types';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
+import { GlassSelect } from './GlassSelect';
 import { toLocalInputValue, fromLocalInputToUtcIso } from '../utils/date';
 import { X, Check, Calculator, ArrowUpRight, ArrowDownLeft, AlertCircle } from 'lucide-react';
 
@@ -12,6 +13,15 @@ interface ImportEditModalProps {
   onSaveTrade?: (updated: TradePreviewItem) => void;
   onSaveDeposit?: (updated: DepositPreviewItem) => void;
 }
+
+const MARKET_OPTIONS = [
+  { value: 'CRYPTO', label: 'Crypto' },
+  { value: 'FOREX', label: 'Forex' },
+  { value: 'FUTURES', label: 'Futures' },
+  { value: 'STOCKS', label: 'Stocks' },
+  { value: 'COMMODITIES', label: 'Commodities' },
+  { value: 'OTHER', label: 'Інше' },
+];
 
 export const ImportEditModal: React.FC<ImportEditModalProps> = ({
   isOpen,
@@ -168,45 +178,39 @@ const TradeEditContent: React.FC<{
         {/* Form Body */}
         <div className="space-y-4 text-xs">
           {/* Symbol & Market */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Символ / Монета</label>
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Символ / Монета</label>
               <input
                 type="text"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="напр. BTC, ETH"
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+                className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono uppercase font-bold text-xs"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Ринок</label>
-              <select
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Ринок</label>
+              <GlassSelect
+                variant="field"
                 value={market}
-                onChange={(e) => setMarket(e.target.value as MarketType)}
-                className="w-full px-3 py-2 rounded-xl bg-[#1c1926] border border-white/[0.1] text-white outline-none focus:border-[#c49bff]"
-              >
-                <option value="CRYPTO">CRYPTO</option>
-                <option value="FOREX">FOREX</option>
-                <option value="FUTURES">FUTURES</option>
-                <option value="STOCKS">STOCKS</option>
-                <option value="COMMODITIES">COMMODITIES</option>
-                <option value="OTHER">OTHER</option>
-              </select>
+                onChange={(val) => setMarket(val as MarketType)}
+                options={MARKET_OPTIONS}
+              />
             </div>
           </div>
 
           {/* Direction & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Напрямок</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Напрямок</label>
+              <div className="grid grid-cols-2 gap-2 h-10">
                 <button
                   type="button"
                   onClick={() => setDirection('LONG')}
-                  className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                  className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                     direction === 'LONG'
-                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
+                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                       : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                   }`}
                 >
@@ -216,9 +220,9 @@ const TradeEditContent: React.FC<{
                 <button
                   type="button"
                   onClick={() => setDirection('SHORT')}
-                  className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                  className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                     direction === 'SHORT'
-                      ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                      ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
                       : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                   }`}
                 >
@@ -229,14 +233,14 @@ const TradeEditContent: React.FC<{
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Статус</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Статус</label>
+              <div className="grid grid-cols-2 gap-2 h-10">
                 <button
                   type="button"
                   onClick={() => setStatus('CLOSED')}
-                  className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer ${
+                  className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center ${
                     status === 'CLOSED'
-                      ? 'bg-[#c49bff]/20 border-[#c49bff] text-[#c49bff]'
+                      ? 'bg-[#c49bff]/20 border-[#c49bff] text-[#c49bff] shadow-[0_0_12px_rgba(196,155,255,0.2)]'
                       : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                   }`}
                 >
@@ -245,9 +249,9 @@ const TradeEditContent: React.FC<{
                 <button
                   type="button"
                   onClick={() => setStatus('OPEN')}
-                  className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer ${
+                  className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center ${
                     status === 'OPEN'
-                      ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                      ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
                       : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                   }`}
                 >
@@ -258,80 +262,77 @@ const TradeEditContent: React.FC<{
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Час входу</label>
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Час входу</label>
               <GlassDateTimePicker value={entryDate} onChange={setEntryDate} />
             </div>
             {status === 'CLOSED' && (
               <div>
-                <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Час виходу</label>
+                <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Час виходу</label>
                 <GlassDateTimePicker value={exitDate} onChange={setExitDate} allowClear />
               </div>
             )}
           </div>
 
           {/* Prices & Quantity */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Ціна входу ($)</label>
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Ціна входу ($)</label>
               <input
                 type="number"
                 step="any"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+                className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono text-xs"
               />
             </div>
             {status === 'CLOSED' ? (
               <div>
-                <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Ціна виходу ($)</label>
+                <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Ціна виходу ($)</label>
                 <input
                   type="number"
                   step="any"
                   value={exitPrice}
                   onChange={(e) => setExitPrice(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+                  className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono text-xs"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Ціна виходу ($)</label>
-                <input
-                  type="text"
-                  disabled
-                  value="Позиція відкрита"
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.05] text-purple-200/40 font-mono text-[11px]"
-                />
+                <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Ціна виходу ($)</label>
+                <div className="glass-input w-full h-10 px-3 rounded-xl text-purple-200/40 font-mono text-[11px] flex items-center select-none opacity-60">
+                  Позиція відкрита
+                </div>
               </div>
             )}
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Кількість (розмір)</label>
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Кількість (розмір)</label>
               <input
                 type="number"
                 step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+                className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono text-xs"
               />
             </div>
           </div>
 
           {/* Fees & PnL */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             <div>
-              <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Комісії ($)</label>
+              <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Комісії ($)</label>
               <input
                 type="number"
                 step="any"
                 value={fees}
                 onChange={(e) => setFees(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+                className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono text-xs"
               />
             </div>
             {status === 'CLOSED' && (
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="text-[11px] font-medium text-purple-200/70">Чистий PnL ($)</label>
                   <button
                     type="button"
@@ -347,7 +348,7 @@ const TradeEditContent: React.FC<{
                   step="any"
                   value={pnl}
                   onChange={(e) => setPnl(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] font-mono focus:border-[#c49bff] outline-none ${
+                  className={`glass-input w-full h-10 px-3 rounded-xl font-mono text-xs font-semibold ${
                     parseFloat(pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
                   }`}
                 />
@@ -357,7 +358,7 @@ const TradeEditContent: React.FC<{
 
           {/* Tags & Setup Notes */}
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">
               Теги <span className="text-purple-200/40">(через кому)</span>
             </label>
             <input
@@ -365,18 +366,18 @@ const TradeEditContent: React.FC<{
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Breakout, Support, Scalp"
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white focus:border-[#c49bff] outline-none"
+              className="glass-input w-full h-10 px-3 rounded-xl text-white text-xs"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Нотатки до угоди</label>
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Нотатки до угоди</label>
             <textarea
               rows={2}
               value={setupNotes}
               onChange={(e) => setSetupNotes(e.target.value)}
               placeholder="Коментар, контекст входу..."
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white focus:border-[#c49bff] outline-none resize-none"
+              className="glass-input w-full p-2.5 rounded-xl text-white text-xs resize-none"
             />
           </div>
         </div>
@@ -464,14 +465,14 @@ const DepositEditContent: React.FC<{
 
         <div className="space-y-3.5 text-xs">
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Тип операції</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Тип операції</label>
+            <div className="grid grid-cols-2 gap-2 h-10">
               <button
                 type="button"
                 onClick={() => setType('deposit')}
-                className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                   type === 'deposit'
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
+                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                     : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                 }`}
               >
@@ -481,9 +482,9 @@ const DepositEditContent: React.FC<{
               <button
                 type="button"
                 onClick={() => setType('withdraw')}
-                className={`py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                className={`h-full rounded-xl font-bold border transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                   type === 'withdraw'
-                    ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
                     : 'bg-white/[0.03] border-white/[0.08] text-purple-200/60 hover:text-white'
                 }`}
               >
@@ -494,29 +495,29 @@ const DepositEditContent: React.FC<{
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Сума ($)</label>
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Сума ($)</label>
             <input
               type="number"
               step="any"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white font-mono focus:border-[#c49bff] outline-none"
+              className="glass-input w-full h-10 px-3 rounded-xl text-white font-mono text-xs"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Дата та час</label>
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Дата та час</label>
             <GlassDateTimePicker value={date} onChange={setDate} />
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-purple-200/70 mb-1">Нотатка / Опис</label>
+            <label className="block text-[11px] font-medium text-purple-200/70 mb-1.5">Нотатка / Опис</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Hyperliquid: deposit..."
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white focus:border-[#c49bff] outline-none"
+              className="glass-input w-full h-10 px-3 rounded-xl text-white text-xs"
             />
           </div>
         </div>
