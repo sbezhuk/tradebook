@@ -261,3 +261,21 @@ html[data-theme="light"] :is([class^="text-rose-400"], [class*=" text-rose-400"]
 html[data-theme="light"] :is([class^="text-amber-400"], [class*=" text-amber-400"], [class^="text-amber-300"], [class*=" text-amber-300"], [class^="text-amber-200"], [class*=" text-amber-200"], [class^="text-amber-100"], [class*=" text-amber-100"], [class^="text-yellow-400"], [class*=" text-yellow-400"], [class^="text-yellow-300"], [class*=" text-yellow-300"], [class^="text-yellow-200"], [class*=" text-yellow-200"]) {
   color: #b45309;
 }
+
+/* Ambient soft glow for hero numbers (smooth text-shadow without harsh filter: drop-shadow raster contours) */
+.glow-emerald {
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.4), 0 0 20px rgba(52, 211, 153, 0.18);
+}
+
+.glow-rose {
+  text-shadow: 0 0 10px rgba(251, 113, 133, 0.4), 0 0 20px rgba(251, 113, 133, 0.18);
+}
+
+html[data-theme="light"] .glow-emerald {
+  text-shadow: 0 0 10px rgba(5, 150, 105, 0.22);
+}
+
+html[data-theme="light"] .glow-rose {
+  text-shadow: 0 0 10px rgba(190, 18, 60, 0.22);
+}
+

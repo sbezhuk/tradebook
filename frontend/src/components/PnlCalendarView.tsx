@@ -1098,9 +1098,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                                   <div
                                     className={`font-mono font-bold tracking-tighter sm:tracking-tight leading-tight text-center text-[10px] sm:text-base lg:text-lg ${
                                       isPositive
-                                        ? 'text-emerald-400 font-extrabold drop-shadow-[0_2px_8px_rgba(52,211,153,0.3)]'
+                                        ? 'text-emerald-400 font-bold glow-emerald'
                                         : isNegative
-                                        ? 'text-rose-400 font-extrabold drop-shadow-[0_2px_8px_rgba(251,113,133,0.3)]'
+                                        ? 'text-rose-400 font-bold glow-rose'
                                         : 'text-purple-200'
                                     }`}
                                   >
@@ -1179,9 +1179,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                               className={`text-xs xs:text-sm sm:text-base lg:text-lg font-mono font-bold tracking-tight truncate leading-tight ${
                                 week.summary.tradesCount > 0
                                   ? week.summary.totalPnl > 0
-                                    ? 'text-emerald-400 font-extrabold drop-shadow-[0_2px_8px_rgba(52,211,153,0.3)]'
+                                    ? 'text-emerald-400 font-bold glow-emerald'
                                     : week.summary.totalPnl < 0
-                                    ? 'text-rose-400 font-extrabold drop-shadow-[0_2px_8px_rgba(251,113,133,0.3)]'
+                                    ? 'text-rose-400 font-bold glow-rose'
                                     : 'text-purple-200'
                                   : 'text-purple-200/30'
                               }`}
