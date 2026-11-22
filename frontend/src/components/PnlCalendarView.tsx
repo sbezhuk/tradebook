@@ -1094,7 +1094,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                               {/* Middle: Hero PnL */}
                               {hasTrades ? (
-                                <div className="my-auto py-0.5 text-center min-w-0 w-full overflow-hidden">
+                                <div className="my-auto py-0.5 text-center min-w-0 w-full">
                                   <div
                                     className={`font-mono font-bold tracking-tighter sm:tracking-tight leading-tight text-center text-[10px] sm:text-base lg:text-lg ${
                                       isPositive
@@ -1176,7 +1176,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                           {/* Middle: Hero Weekly PnL */}
                           <div className="my-auto py-1 text-center min-w-0 w-full">
                             <div
-                              className={`text-xs xs:text-sm sm:text-base lg:text-lg font-mono font-bold tracking-tight truncate leading-tight ${
+                              className={`text-xs xs:text-sm sm:text-base lg:text-lg font-mono font-bold tracking-tight whitespace-nowrap leading-tight ${
                                 week.summary.tradesCount > 0
                                   ? week.summary.totalPnl > 0
                                     ? 'text-emerald-400 font-bold glow-emerald'

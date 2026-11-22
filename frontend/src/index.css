@@ -262,20 +262,20 @@ html[data-theme="light"] :is([class^="text-amber-400"], [class*=" text-amber-400
   color: #b45309;
 }
 
-/* Ambient soft glow for hero numbers (smooth text-shadow without harsh filter: drop-shadow raster contours) */
+/* Ambient soft glow for hero numbers (smooth text-shadow without harsh filter: drop-shadow raster contours or box clipping) */
 .glow-emerald {
-  text-shadow: 0 0 10px rgba(52, 211, 153, 0.4), 0 0 20px rgba(52, 211, 153, 0.18);
+  text-shadow: 0 0 6px rgba(52, 211, 153, 0.45), 0 0 14px rgba(52, 211, 153, 0.18);
 }
 
 .glow-rose {
-  text-shadow: 0 0 10px rgba(251, 113, 133, 0.4), 0 0 20px rgba(251, 113, 133, 0.18);
+  text-shadow: 0 0 6px rgba(251, 113, 133, 0.45), 0 0 14px rgba(251, 113, 133, 0.18);
 }
 
 html[data-theme="light"] .glow-emerald {
-  text-shadow: 0 0 10px rgba(5, 150, 105, 0.22);
+  text-shadow: 0 0 6px rgba(5, 150, 105, 0.22);
 }
 
 html[data-theme="light"] .glow-rose {
-  text-shadow: 0 0 10px rgba(190, 18, 60, 0.22);
+  text-shadow: 0 0 6px rgba(190, 18, 60, 0.22);
 }
 
