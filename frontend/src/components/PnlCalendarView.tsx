@@ -625,12 +625,12 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               type="button"
               onClick={handlePrevMonth}
               title="Попередній місяць"
-              className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer shrink-0"
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
-            <div className="px-2.5 sm:px-4 py-1.5 rounded-xl bg-[#c49bff]/10 border border-[#c49bff]/25 text-white font-bold text-xs sm:text-base lg:text-lg min-w-[125px] sm:min-w-[170px] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] whitespace-nowrap">
+            <div className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-[#c49bff]/10 border border-[#c49bff]/25 text-white font-bold text-xs sm:text-sm lg:text-base min-w-[125px] sm:min-w-[170px] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] whitespace-nowrap leading-none shrink-0">
               {monthTitle}
             </div>
 
@@ -638,7 +638,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               type="button"
               onClick={handleNextMonth}
               title="Наступний місяць"
-              className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-purple-200/80 hover:text-white transition-all cursor-pointer shrink-0"
             >
               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -646,7 +646,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             <button
               type="button"
               onClick={handleTodayMonth}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-purple-200 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+              className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-purple-200 hover:text-white transition-all cursor-pointer whitespace-nowrap flex items-center justify-center shrink-0"
             >
               Сьогодні
             </button>
@@ -655,14 +655,14 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
           {/* Center / Right: View Toggle, Export, New Trade */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* View Mode Switcher: Grid vs List */}
-            <div className="flex items-center p-0.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            <div className="h-9 sm:h-10 flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] box-border shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`h-full px-2 sm:px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   viewMode === 'grid'
                     ? 'bg-[#c49bff]/25 text-white border border-[#c49bff]/40 shadow-sm'
-                    : 'text-purple-200/60 hover:text-white'
+                    : 'text-purple-200/60 hover:text-white border border-transparent'
                 }`}
                 title="Режим сітки календаря"
               >
@@ -672,10 +672,10 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`h-full px-2 sm:px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   viewMode === 'list'
                     ? 'bg-[#c49bff]/25 text-white border border-[#c49bff]/40 shadow-sm'
-                    : 'text-purple-200/60 hover:text-white'
+                    : 'text-purple-200/60 hover:text-white border border-transparent'
                 }`}
                 title="Режим списку днів за тижнями"
               >
@@ -700,15 +700,15 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                         setSelectedDayDate(null);
                         onSelectMonth(m.month);
                       }}
-                      className={`px-2 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                      className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive
-                          ? 'bg-[#c49bff]/20 text-[#e9d5ff] border border-[#c49bff]/40 font-semibold'
+                          ? 'bg-[#c49bff]/20 text-[#e9d5ff] border border-[#c49bff]/40 font-semibold shadow-sm'
                           : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] text-purple-200/70 hover:text-white'
                       }`}
                     >
                       <span>{m.label.split(' ')[0]}</span>
                       <span
-                        className={`font-mono text-[10px] ${
+                        className={`font-mono text-[11px] font-semibold ${
                           m.total_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
                         }`}
                       >
@@ -725,7 +725,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={onExportCsv}
-                className="p-1.5 sm:p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-purple-200/75 hover:text-white transition-all cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-purple-200/75 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
                 title="Експорт угод місяця в CSV"
               >
                 <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -737,9 +737,9 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               <button
                 type="button"
                 onClick={onNewTrade}
-                className="px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-xl text-xs font-semibold bg-[#c49bff] hover:bg-[#d8b4fe] text-[#110820] shadow-[0_0_20px_rgba(196,155,255,0.35)] transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
+                className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl text-xs font-semibold bg-[#c49bff] hover:bg-[#d8b4fe] text-[#110820] shadow-[0_0_20px_rgba(196,155,255,0.35)] transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                 <span className="hidden sm:inline">Нова угода</span>
               </button>
             )}
