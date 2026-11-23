@@ -234,7 +234,7 @@ export const AuthView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#090611] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden auth-bg">
       {/* Top-right Theme Pill Switcher */}
       <div className="fixed top-4 right-4 z-20 inline-flex items-center p-1 rounded-full glass-panel gap-1">
         {(
@@ -263,11 +263,7 @@ export const AuthView: React.FC = () => {
         })}
       </div>
 
-      {/* Subtle Ambient Glows */}
-      <div className="absolute -top-40 left-1/3 w-[600px] h-[600px] bg-purple-700/15 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-700/12 rounded-full blur-[160px] pointer-events-none" />
-
-      <div className="relative z-10 w-full max-w-md">
+      <div className="w-full max-w-md relative">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#c49bff] text-[#110820] shadow-[0_0_30px_rgba(196,155,255,0.4)] mb-4">

@@ -68,6 +68,16 @@ html[data-theme="light"] {
 }
 
 /* Verdelo-inspired Purple Liquid Glass Surfaces */
+.auth-bg {
+  background-color: #090611;
+  background-image: radial-gradient(circle at 50% 20%, rgba(147, 51, 234, 0.16) 0%, rgba(79, 70, 229, 0.08) 40%, rgba(9, 6, 17, 1) 85%);
+}
+
+html[data-theme="light"] .auth-bg {
+  background-color: #f6f2ff;
+  background-image: radial-gradient(circle at 50% 15%, rgba(196, 155, 255, 0.35) 0%, rgba(237, 230, 255, 0.5) 45%, rgba(246, 242, 255, 1) 85%);
+}
+
 .glass-panel {
   background: rgba(20, 13, 34, 0.68);
   backdrop-filter: blur(22px) saturate(160%);
