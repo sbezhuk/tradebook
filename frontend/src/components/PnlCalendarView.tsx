@@ -18,8 +18,6 @@ import {
   LayoutGrid,
   List,
   Calendar as CalendarIcon,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -159,7 +157,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
   const [currentMonth, setCurrentMonth] = useState<number>(initialYearMonth.month);
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [gridScrollMode, setGridScrollMode] = useState<boolean>(false);
 
   // Synchronize when selectedMonth prop changes externally
   React.useEffect(() => {
@@ -655,7 +652,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             </button>
           </div>
 
-          {/* Center / Right: View Toggle, Fit Mode, Export, New Trade */}
+          {/* Center / Right: View Toggle, Export, New Trade */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* View Mode Switcher: Grid vs List */}
             <div className="flex items-center p-0.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
@@ -686,36 +683,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 <span className="hidden sm:inline">Список</span>
               </button>
             </div>
-
-            {/* In Grid mode: Screen Fit vs Scroll toggle on smaller screens */}
-            {viewMode === 'grid' && (
-              <button
-                type="button"
-                onClick={() => setGridScrollMode((v) => !v)}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                  gridScrollMode
-                    ? 'bg-[#c49bff]/15 border-[#c49bff]/30 text-[#e9d5ff]'
-                    : 'bg-white/[0.03] border-white/[0.06] text-purple-200/60 hover:text-purple-200'
-                }`}
-                title={
-                  gridScrollMode
-                    ? 'Перемкнути на авто-вміщення в екран без скролу'
-                    : 'Перемкнути на широкий режим із горизонтальною прокруткою'
-                }
-              >
-                {gridScrollMode ? (
-                  <>
-                    <Minimize2 className="w-3.5 h-3.5" />
-                    <span>В екран</span>
-                  </>
-                ) : (
-                  <>
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    <span>Прокрутка</span>
-                  </>
-                )}
-              </button>
-            )}
 
             {/* Quick Available Months Pills */}
             {analytics?.available_months && analytics.available_months.length > 0 && (
@@ -915,9 +882,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
       {/* 4. Full Calendar Grid / List View */}
       {viewMode === 'grid' ? (
         <div className="glass-panel rounded-2xl sm:rounded-3xl p-1.5 sm:p-6 border border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
-          <div className={gridScrollMode ? 'overflow-x-auto pb-2 -mx-1 px-1 touch-pan-x' : 'w-full'}>
-            <div className={gridScrollMode ? 'min-w-[700px]' : 'w-full'}>
-              {/* Weekday Column Headers */}
+          <div className="w-full overflow-x-auto pb-1">
+            {/* Weekday Column Headers */}
               <div className="grid gap-1 sm:gap-2 lg:gap-2.5 mb-1.5 sm:mb-2.5 grid-cols-7 xl:grid-cols-8">
                 {WEEKDAY_NAMES_7.map((wName, idx) => {
                   const isWeekend = idx >= 5;
@@ -1185,7 +1151,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
       ) : (
         /* Agenda / List View: Mobile-first & vertical breakdown by week and day */
         <div className="glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 border border-white/[0.08] space-y-4">
