@@ -50,6 +50,22 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface LoginOtpRequiredResponse {
+  otp_required: true;
+  temp_token: string;
+  email_masked: string;
+  message: string;
+}
+
+export type LoginResult = AuthResponse | LoginOtpRequiredResponse;
+
+export interface OtpSendResponse {
+  message: string;
+  email: string;
+  expires_in_seconds: number;
+  cooldown_seconds: number;
+}
+
 export interface Trade {
   id: number;
   user_id: number;

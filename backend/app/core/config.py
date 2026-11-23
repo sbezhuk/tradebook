@@ -35,5 +35,21 @@ class Settings(BaseSettings):
         "*"
     ]
 
+    # Gmail SMTP Configuration
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "").strip()
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "").replace(" ", "").strip()
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "").strip()
+    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "TradeBook")
+    SMTP_TLS: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
+
+    # OTP Configuration
+    OTP_REQUIRED: bool = os.getenv("OTP_REQUIRED", "true").lower() in ("true", "1", "yes")
+    OTP_EXPIRE_MINUTES: int = int(os.getenv("OTP_EXPIRE_MINUTES", "10"))
+    OTP_RESEND_COOLDOWN_SECONDS: int = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "60"))
+    OTP_MAX_ATTEMPTS: int = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+    OTP_DEMO_BYPASS: bool = os.getenv("OTP_DEMO_BYPASS", "true").lower() in ("true", "1", "yes")
+
 settings = Settings()
 settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '../types';
+import type { User, LoginResult, OtpSendResponse } from '../types';
 import { api } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (usernameOrEmail: string, pass: string) => Promise<void>;
-  register: (email: string, username: string, pass: string) => Promise<void>;
+  login: (usernameOrEmail: string, pass: string) => Promise<LoginResult>;
+  verifyLoginOtp: (tempToken: string, otpCode: string) => Promise<void>;
+  sendRegisterOtp: (email: string, username: string, pass: string) => Promise<OtpSendResponse>;
+  registerWithOtp: (email: string, username: string, pass: string, otpCode: string) => Promise<void>;
+  resendOtp: (data: { email?: string; tempToken?: string; purpose?: 'registration' | 'login' }) => Promise<OtpSendResponse>;
   loginDemo: () => Promise<void>;
   logout: () => void;
 }
@@ -52,16 +55,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (usernameOrEmail: string, pass: string) => {
+  const login = async (usernameOrEmail: string, pass: string): Promise<LoginResult> => {
     const res = await api.login({ username_or_email: usernameOrEmail, password: pass });
+    if ('access_token' in res) {
+      setUser(res.user);
+      setToken(res.access_token);
+    }
+    return res;
+  };
+
+  const verifyLoginOtp = async (tempToken: string, otpCode: string): Promise<void> => {
+    const res = await api.verifyLoginOtp({ temp_token: tempToken, otp_code: otpCode });
     setUser(res.user);
     setToken(res.access_token);
   };
 
-  const register = async (email: string, username: string, pass: string) => {
-    const res = await api.register({ email, username, password: pass });
+  const sendRegisterOtp = async (email: string, username: string, pass: string): Promise<OtpSendResponse> => {
+    return api.sendRegisterOtp({ email, username, password: pass });
+  };
+
+  const registerWithOtp = async (email: string, username: string, pass: string, otpCode: string): Promise<void> => {
+    const res = await api.register({ email, username, password: pass, otp_code: otpCode });
     setUser(res.user);
     setToken(res.access_token);
+  };
+
+  const resendOtp = async (data: { email?: string; tempToken?: string; purpose?: 'registration' | 'login' }): Promise<OtpSendResponse> => {
+    return api.resendOtp({ email: data.email, temp_token: data.tempToken, purpose: data.purpose });
   };
 
   const loginDemo = async () => {
@@ -75,7 +95,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, loginDemo, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        login,
+        verifyLoginOtp,
+        sendRegisterOtp,
+        registerWithOtp,
+        resendOtp,
+        loginDemo,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -7,6 +7,7 @@ os.environ["DATABASE_URL"] = os.getenv(
     "TEST_DATABASE_URL",
     "postgresql+psycopg2://localhost:5432/tradebook_test"
 )
+os.environ["OTP_REQUIRED"] = "false"
 
 from app.core.database import Base, engine, ensure_schema_migrations, SessionLocal
 from app.core.security import get_password_hash

@@ -16,6 +16,10 @@ uploads/*
 !uploads/.gitkeep
 backend/uploads/*
 !backend/uploads/.gitkeep
+backups/
+backups/*.sql
+backups/*.dump
+backups/*.tar
 
 # Node
 node_modules/

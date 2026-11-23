@@ -30,3 +30,14 @@ def decode_access_token(token: str) -> Optional[dict]:
         return payload
     except jwt.PyJWTError:
         return None
+
+def create_temp_token(payload: dict, expires_minutes: int = 10) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+    to_encode = {**payload, "exp": expire}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def decode_temp_token(token: str) -> Optional[dict]:
+    try:
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except jwt.PyJWTError:
+        return None

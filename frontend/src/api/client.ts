@@ -1,5 +1,7 @@
 import type {
   AuthResponse,
+  LoginResult,
+  OtpSendResponse,
   User,
   Trade,
   TradeFormData,
@@ -79,7 +81,14 @@ class ApiClient {
   }
 
   // Auth
-  async register(data: { email: string; username: string; password: string }): Promise<AuthResponse> {
+  async sendRegisterOtp(data: { email: string; username: string; password: string }): Promise<OtpSendResponse> {
+    return this.request<OtpSendResponse>('/auth/register/send-otp', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async register(data: { email: string; username: string; password: string; otp_code?: string }): Promise<AuthResponse> {
     const res = await this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -88,13 +97,31 @@ class ApiClient {
     return res;
   }
 
-  async login(data: { username_or_email: string; password: string }): Promise<AuthResponse> {
-    const res = await this.request<AuthResponse>('/auth/login', {
+  async login(data: { username_or_email: string; password: string; otp_code?: string }): Promise<LoginResult> {
+    const res = await this.request<LoginResult>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if ('access_token' in res) {
+      this.setToken(res.access_token);
+    }
+    return res;
+  }
+
+  async verifyLoginOtp(data: { temp_token: string; otp_code: string }): Promise<AuthResponse> {
+    const res = await this.request<AuthResponse>('/auth/login/verify-otp', {
       method: 'POST',
       body: JSON.stringify(data),
     });
     this.setToken(res.access_token);
     return res;
+  }
+
+  async resendOtp(data: { email?: string; temp_token?: string; purpose?: 'registration' | 'login' }): Promise<OtpSendResponse> {
+    return this.request<OtpSendResponse>('/auth/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async getMe(): Promise<User> {
