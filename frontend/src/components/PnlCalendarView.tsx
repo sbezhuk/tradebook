@@ -75,7 +75,6 @@ const MONTHS_GENITIVE = [
 ];
 
 const WEEKDAY_NAMES_7 = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
-const WEEKDAY_NAMES_5 = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
 
 const WEEKDAY_FULL_NAMES = [
   'Понеділок',
@@ -158,7 +157,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
   const [currentYear, setCurrentYear] = useState<number>(initialYearMonth.year);
   const [currentMonth, setCurrentMonth] = useState<number>(initialYearMonth.month);
-  const [showWeekends, setShowWeekends] = useState<boolean>(true);
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [gridScrollMode, setGridScrollMode] = useState<boolean>(false);
@@ -512,11 +510,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
       const winRate = tradesCount > 0 ? Math.round((winsCount / tradesCount) * 1000) / 10 : 0;
 
-      // Filter out weekends if showWeekends is false
-      if (!showWeekends) {
-        weekDays = weekDays.filter((d) => d.dayOfWeek < 5);
-      }
-
       weeks.push({
         weekIndex: w + 1,
         days: weekDays,
@@ -532,7 +525,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
     }
 
     return weeks;
-  }, [currentYear, currentMonth, todayStr, dailyStatsMap, tradesByDay, showWeekends]);
+  }, [currentYear, currentMonth, todayStr, dailyStatsMap, tradesByDay]);
 
   // Selected day data
   const selectedDayTrades = useMemo(() => {
@@ -662,7 +655,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
             </button>
           </div>
 
-          {/* Center / Right: View Toggle, Fit Mode, Weekend Toggle, Export, New Trade */}
+          {/* Center / Right: View Toggle, Fit Mode, Export, New Trade */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* View Mode Switcher: Grid vs List */}
             <div className="flex items-center p-0.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
@@ -759,20 +752,6 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                 })}
               </div>
             )}
-
-            {/* Weekend Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowWeekends((v) => !v)}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                showWeekends
-                  ? 'bg-white/[0.06] border-white/[0.12] text-white'
-                  : 'bg-white/[0.02] border-white/[0.05] text-purple-200/50 hover:text-purple-200'
-              }`}
-              title={showWeekends ? 'Приховати суботу та неділю' : 'Показати всі 7 днів тижня'}
-            >
-              <span>{showWeekends ? '7 днів' : '5 днів (Пн-Пт)'}</span>
-            </button>
 
             {/* Export CSV */}
             {onExportCsv && (
@@ -939,12 +918,8 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
           <div className={gridScrollMode ? 'overflow-x-auto pb-2 -mx-1 px-1 touch-pan-x' : 'w-full'}>
             <div className={gridScrollMode ? 'min-w-[700px]' : 'w-full'}>
               {/* Weekday Column Headers */}
-              <div
-                className={`grid gap-1 sm:gap-2 lg:gap-2.5 mb-1.5 sm:mb-2.5 ${
-                  showWeekends ? 'grid-cols-7 xl:grid-cols-8' : 'grid-cols-5 xl:grid-cols-6'
-                }`}
-              >
-                {(showWeekends ? WEEKDAY_NAMES_7 : WEEKDAY_NAMES_5).map((wName, idx) => {
+              <div className="grid gap-1 sm:gap-2 lg:gap-2.5 mb-1.5 sm:mb-2.5 grid-cols-7 xl:grid-cols-8">
+                {WEEKDAY_NAMES_7.map((wName, idx) => {
                   const isWeekend = idx >= 5;
                   return (
                     <div
@@ -1002,11 +977,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
                       </div>
 
                       {/* Days Grid in Week */}
-                      <div
-                        className={`grid gap-1 sm:gap-2 lg:gap-2.5 ${
-                          showWeekends ? 'grid-cols-7 xl:grid-cols-8' : 'grid-cols-5 xl:grid-cols-6'
-                        }`}
-                      >
+                      <div className="grid gap-1 sm:gap-2 lg:gap-2.5 grid-cols-7 xl:grid-cols-8">
                         {week.days.map((cell) => {
                           const hasTrades = cell.stats && cell.stats.tradesCount > 0;
                           const isSelected = selectedDayDate === cell.dateStr;
