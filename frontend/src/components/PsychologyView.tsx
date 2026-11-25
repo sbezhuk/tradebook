@@ -163,7 +163,7 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                           <ArrowDownRight className="w-3.5 h-3.5" />
                         )}
                       </div>
-                      <span className="font-bold text-sm text-white w-20 sm:w-24 truncate shrink-0">
+                      <span className="font-bold text-sm text-white w-28 sm:w-32 truncate shrink-0">
                         {t.symbol}
                       </span>
                       <span
