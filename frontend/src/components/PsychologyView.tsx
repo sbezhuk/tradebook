@@ -151,7 +151,7 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                   className="p-4 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] cursor-pointer transition-all"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                           isLong ? 'bg-[#c49bff]/15 text-[#c49bff]' : 'bg-rose-500/15 text-rose-400'
@@ -163,7 +163,7 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                           <ArrowDownRight className="w-3.5 h-3.5" />
                         )}
                       </div>
-                      <span className="font-bold text-sm text-white w-28 sm:w-32 truncate shrink-0">
+                      <span className="font-bold text-sm text-white sm:min-w-[155px] whitespace-nowrap shrink-0">
                         {t.symbol}
                       </span>
                       <span
