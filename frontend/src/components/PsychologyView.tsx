@@ -150,8 +150,8 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                   onClick={() => onSelectTrade(t)}
                   className="p-4 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] cursor-pointer transition-all"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                           isLong ? 'bg-[#c49bff]/15 text-[#c49bff]' : 'bg-rose-500/15 text-rose-400'
@@ -163,9 +163,17 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                           <ArrowDownRight className="w-3.5 h-3.5" />
                         )}
                       </div>
-                      <span className="font-bold text-sm text-white sm:min-w-[155px] whitespace-nowrap shrink-0">
-                        {t.symbol}
-                      </span>
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 min-w-0">
+                        <span className="font-bold text-sm text-white whitespace-nowrap">
+                          {t.symbol}
+                        </span>
+                        <span className="text-[11px] text-purple-200/45 font-mono whitespace-nowrap">
+                          {formatDisplayDateTime(t.entry_date, false)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
                       <span
                         className={`inline-flex items-center justify-center text-[10px] px-2.5 py-0.5 rounded-full font-semibold shrink-0 min-w-[82px] ${
                           t.followed_rules
@@ -175,12 +183,6 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                       >
                         {t.followed_rules ? 'За планом' : 'Порушення'}
                       </span>
-                      <span className="text-[11px] text-purple-200/45 font-mono hidden sm:inline shrink-0">
-                        {formatDisplayDateTime(t.entry_date, false)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0 ml-auto">
                       <div
                         className="flex items-center gap-0.5 shrink-0"
                         title={`Самооцінка: ${rating}/5`}
@@ -194,7 +196,7 @@ export const PsychologyView: React.FC<PsychologyViewProps> = ({
                           />
                         ))}
                       </div>
-                      <div className="min-w-[84px] text-right shrink-0">
+                      <div className="min-w-[76px] text-right shrink-0">
                         {isOpen ? (
                           <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">
                             Відкрита
