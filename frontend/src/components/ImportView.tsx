@@ -835,7 +835,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={mode === 'trades' ? 'Пошук монети або тегу...' : 'Пошук за описом...'}
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-purple-200/40 outline-none focus:border-[#c49bff]"
+                    className="w-full pl-9 pr-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-purple-200/40 outline-none focus:border-[#c49bff]"
                   />
                   {searchQuery && (
                     <button
@@ -850,11 +850,11 @@ export const ImportView: React.FC<ImportViewProps> = ({
 
                 {/* Filter and Selection buttons */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex p-0.5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                  <div className="inline-flex p-0.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
                     <button
                       type="button"
                       onClick={() => setFilterType('all')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors cursor-pointer ${
                         filterType === 'all'
                           ? 'bg-[#c49bff]/20 text-[#c49bff]'
                           : 'text-purple-200/60 hover:text-white'
@@ -865,7 +865,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setFilterType('new_only')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors cursor-pointer ${
                         filterType === 'new_only'
                           ? 'bg-[#c49bff]/20 text-[#c49bff]'
                           : 'text-purple-200/60 hover:text-white'
@@ -877,7 +877,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setFilterType('duplicates_only')}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors cursor-pointer ${
                           filterType === 'duplicates_only'
                             ? 'bg-amber-500/20 text-amber-300'
                             : 'text-purple-200/60 hover:text-white'
@@ -901,14 +901,14 @@ export const ImportView: React.FC<ImportViewProps> = ({
                             : filteredDeposits.map((d) => d.temp_id)
                         )
                       }
-                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Обрати всі
                     </button>
                     <button
                       type="button"
                       onClick={handleSelectOnlyNew}
-                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Лише нові
                     </button>
@@ -921,7 +921,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                             : filteredDeposits.map((d) => d.temp_id)
                         )
                       }
-                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Зняти всі
                     </button>
@@ -930,13 +930,13 @@ export const ImportView: React.FC<ImportViewProps> = ({
                   {mode === 'trades' && (
                     <>
                       <div className="h-4 w-px bg-white/[0.1] hidden sm:block" />
-                      <div className="inline-flex items-center p-0.5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                      <div className="inline-flex items-center p-0.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
                         <span className="text-[11px] text-purple-200/50 px-1.5 font-mono">Пара:</span>
                         <button
                           type="button"
                           onClick={() => handleSwitchAllQuotes('USDT')}
                           title="Перемкнути всі прев'ю-угоди на /USDT"
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold transition-colors cursor-pointer ${
                             importQuote === 'USDT'
                               ? 'bg-[#c49bff]/25 text-[#c49bff]'
                               : 'text-purple-200/60 hover:text-white'
@@ -948,7 +948,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                           type="button"
                           onClick={() => handleSwitchAllQuotes('USDC')}
                           title="Перемкнути всі прев'ю-угоди на /USDC"
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold transition-colors cursor-pointer ${
                             importQuote === 'USDC'
                               ? 'bg-[#c49bff]/25 text-[#c49bff]'
                               : 'text-purple-200/60 hover:text-white'
