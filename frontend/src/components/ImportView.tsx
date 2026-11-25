@@ -901,14 +901,14 @@ export const ImportView: React.FC<ImportViewProps> = ({
                             : filteredDeposits.map((d) => d.temp_id)
                         )
                       }
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Обрати всі
                     </button>
                     <button
                       type="button"
                       onClick={handleSelectOnlyNew}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Лише нові
                     </button>
@@ -921,7 +921,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
                             : filteredDeposits.map((d) => d.temp_id)
                         )
                       }
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] text-purple-200/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Зняти всі
                     </button>
