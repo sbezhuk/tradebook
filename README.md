@@ -22,6 +22,7 @@
 
 ### 3. ⚡ Імпорт з Hyperliquid з інтерактивним Preview & Duplicate Detection
 - Прямий імпорт історії угод (`trade_history.csv`) та історії депозитів/виведень з DEX **Hyperliquid**.
+- **Стандартизація торгових пар (`BASE/QUOTE`)**: автоматичне приведення символів до єдиного формату (наприклад, `BTC` → `BTC/USDT`, `NVDA (IO)` → `NVDA/USDT (IO)`) як при ручному створенні угоди, так і під час CSV-імпорту.
 - **Етап інтерактивного попереднього перегляду (Preview Modal)**:
   - Можливість редагувати будь-які параметри перед записом у базу (ціна, об'єм, PnL, комісії, час, теги).
   - Гнучкий вибір записів за допомогою чекбоксів (можливість імпортувати лише обрані трейди).
@@ -69,6 +70,11 @@
 - Повна адаптивність під мобільні екрани (адаптивні модальні вікна, скрол, мобільне меню).
 - Сувора робота з часовими поясами (**ISO 8601 UTC**) без локального зсуву дат.
 
+### 11. 🔐 Безпека та Email OTP-верифікація (2FA)
+- Підтвердження реєстрації та входу за допомогою **6-значного OTP-коду**, що надсилається на пошту через **Gmail SMTP**.
+- Захист від перебору та спаму: термін дії коду (`OTP_EXPIRE_MINUTES`), обмеження кількості спроб (`OTP_MAX_ATTEMPTS`) та таймер повторного надсилання (`OTP_RESEND_COOLDOWN_SECONDS`).
+- Можливість швидкого обходу OTP для демо-акаунта (`OTP_DEMO_BYPASS=true`).
+
 ---
 
 ## 🏗 Архітектура проекту
@@ -80,17 +86,19 @@ tradebook/
 │   │   ├── api/v1/                # REST ендпоінти API
 │   │   │   ├── accounts.py        # Управління торговими рахунками
 │   │   │   ├── analytics.py       # Аналітика, крива еквайті, щоденна активність
-│   │   │   ├── auth.py            # Автентифікація, реєстрація, профіль (JWT)
+│   │   │   ├── auth.py            # Автентифікація, реєстрація, Email OTP, профіль (JWT)
 │   │   │   ├── deposits.py        # Депозити, виведення та імпорт балансів
 │   │   │   ├── trades.py          # CRUD угод, фільтри, імпорт Hyperliquid з Preview
 │   │   │   └── upload.py          # Завантаження скріншотів графіків
 │   │   ├── core/                  # Базові модулі: конфігурація (.env), безпека (JWT, bcrypt), DB
-│   │   ├── models/                # SQLAlchemy моделі (User, TradingAccount, Trade, Deposit)
+│   │   ├── models/                # SQLAlchemy моделі (User, TradingAccount, Trade, Deposit, OTPCode)
 │   │   ├── schemas/               # Pydantic v2 моделі валідації та серіалізації
-│   │   ├── services/              # Бізнес-логіка (калькулятор PnL, аналітика, імпортер)
+│   │   ├── services/              # Бізнес-логіка (калькулятор PnL, аналітика, імпортер, OTP email, символи)
 │   │   └── main.py                # Точка входу FastAPI, CORS, роутери, роздача статики
 │   ├── uploads/                   # Директорія для завантажених зображень
-│   ├── test_api.py                # Комплексний набір pytest тестів (16 сценаріїв)
+│   ├── .env.example               # Шаблон змінних оточення (DB, JWT, Gmail SMTP / OTP)
+│   ├── test_api.py                # Набір pytest тестів основного API (17 сценаріїв)
+│   ├── test_otp.py                # Набір pytest тестів Email OTP верифікації (6 сценаріїв)
 │   ├── seed_demo.py               # Скрипт ініціалізації демо-користувача та угод
 │   └── requirements.txt           # Залежності Python
 │
@@ -99,11 +107,15 @@ tradebook/
 │   │   ├── api/                   # HTTP-клієнт для взаємодії з бекендом
 │   │   ├── components/            # UI компоненти:
 │   │   │   ├── AccountModal.tsx   # Управління торговими рахунками
+│   │   │   ├── AuthView.tsx       # Вхід, реєстрація та 6-значна OTP-верифікація
 │   │   │   ├── DepositModal.tsx   # Додавання депозитів та зняття коштів
+│   │   │   ├── GlassDateTimePicker.tsx # Кастомний вибір дати й часу
+│   │   │   ├── GlassSelect.tsx    # Кастомні скляні селекти
 │   │   │   ├── ImportView.tsx     # Імпорт Hyperliquid (Trades & Deposits)
 │   │   │   ├── ImportEditModal.tsx# Редагування записів перед імпортом
 │   │   │   ├── InsightsBento.tsx  # Bento Grid аналітика та KPI
 │   │   │   ├── OverviewView.tsx   # Головний огляд та статистика
+│   │   │   ├── PaginationBar.tsx  # Панель пагінації журналу угод
 │   │   │   ├── PnlCalendarView.tsx# Календар прибутковості (Heatmap)
 │   │   │   ├── PsychologyView.tsx # Аналіз психології та дисципліни
 │   │   │   ├── TradeList.tsx      # Журнал угод із фільтрами та пагінацією
@@ -111,11 +123,10 @@ tradebook/
 │   │   │   ├── TradeDetailModal.tsx # Детальний перегляд угоди
 │   │   │   ├── OverallCapitalStrip.tsx # Смуга сукупного капіталу
 │   │   │   ├── TopBar.tsx         # Верхня панель (тема, місяці, пошук)
-│   │   │   ├── Sidebar.tsx        # Навігаційна панель із вибором рахунку
-│   │   │   └── GlassSelect.tsx    # Кастомні скляні компоненти
+│   │   │   └── Sidebar.tsx        # Навігаційна панель із вибором рахунку
 │   │   ├── context/               # AuthContext (авторизація), ThemeContext (Dark/Light)
 │   │   ├── types/                 # TypeScript типи та інтерфейси
-│   │   └── utils/                 # Утиліти форматування дат (UTC) та експорту в CSV
+│   │   └── utils/                 # Утиліти дат (UTC), стандартизації символів та експорту в CSV
 │   └── package.json
 │
 ├── start.sh                       # Скрипт швидкого запуску обох частин
@@ -186,9 +197,11 @@ npm run dev
 
 ### Запуск тестів бекенду (pytest):
 ```bash
-backend/venv/bin/pytest backend/test_api.py -v
+backend/venv/bin/pytest backend/test_api.py backend/test_otp.py -v
 ```
-> Покриває 16 автоматизованих тестів: реєстрацію та вхід, життєвий цикл угод, розрахунок Net PnL та фандингу, ізоляцію мульти-акаунтів, імпорт з Hyperliquid та роботу Preview/Commit етапу, перевірку дублікатів, депозити, пагінацію, звітні періоди та UTC-серіалізацію.
+> Покриває 23 автоматизовані тести:
+> - **`test_api.py` (17 тестів)**: реєстрація та вхід, життєвий цикл угод, розрахунок Net PnL та фандингу, ізоляція мульти-акаунтів, імпорт з Hyperliquid та робота Preview/Commit етапу, перевірка дублікатів, стандартизація торгових пар (`BASE/QUOTE`), депозити, пагінація, звітні періоди, календар PnL та UTC-серіалізація.
+> - **`test_otp.py` (6 тестів)**: OTP-потік реєстрації та входу, rate-limiting повторного надсилання, прострочені коди, перевищення ліміту спроб, обхід OTP для демо-акаунта.
 
 ### Перевірка збірки фронтенду:
 ```bash
@@ -217,7 +230,13 @@ npm run lint
 
 ## ⚙️ Налаштування оточення (.env)
 
-За замовчуванням бекенд готовий до роботи з локальним PostgreSQL або SQLite. За потреби створіть файл `backend/.env`:
+За замовчуванням бекенд готовий до роботи з локальним PostgreSQL або SQLite. Для налаштування бази даних, JWT та Gmail SMTP (для надсилання 6-значних OTP-кодів) скопіюйте шаблон `backend/.env.example` у `backend/.env`:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Основні змінні у `backend/.env`:
 
 ```env
 PROJECT_NAME="TradeBook API"
@@ -229,6 +248,20 @@ DATABASE_URL="postgresql+psycopg2://localhost:5432/tradebook"
 
 # Або SQLite для спрощеного локального запуску:
 # DATABASE_URL="sqlite:///./tradebook.db"
+
+# Gmail SMTP & OTP верифікація
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=your-email@gmail.com
+SMTP_FROM_NAME=TradeBook
+SMTP_TLS=true
+OTP_REQUIRED=true
+OTP_EXPIRE_MINUTES=10
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_MAX_ATTEMPTS=5
+OTP_DEMO_BYPASS=true
 ```
 
 ---
@@ -238,13 +271,16 @@ DATABASE_URL="postgresql+psycopg2://localhost:5432/tradebook"
 API TradeBook спроектовано за принципами RESTful API з повною сумісністю з мобільними платформами (iOS / Swift, Android / Kotlin, Flutter / Dart, React Native):
 
 1. **Автентифікація**:
-   - `POST /api/v1/auth/login` — повертає `access_token`.
+   - `POST /api/v1/auth/login` — повертає `access_token` або (`otp_required: true` + `temp_token` для подальшого підтвердження через `/login/verify-otp`).
    - Подальші запити використовують стандартний HTTP-заголовок `Authorization: Bearer <access_token>`.
 
 2. **Основні ендпоінти API**:
    - **Автентифікація**:
-     - `POST /api/v1/auth/register` — реєстрація нового користувача
-     - `POST /api/v1/auth/login` — авторизація (отримання JWT)
+     - `POST /api/v1/auth/register/send-otp` — валідація даних та надсилання 6-значного OTP-коду на email
+     - `POST /api/v1/auth/register` — реєстрація нового користувача (з перевіркою OTP-коду)
+     - `POST /api/v1/auth/login` — авторизація (отримання JWT або `temp_token` для OTP)
+     - `POST /api/v1/auth/login/verify-otp` — завершення входу після перевірки 6-значного OTP-коду
+     - `POST /api/v1/auth/resend-otp` — повторне надсилання OTP-коду з урахуванням cooldown
      - `GET /api/v1/auth/me` — дані поточного користувача
    - **Торгові акаунти**:
      - `GET /api/v1/accounts` — список акаунтів користувача
