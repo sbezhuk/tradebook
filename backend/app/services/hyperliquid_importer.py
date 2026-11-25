@@ -3,6 +3,7 @@ import io
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from app.services.symbol_utils import normalize_symbol_pair
 
 
 @dataclass
@@ -78,7 +79,7 @@ def _parse_hl_time(time_str: str) -> datetime:
     return dt
 
 
-def parse_hyperliquid_csv(csv_content: str) -> List[ParsedHyperliquidTrade]:
+def parse_hyperliquid_csv(csv_content: str, default_quote: str = "USDT") -> List[ParsedHyperliquidTrade]:
     reader = csv.DictReader(io.StringIO(csv_content.strip()))
     if not reader.fieldnames:
         raise ValueError("CSV файл порожній або не містить заголовків")
@@ -118,12 +119,13 @@ def parse_hyperliquid_csv(csv_content: str) -> List[ParsedHyperliquidTrade]:
             return
 
         avg_entry = pos.open_notional / pos.open_qty
+        pair_symbol = normalize_symbol_pair(pos.coin, default_quote=default_quote)
 
         if pos.close_qty <= 1e-12 or force_open:
             # Position is still OPEN
             completed_trades.append(
                 ParsedHyperliquidTrade(
-                    symbol=pos.coin,
+                    symbol=pair_symbol,
                     market="CRYPTO",
                     direction=pos.direction,
                     status="OPEN",
@@ -153,7 +155,7 @@ def parse_hyperliquid_csv(csv_content: str) -> List[ParsedHyperliquidTrade]:
 
         completed_trades.append(
             ParsedHyperliquidTrade(
-                symbol=pos.coin,
+                symbol=pair_symbol,
                 market="CRYPTO",
                 direction=pos.direction,
                 status="CLOSED",

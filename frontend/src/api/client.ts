@@ -278,9 +278,13 @@ class ApiClient {
   // Import Hyperliquid CSV
   async previewHyperliquidCsv(
     file: File,
-    accountId?: number | null
+    accountId?: number | null,
+    quote: string = 'USDT'
   ): Promise<HyperliquidTradesPreviewResponse> {
-    const qs = accountId ? `?account_id=${accountId}` : '';
+    const params = new URLSearchParams();
+    if (accountId) params.set('account_id', String(accountId));
+    if (quote) params.set('quote', quote);
+    const qs = params.toString() ? `?${params.toString()}` : '';
     return this.uploadFile<HyperliquidTradesPreviewResponse>(
       `/trades/import/hyperliquid/preview${qs}`,
       file,
@@ -299,8 +303,15 @@ class ApiClient {
     });
   }
 
-  async importHyperliquidCsv(file: File, accountId?: number | null): Promise<HyperliquidImportResponse> {
-    const qs = accountId ? `?account_id=${accountId}` : '';
+  async importHyperliquidCsv(
+    file: File,
+    accountId?: number | null,
+    quote: string = 'USDT'
+  ): Promise<HyperliquidImportResponse> {
+    const params = new URLSearchParams();
+    if (accountId) params.set('account_id', String(accountId));
+    if (quote) params.set('quote', quote);
+    const qs = params.toString() ? `?${params.toString()}` : '';
     return this.uploadFile<HyperliquidImportResponse>(
       `/trades/import/hyperliquid${qs}`,
       file,

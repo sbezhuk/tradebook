@@ -5,6 +5,12 @@ import { GlassSelect } from './GlassSelect';
 import { GlassDateTimePicker } from './GlassDateTimePicker';
 import { toLocalInputValue, fromLocalInputToUtcIso } from '../utils/date';
 import {
+  normalizeSymbolPair,
+  changeSymbolQuote,
+  isValidPair,
+  detectQuoteCurrency,
+} from '../utils/symbol';
+import {
   X,
   Upload,
   Star,
@@ -30,11 +36,11 @@ interface TradeModalProps {
 }
 
 const QUICK_SYMBOLS: Record<MarketType, string[]> = {
-  CRYPTO: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
+  CRYPTO: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BTC/USDC'],
   FOREX: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
-  STOCKS: ['NVDA', 'AAPL', 'TSLA'],
-  FUTURES: ['NQ1!', 'ES1!'],
-  COMMODITIES: ['XAU/USD', 'WTI'],
+  STOCKS: ['NVDA/USDT', 'NVDA/USDT (IO)', 'AAPL/USDT', 'TSLA/USDT'],
+  FUTURES: ['NQ/USD', 'ES/USD'],
+  COMMODITIES: ['XAU/USD', 'WTI/USD'],
   OTHER: [],
 };
 
@@ -189,10 +195,41 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     }
   }
 
-  const validateStep1 = () => {
+  const activeQuote = detectQuoteCurrency(symbol);
+
+  const handleQuoteClick = (quote: 'USDT' | 'USDC') => {
     if (!symbol.trim()) {
-      setError('Будь ласка, вкажіть символ або пару');
+      setSymbol(`BTC/${quote}`);
+      return;
+    }
+    const currentQuote = detectQuoteCurrency(symbol);
+    if (currentQuote) {
+      setSymbol(changeSymbolQuote(symbol, quote));
+    } else {
+      setSymbol(normalizeSymbolPair(symbol, quote));
+    }
+  };
+
+  const handleSymbolBlur = () => {
+    if (symbol.trim()) {
+      const normalized = normalizeSymbolPair(symbol.trim(), 'USDT');
+      setSymbol(normalized);
+    }
+  };
+
+  const validateStep1 = () => {
+    const rawSym = symbol.trim();
+    if (!rawSym) {
+      setError('Будь ласка, вкажіть торгову пару');
       return false;
+    }
+    const normalized = normalizeSymbolPair(rawSym, 'USDT');
+    if (!isValidPair(normalized)) {
+      setError('Вкажіть коректну торгову пару (напр. BTC/USDT, BTC/USDC або NVDA/USDT (IO))');
+      return false;
+    }
+    if (symbol !== normalized) {
+      setSymbol(normalized);
     }
     if (!numEntry || numEntry <= 0) {
       setError('Вкажіть коректну ціну входу');
@@ -258,13 +295,19 @@ export const TradeModal: React.FC<TradeModalProps> = ({
     e?.preventDefault();
     if (!validateStep1()) return;
 
+    const normalizedSymbol = normalizeSymbolPair(symbol.trim(), 'USDT');
+    if (!isValidPair(normalizedSymbol)) {
+      setError('Вкажіть коректну торгову пару (напр. BTC/USDT, BTC/USDC або NVDA/USDT (IO))');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
     try {
       const payload: TradeFormData = {
         account_id: accountId,
-        symbol: symbol.trim().toUpperCase(),
+        symbol: normalizedSymbol,
         market,
         direction,
         status,
@@ -452,7 +495,14 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               {/* Symbol + Quick Suggestions */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-purple-200/70">Символ / Пара *</label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs font-medium text-purple-200/70">Торгова пара *</label>
+                    {isValidPair(symbol) && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full font-mono">
+                        <Check className="w-2.5 h-2.5" /> пара
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     {QUICK_SYMBOLS[market]?.map((sym) => (
                       <button
@@ -466,14 +516,48 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                     ))}
                   </div>
                 </div>
-                <input
-                  type="text"
-                  required
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                  placeholder="Напр. BTC/USDT, EUR/USD, NVDA"
-                  className="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-purple-200/35 uppercase font-mono font-bold"
-                />
+
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    required
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value)}
+                    onBlur={handleSymbolBlur}
+                    placeholder="Напр. BTC/USDT, BTC/USDC, NVDA/USDT (IO)"
+                    className="glass-input w-full rounded-xl pl-3.5 pr-28 py-2.5 text-sm text-white placeholder-purple-200/35 uppercase font-mono font-bold"
+                  />
+                  {/* Quick Quote Pills */}
+                  <div className="absolute right-1.5 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleQuoteClick('USDT')}
+                      title="Котирування в /USDT"
+                      className={`px-2 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all ${
+                        activeQuote === 'USDT'
+                          ? 'bg-[#c49bff]/25 text-[#c49bff] border border-[#c49bff]/40 shadow-sm'
+                          : 'bg-white/[0.05] text-purple-200/60 hover:text-white hover:bg-white/[0.1] border border-white/[0.08]'
+                      }`}
+                    >
+                      /USDT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuoteClick('USDC')}
+                      title="Котирування в /USDC"
+                      className={`px-2 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all ${
+                        activeQuote === 'USDC'
+                          ? 'bg-[#c49bff]/25 text-[#c49bff] border border-[#c49bff]/40 shadow-sm'
+                          : 'bg-white/[0.05] text-purple-200/60 hover:text-white hover:bg-white/[0.1] border border-white/[0.08]'
+                      }`}
+                    >
+                      /USDC
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-purple-200/50 mt-1">
+                  Обов'язковий формат пари: <span className="font-mono text-purple-200/75 font-semibold">n/USDT</span> або <span className="font-mono text-purple-200/75 font-semibold">n/USDC</span> (наприклад, <span className="font-mono text-purple-100">BTC/USDT</span> або <span className="font-mono text-purple-100">NVDA/USDT (IO)</span>)
+                </p>
               </div>
 
               {/* Quantity, Entry Price, Exit Price */}

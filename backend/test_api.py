@@ -101,8 +101,8 @@ def test_hyperliquid_preview_and_commit():
     assert pdata["total_parsed"] == 2
     assert pdata["duplicate_count"] == 0
     assert len(pdata["items"]) == 2
-    assert pdata["items"][0]["symbol"] == "SOL"
-    assert pdata["items"][1]["symbol"] == "AVAX"
+    assert pdata["items"][0]["symbol"] == "SOL/USDT"
+    assert pdata["items"][1]["symbol"] == "AVAX/USDT"
 
     # User adjusts SOL trade (e.g. changes tags, notes) and chooses only SOL to import
     selected_items = [
@@ -127,7 +127,7 @@ def test_hyperliquid_preview_and_commit():
     assert commit_res.status_code == 200
     cdata = commit_res.json()
     assert cdata["imported_count"] == 1
-    assert cdata["trades"][0]["symbol"] == "SOL"
+    assert cdata["trades"][0]["symbol"] == "SOL/USDT"
     assert cdata["trades"][0]["tags"] == "CustomTag,Swing"
     assert cdata["trades"][0]["setup_notes"] == "Edited before import"
 
@@ -985,6 +985,61 @@ def test_trade_datetime_utc_serialization_and_stability():
         assert "14:45:00" in up_date_data["entry_date"]
     finally:
         client.delete(f"/api/v1/trades/{tid}", headers=headers)
+
+
+def test_symbol_pair_formatting_and_import_quotes():
+    res = client.post("/api/v1/auth/login", json={
+        "username_or_email": "trader",
+        "password": "password123"
+    })
+    token = res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. Manual create with unformatted symbol 'BTC' -> auto normalized to 'BTC/USDT'
+    create_res1 = client.post("/api/v1/trades", headers=headers, json={
+        "symbol": "BTC",
+        "market": "CRYPTO",
+        "direction": "LONG",
+        "status": "OPEN",
+        "entry_price": 50000.0,
+        "quantity": 1.0,
+        "entry_date": "2026-11-20T10:00:00Z"
+    })
+    assert create_res1.status_code == 201
+    t1 = create_res1.json()
+    assert t1["symbol"] == "BTC/USDT"
+    client.delete(f"/api/v1/trades/{t1['id']}", headers=headers)
+
+    # 2. Manual create with 'NVDA (IO)' -> auto normalized to 'NVDA/USDT (IO)'
+    create_res2 = client.post("/api/v1/trades", headers=headers, json={
+        "symbol": "NVDA (IO)",
+        "market": "STOCKS",
+        "direction": "LONG",
+        "status": "OPEN",
+        "entry_price": 140.0,
+        "quantity": 10.0,
+        "entry_date": "2026-11-20T10:00:00Z"
+    })
+    assert create_res2.status_code == 201
+    t2 = create_res2.json()
+    assert t2["symbol"] == "NVDA/USDT (IO)"
+    client.delete(f"/api/v1/trades/{t2['id']}", headers=headers)
+
+    # 3. Hyperliquid import with quote=USDC
+    sample_csv = (
+        "time,coin,dir,px,sz,ntl,fee,closedPnl\n"
+        "01/18/2026 - 10:00:00,BTC,Open Long,60000.0,0.5,30000.0,0.05,-0.05\n"
+        "01/18/2026 - 11:00:00,BTC,Close Long,61000.0,0.5,30500.0,0.05,499.95\n"
+        "01/18/2026 - 12:00:00,NVDA (IO),Open Long,130.0,5.0,650.0,0.05,-0.05\n"
+        "01/18/2026 - 13:00:00,NVDA (IO),Close Long,135.0,5.0,675.0,0.05,24.95\n"
+    )
+    files = {"file": ("trade_history.csv", sample_csv, "text/csv")}
+    preview_res = client.post("/api/v1/trades/import/hyperliquid/preview?quote=USDC", headers=headers, files=files)
+    assert preview_res.status_code == 200
+    pdata = preview_res.json()
+    assert pdata["total_parsed"] == 2
+    assert pdata["items"][0]["symbol"] == "BTC/USDC"
+    assert pdata["items"][1]["symbol"] == "NVDA/USDC (IO)"
 
 
 

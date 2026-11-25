@@ -73,7 +73,7 @@ def setup_test_database():
             "followed_rules": True,
         },
         {
-            "symbol": "NVDA",
+            "symbol": "NVDA/USDT",
             "market": "STOCKS",
             "direction": "LONG",
             "status": "CLOSED",
@@ -149,7 +149,7 @@ def setup_test_database():
             "followed_rules": False,
         },
         {
-            "symbol": "TSLA",
+            "symbol": "TSLA/USDT",
             "market": "STOCKS",
             "direction": "LONG",
             "status": "CLOSED",

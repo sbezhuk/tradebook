@@ -10,6 +10,7 @@ import type {
 import { GlassSelect } from './GlassSelect';
 import { ImportEditModal } from './ImportEditModal';
 import { formatDisplayDateTime } from '../utils/date';
+import { changeSymbolQuote } from '../utils/symbol';
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -121,6 +122,17 @@ export const ImportView: React.FC<ImportViewProps> = ({
   const [isReading, setIsReading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importQuote, setImportQuote] = useState<'USDT' | 'USDC'>('USDT');
+
+  const handleSwitchAllQuotes = (newQuote: 'USDT' | 'USDC') => {
+    setImportQuote(newQuote);
+    setPreviewTrades((prev) =>
+      prev.map((t) => ({
+        ...t,
+        symbol: changeSymbolQuote(t.symbol, newQuote),
+      }))
+    );
+  };
 
   // Preview data
   const [previewTrades, setPreviewTrades] = useState<TradePreviewItem[]>([]);
@@ -195,7 +207,7 @@ export const ImportView: React.FC<ImportViewProps> = ({
 
     try {
       if (mode === 'trades') {
-        const previewRes = await api.previewHyperliquidCsv(file, resolvedTargetId);
+        const previewRes = await api.previewHyperliquidCsv(file, resolvedTargetId, importQuote);
         if (previewRes.items.length === 0) {
           throw new Error('У файлі не знайдено записів угод Hyperliquid');
         }
@@ -589,6 +601,45 @@ export const ImportView: React.FC<ImportViewProps> = ({
                 </p>
               </div>
 
+              {/* Quote Currency Selection for Trades */}
+              {mode === 'trades' && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
+                  <div>
+                    <div className="text-xs font-semibold text-white">Формат котирування пар (Quote Currency)</div>
+                    <div className="text-[11px] text-purple-200/60 mt-0.5">
+                      Символи ордерів будуть автоматично імпортовані як пари{' '}
+                      <span className="font-mono text-purple-200/80 font-bold">n/{importQuote}</span> (наприклад,{' '}
+                      <span className="font-mono text-white">BTC/{importQuote}</span> або{' '}
+                      <span className="font-mono text-white">NVDA/{importQuote} (IO)</span>).
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 self-start sm:self-auto shrink-0 bg-white/[0.03] p-1 rounded-xl border border-white/[0.08]">
+                    <button
+                      type="button"
+                      onClick={() => setImportQuote('USDT')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        importQuote === 'USDT'
+                          ? 'bg-[#c49bff]/25 text-[#c49bff] border border-[#c49bff]/40 shadow-sm'
+                          : 'text-purple-200/60 hover:text-white'
+                      }`}
+                    >
+                      /USDT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImportQuote('USDC')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        importQuote === 'USDC'
+                          ? 'bg-[#c49bff]/25 text-[#c49bff] border border-[#c49bff]/40 shadow-sm'
+                          : 'text-purple-200/60 hover:text-white'
+                      }`}
+                    >
+                      /USDC
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {mode === 'deposits' && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07]">
                   <div className="flex items-center gap-2.5">
@@ -875,6 +926,39 @@ export const ImportView: React.FC<ImportViewProps> = ({
                       Зняти всі
                     </button>
                   </div>
+
+                  {mode === 'trades' && (
+                    <>
+                      <div className="h-4 w-px bg-white/[0.1] hidden sm:block" />
+                      <div className="inline-flex items-center p-0.5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                        <span className="text-[10px] text-purple-200/50 px-1.5 font-mono">Пара:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleSwitchAllQuotes('USDT')}
+                          title="Перемкнути всі прев'ю-угоди на /USDT"
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-colors cursor-pointer ${
+                            importQuote === 'USDT'
+                              ? 'bg-[#c49bff]/25 text-[#c49bff]'
+                              : 'text-purple-200/60 hover:text-white'
+                          }`}
+                        >
+                          /USDT
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSwitchAllQuotes('USDC')}
+                          title="Перемкнути всі прев'ю-угоди на /USDC"
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-colors cursor-pointer ${
+                            importQuote === 'USDC'
+                              ? 'bg-[#c49bff]/25 text-[#c49bff]'
+                              : 'text-purple-200/60 hover:text-white'
+                          }`}
+                        >
+                          /USDC
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

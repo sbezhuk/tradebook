@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from app.schemas.common import UtcDateTime, OptionalUtcDateTime
+from app.services.symbol_utils import normalize_symbol_pair, is_valid_pair
 
 class TradeBase(BaseModel):
-    symbol: str = Field(..., description="Символ або пара")
+    symbol: str = Field(..., description="Торгова пара (напр. BTC/USDT, BTC/USDC або NVDA/USDT (IO))")
     market: str = Field(default="CRYPTO", description="CRYPTO, FOREX, STOCKS, FUTURES, COMMODITIES")
     direction: str = Field(..., description="LONG або SHORT")
     status: str = Field(default="OPEN", description="OPEN, CLOSED, CANCELLED")
@@ -25,6 +26,17 @@ class TradeBase(BaseModel):
     discipline_rating: int = Field(default=5, ge=1, le=5)
     followed_rules: bool = True
     chart_url: Optional[str] = None
+
+    @field_validator("symbol")
+    @classmethod
+    def validate_and_normalize_symbol(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("Символ або пара є обов'язковим полем")
+        norm = normalize_symbol_pair(s, default_quote="USDT")
+        if not is_valid_pair(norm):
+            raise ValueError(f"Символ повинен бути торговою парою (напр. BTC/USDT або NVDA/USDT (IO)), отримано: {v}")
+        return norm
 
 class TradeCreate(TradeBase):
     pass
@@ -51,6 +63,19 @@ class TradeUpdate(BaseModel):
     discipline_rating: Optional[int] = None
     followed_rules: Optional[bool] = None
     chart_url: Optional[str] = None
+
+    @field_validator("symbol")
+    @classmethod
+    def validate_and_normalize_update_symbol(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip()
+        if not s:
+            return None
+        norm = normalize_symbol_pair(s, default_quote="USDT")
+        if not is_valid_pair(norm):
+            raise ValueError(f"Символ повинен бути торговою парою (напр. BTC/USDT або NVDA/USDT (IO)), отримано: {v}")
+        return norm
 
 class TradeResponse(TradeBase):
     model_config = ConfigDict(from_attributes=True)
@@ -95,6 +120,14 @@ class TradePreviewItem(BaseModel):
     is_duplicate: bool = False
     duplicate_reason: Optional[str] = None
 
+    @field_validator("symbol")
+    @classmethod
+    def validate_and_normalize_preview_symbol(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("Символ або пара є обов'язковим полем")
+        return normalize_symbol_pair(s, default_quote="USDT")
+
 
 class HyperliquidTradesPreviewResponse(BaseModel):
     total_parsed: int
@@ -123,6 +156,17 @@ class TradeCommitItem(BaseModel):
     post_trade_notes: Optional[str] = None
     discipline_rating: int = 5
     followed_rules: bool = True
+
+    @field_validator("symbol")
+    @classmethod
+    def validate_and_normalize_commit_symbol(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("Символ або пара є обов'язковим полем")
+        norm = normalize_symbol_pair(s, default_quote="USDT")
+        if not is_valid_pair(norm):
+            raise ValueError(f"Символ повинен бути торговою парою (напр. BTC/USDT або NVDA/USDT (IO)), отримано: {v}")
+        return norm
 
 
 class TradeBatchCommitRequest(BaseModel):

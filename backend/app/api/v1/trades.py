@@ -201,6 +201,7 @@ def get_user_tags(
 async def preview_hyperliquid_trades(
     file: UploadFile = File(...),
     account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту"),
+    quote: str = Query("USDT", description="Валюта котирування (USDT або USDC)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -215,7 +216,7 @@ async def preview_hyperliquid_trades(
         raise HTTPException(status_code=400, detail="Файл повинен бути в кодуванні UTF-8")
 
     try:
-        parsed_trades = parse_hyperliquid_csv(csv_text)
+        parsed_trades = parse_hyperliquid_csv(csv_text, default_quote=quote)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -432,6 +433,7 @@ def commit_trades_import(
 async def import_hyperliquid_trades(
     file: UploadFile = File(...),
     account_id: Optional[int] = Query(None, description="ID торгового акаунту для імпорту"),
+    quote: str = Query("USDT", description="Валюта котирування (USDT або USDC)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -446,7 +448,7 @@ async def import_hyperliquid_trades(
         raise HTTPException(status_code=400, detail="Файл повинен бути в кодуванні UTF-8")
 
     try:
-        parsed_trades = parse_hyperliquid_csv(csv_text)
+        parsed_trades = parse_hyperliquid_csv(csv_text, default_quote=quote)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
