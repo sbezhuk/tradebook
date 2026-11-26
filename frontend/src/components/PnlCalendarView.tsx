@@ -958,7 +958,7 @@ export const PnlCalendarView: React.FC<PnlCalendarViewProps> = ({
 
                           if (!cell.isCurrentMonth) {
                             dayCardStyle =
-                              'bg-transparent border-white/[0.02] opacity-35 hover:opacity-70';
+                              'bg-transparent border-white/[0.02] opacity-50 dark:opacity-35 hover:opacity-75';
                           } else if (hasTrades) {
                             if (isPositive) {
                               dayCardStyle =
