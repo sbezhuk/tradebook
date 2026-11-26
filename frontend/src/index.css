@@ -268,19 +268,19 @@ html[data-theme="light"] :is([class^="bg-purple-900/"], [class*=" bg-purple-900/
   background-color: rgba(124, 58, 237, 0.06);
 }
 
-html[data-theme="light"] :is([class^="text-emerald-400"], [class*=" text-emerald-400"]):not([class*="bg-emerald-500"]):not([class*="bg-emerald-500"] *):not([class*="bg-emerald-600"]):not([class*="bg-emerald-600"] *) {
+html[data-theme="light"] :is([class^="text-emerald-400"], [class*=" text-emerald-400"]) {
   color: #047857;
 }
 
-html[data-theme="light"] :is([class^="text-emerald-300"], [class*=" text-emerald-300"], [class^="text-emerald-200"], [class*=" text-emerald-200"]):not([class*="bg-emerald-500"]):not([class*="bg-emerald-500"] *):not([class*="bg-emerald-600"]):not([class*="bg-emerald-600"] *) {
+html[data-theme="light"] :is([class^="text-emerald-300"], [class*=" text-emerald-300"], [class^="text-emerald-200"], [class*=" text-emerald-200"]) {
   color: #065f46;
 }
 
-html[data-theme="light"] :is([class^="text-rose-400"], [class*=" text-rose-400"]):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *):not([class*="bg-rose-600"]):not([class*="bg-rose-600"] *) {
+html[data-theme="light"] :is([class^="text-rose-400"], [class*=" text-rose-400"]) {
   color: #be123c;
 }
 
-html[data-theme="light"] :is([class^="text-rose-300"], [class*=" text-rose-300"], [class^="text-rose-200"], [class*=" text-rose-200"]):not([class*="bg-rose-500"]):not([class*="bg-rose-500"] *):not([class*="bg-rose-600"]):not([class*="bg-rose-600"] *) {
+html[data-theme="light"] :is([class^="text-rose-300"], [class*=" text-rose-300"], [class^="text-rose-200"], [class*=" text-rose-200"]) {
   color: #9f1239;
 }
 
